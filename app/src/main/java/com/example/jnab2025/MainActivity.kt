@@ -40,5 +40,11 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, ListSimposiosActivity::class.java)
             startActivity(intent)
         }
+
+        binding.btnVerAgenda.setOnClickListener {
+            val intent = Intent(this, AgendaActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 }
