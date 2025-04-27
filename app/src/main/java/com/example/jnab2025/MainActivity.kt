@@ -46,5 +46,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        binding.btnFeedNovedades.setOnClickListener {
+            val intent = Intent(this, FeedNovedadesActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 }
