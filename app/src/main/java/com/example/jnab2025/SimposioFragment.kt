@@ -1,40 +1,32 @@
 package com.example.jnab2025
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class ListSimposiosActivity : AppCompatActivity() {
+class SimposiosFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: SimposioAdapter
-
-    // Lista mutable para poder actualizar favoritos
     private val listaSimposios = mutableListOf<Simposio>()
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_list_simposios)
-
-        // Inicializar vistas
-        recyclerView = findViewById(R.id.rvEventos)
-
-        // Configurar RecyclerView
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Cargar datos de ejemplo
-        cargarDatosEjemplo()
-
-        // Configurar adaptador
-        adapter = SimposioAdapter(listaSimposios)
-        recyclerView.adapter = adapter
-
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        return inflater.inflate(R.layout.fragment_simposio, container, false)
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        recyclerView = view.findViewById(R.id.rvEventos)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        cargarDatosEjemplo()
+        adapter = SimposioAdapter(listaSimposios)
+        recyclerView.adapter = adapter
+    }
     private fun cargarDatosEjemplo() {
         // Datos de ejemplo - Estos serían reemplazados por datos reales de la API o base de datos
         listaSimposios.apply {

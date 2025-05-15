@@ -1,51 +1,43 @@
 package com.example.jnab2025
 
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.example.jnab2025.adapters.CharlaAdapter 
 
-class AgendaActivity : AppCompatActivity() {
+
+class AgendaFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CharlaAdapter
     private lateinit var fabFiltrar: FloatingActionButton
-
-    // Lista mutable para poder actualizar favoritos
     private val listaCharlas = mutableListOf<Charla>()
-
-    // Variable para controlar si estamos mostrando solo favoritos o todos
     private var mostrandoSoloFavoritos = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_agenda)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        return inflater.inflate(R.layout.fragment_charla, container, false)
+    }
 
-        // Inicializar vistas
-        recyclerView = findViewById(R.id.rvEventos)
-        fabFiltrar = findViewById(R.id.fabFiltrar)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        recyclerView = view.findViewById(R.id.rvEventos)
+        fabFiltrar = view.findViewById(R.id.fabFiltrar)
 
-        // Configurar RecyclerView
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Cargar datos de ejemplo
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
         cargarDatosEjemplo()
 
-        // Configurar adaptador
-        adapter = CharlaAdapter(listaCharlas.sortedBy { it.fecha }) { charla ->
-            // Callback para cuando se hace clic en el botón de favorito
-            toggleFavorito(charla)
-        }
+        adapter = CharlaAdapter(listaCharlas.sortedBy { it.fecha }) { charla -> toggleFavorito(charla) }
         recyclerView.adapter = adapter
 
-        // Configurar botón de filtro
         fabFiltrar.setOnClickListener {
             toggleFiltroFavoritos()
         }
     }
-
     private fun cargarDatosEjemplo() {
         // Datos de ejemplo - Estos serían reemplazados por datos reales de la API o base de datos
         listaCharlas.apply {

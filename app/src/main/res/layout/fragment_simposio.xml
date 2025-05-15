@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/mint_green"
-    tools:context=".ListSimposiosActivity">
+    tools:context=".SimposioFragment">
 
     <TextView
         android:id="@+id/tvTitulo"
@@ -35,3 +35,5 @@
         tools:listitem="@layout/item_simposio" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+
