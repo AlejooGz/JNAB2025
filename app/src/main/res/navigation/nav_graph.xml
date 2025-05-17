@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/fragmentListSimposios">
+
+
+    <fragment
+        android:id="@+id/fragmentListSimposios"
+        android:name="com.example.jnab2025.FragmentListSimposios"
+        android:label="fragment_list_simposios"
+        tools:layout="@layout/fragment_list_simposios" >
+        <action
+            android:id="@+id/action_fragmentListSimposios_to_fragmentListCharlas"
+            app:destination="@id/fragmentListCharlas" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragmentListCharlas"
+        android:name="com.example.jnab2025.FragmentListCharlas"
+        android:label="fragment_list_charlas"
+        tools:layout="@layout/fragment_list_charlas" />
+
+</navigation>
