@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.jnab2025.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,7 +19,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-
-
+        // setContentView(R.layout.activity_main)
     }
 }
+

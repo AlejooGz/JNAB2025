@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/mint_green"
-    tools:context=".AgendaActivity">
+    tools:context=".CharlaFragment">
 
     <TextView
         android:id="@+id/tvTitulo"
@@ -60,3 +60,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
+

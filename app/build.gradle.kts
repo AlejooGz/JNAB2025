@@ -69,6 +69,9 @@ dependencies {
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

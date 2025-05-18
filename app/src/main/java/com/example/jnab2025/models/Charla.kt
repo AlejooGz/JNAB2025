@@ -1,6 +1,4 @@
-package com.example.jnab2025
-
-import java.time.LocalTime
+package com.example.jnab2025.models
 
 data class Charla(
     val id: Int,

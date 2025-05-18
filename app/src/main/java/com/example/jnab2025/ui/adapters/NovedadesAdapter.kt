@@ -1,4 +1,4 @@
-package com.example.jnab2025
+package com.example.jnab2025.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,6 +6,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.jnab2025.R
+import com.example.jnab2025.models.Novedad
 
 class NovedadesAdapter(private val novedadesList: List<Novedad>) :
     RecyclerView.Adapter<NovedadesAdapter.NovedadViewHolder>() {
