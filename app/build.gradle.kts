@@ -41,6 +41,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.protolite.well.known.types)
     val nav_version = "2.8.9"
 
     implementation("androidx.constraintlayout:constraintlayout:2.2.0-beta01")

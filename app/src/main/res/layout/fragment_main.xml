@@ -45,4 +45,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <Button
+        android:id="@+id/btnTramite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Iniciar Trámite"
+        android:visibility="gone"
+        android:backgroundTint="@color/dark_red"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@+id/btnFeedNovedades"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/btnMisTramites"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mis Trámites"
+        android:backgroundTint="@color/dark_red"
+        android:textColor="@color/white"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/btnTramite"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,10 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import android.content.Context
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.data.FakeUserRepository
 import com.example.jnab2025.databinding.FragmentLoginBinding
 import com.example.jnab2025.R
+
 
 /**
  * A simple [Fragment] subclass.
@@ -40,6 +42,15 @@ class LoginFragment : Fragment() {
 
             if (FakeUserRepository.login(username, password)) {
                 Toast.makeText(requireContext(), "Login exitoso", Toast.LENGTH_SHORT).show()
+                val rol = when (username) {
+                    "usuario1" -> "expositor"
+                    "usuario2" -> "asistente"
+                    "admin" -> "organizador"
+                    else -> "invitado"
+                }
+
+                val sharedPref = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+                sharedPref.edit().putString("user_rol", rol).apply()
 
                 // Navegar a otro fragmento (ajustar según tu navigation graph)
                 findNavController().navigate(R.id.action_loginFragment_to_mainFragment)

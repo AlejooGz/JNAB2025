@@ -1,5 +1,6 @@
 package com.example.jnab2025
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -21,7 +22,16 @@ class MainFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val sharedPref = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val rol = sharedPref.getString("user_rol", "invitado") ?: "invitado"
 
+        if (rol == "expositor") {
+            configurarVistaExpositor()
+        } else {
+            configurarVistaComun()
+        }
+
+        // botones comunes
         binding.btnListSimposios.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_simposiosFragment)
         }
@@ -33,6 +43,30 @@ class MainFragment : Fragment() {
         binding.btnFeedNovedades.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_novedadesFragment)
         }
+    }
+
+    private fun configurarVistaExpositor() {
+        Toast.makeText(requireContext(), "Bienvenido Expositor", Toast.LENGTH_SHORT).show()
+
+        binding.btnTramite.visibility = View.VISIBLE
+        binding.btnMisTramites.visibility = View.VISIBLE
+
+        binding.btnTramite.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_tramiteExpositorFragment)
+        }
+
+        binding.btnMisTramites.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_seguimientoTramiteFragment)
+        }
+    }
+
+
+    private fun configurarVistaComun() {
+        Toast.makeText(requireContext(), "Bienvenido", Toast.LENGTH_SHORT).show()
+
+        // ocultar botones del expositor por si venía visible
+        binding.btnTramite.visibility = View.GONE
+        binding.btnMisTramites.visibility = View.GONE
     }
 
     override fun onDestroyView() {

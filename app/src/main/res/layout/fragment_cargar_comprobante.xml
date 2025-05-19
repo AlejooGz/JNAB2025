@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <!-- Card con el formulario -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardFormulario"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardElevation="4dp"
+        app:cardCornerRadius="12dp"
+        app:cardBackgroundColor="@color/cream"
+        app:layout_constraintTop_toBottomOf="@id/tvTituloEncab"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvTituloTrabajo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Trabajo: "
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/etNombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre" />
+
+        <EditText
+            android:id="@+id/etApellido"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Apellido"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/tvArchivoSeleccionado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Archivo no seleccionado"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/btnSeleccionarArchivo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Seleccionar archivo"
+            android:backgroundTint="@color/dark_red"
+            android:textColor="@color/white"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btnEnviarComprobante"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar comprobante"
+            android:backgroundTint="@color/dark_red"
+            android:textColor="@color/white"
+            android:layout_marginTop="24dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -39,5 +39,36 @@
         android:name="com.example.jnab2025.ui.fragments.NovedadesFragment"
         android:label="Novedades" />
 
+    <fragment
+        android:id="@+id/tramiteExpositorFragment"
+        android:name="com.example.jnab2025.ui.fragments.TramiteExpositorFragment"
+        android:label="Trámite Expositor" />
+    <fragment
+        android:id="@+id/seguimientoTramiteFragment"
+        android:name="com.example.jnab2025.ui.fragments.SeguimientoTramiteFragment"
+        android:label="Seguimiento de Trámite" >
+        <action
+            android:id="@+id/action_seguimientoTramiteFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+    <action
+        android:id="@+id/action_mainFragment_to_tramiteExpositorFragment"
+        app:destination="@id/tramiteExpositorFragment" />
+
+    <action
+        android:id="@+id/action_mainFragment_to_seguimientoTramiteFragment"
+        app:destination="@id/seguimientoTramiteFragment" />
+
+    <fragment
+        android:id="@+id/cargarComprobanteFragment"
+        android:name="com.example.jnab2025.ui.fragments.CargarComprobanteFragment"
+        android:label="Cargar Comprobante">
+        <argument
+            android:name="tramiteId"
+            app:argType="integer" />
+        <argument
+            android:name="tituloTrabajo"
+            app:argType="string" />
+    </fragment>
 </navigation>
 
