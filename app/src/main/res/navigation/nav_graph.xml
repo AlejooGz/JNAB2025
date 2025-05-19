@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.jnab2025.ui.fragments.LoginFragment"
+        android:label="Login">
+
+        <!-- Acción hacia MainFragment (o el que quieras) -->
+        <action
+            android:id="@+id/action_loginFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.example.jnab2025.MainFragment"
+        android:label="Inicio">
+        <action android:id="@+id/action_mainFragment_to_agendaFragment" app:destination="@id/agendaFragment" />
+        <action android:id="@+id/action_mainFragment_to_simposiosFragment" app:destination="@id/simposiosFragment" />
+        <action android:id="@+id/action_mainFragment_to_novedadesFragment" app:destination="@id/novedadesFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/agendaFragment"
+        android:name="com.example.jnab2025.ui.fragments.AgendaFragment"
+        android:label="Agenda" />
+
+    <fragment
+        android:id="@+id/simposiosFragment"
+        android:name="com.example.jnab2025.ui.fragments.SimposiosFragment"
+        android:label="Simposios" />
+
+    <fragment
+        android:id="@+id/novedadesFragment"
+        android:name="com.example.jnab2025.ui.fragments.NovedadesFragment"
+        android:label="Novedades" />
+
+</navigation>
+

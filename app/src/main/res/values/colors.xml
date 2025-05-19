@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Nueva paleta de colores para la app de JNAB -->
+    <color name="mint_green">#D1E7E0</color>
+    <color name="dark_red">#932C27</color>
+    <color name="dusty_rose">#BC827A</color>
+    <color name="light_pink">#FFF5F2</color>
+    <color name="cream">#F3EED9</color>
+
+    <!-- Colores específicos para componentes de la app -->|
+    <color name="yellow_header">#932C27</color>
+    <color name="green_subtitle">#BC827A</color>
+    <color name="event_background">#FFF5F2</color>
 </resources>
