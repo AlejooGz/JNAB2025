@@ -33,6 +33,10 @@ class MainFragment : Fragment() {
         binding.btnFeedNovedades.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_novedadesFragment)
         }
+
+        binding.btnMisSimposios.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_misSimposiosFragment)
+        }
     }
 
     override fun onDestroyView() {

@@ -22,6 +22,7 @@
         <action android:id="@+id/action_mainFragment_to_agendaFragment" app:destination="@id/agendaFragment" />
         <action android:id="@+id/action_mainFragment_to_simposiosFragment" app:destination="@id/simposiosFragment" />
         <action android:id="@+id/action_mainFragment_to_novedadesFragment" app:destination="@id/novedadesFragment" />
+        <action android:id="@+id/action_mainFragment_to_misSimposiosFragment" app:destination="@id/misSimposiosFragment" />
     </fragment>
 
     <fragment
@@ -38,6 +39,57 @@
         android:id="@+id/novedadesFragment"
         android:name="com.example.jnab2025.ui.fragments.NovedadesFragment"
         android:label="Novedades" />
+
+    <fragment
+        android:id="@+id/misSimposiosFragment"
+        android:name="com.example.jnab2025.ui.fragments.MisSimposiosFragment"
+        android:label="Mis Simposios">
+        <action
+            android:id="@+id/action_misSimposiosFragment_to_crearSimposioFragment"
+            app:destination="@id/crearSimposioFragment" />
+        <action
+            android:id="@+id/action_misSimposiosFragment_to_editarSimposioFragment"
+            app:destination="@id/editarSimposioFragment" />
+        <action
+            android:id="@+id/action_misSimposiosFragment_to_propuestasFragment"
+            app:destination="@id/propuestasFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/crearSimposioFragment"
+        android:name="com.example.jnab2025.ui.fragments.CrearSimposioFragment"
+        android:label="Crear Simposio" />
+
+    <fragment
+        android:id="@+id/editarSimposioFragment"
+        android:name="com.example.jnab2025.ui.fragments.EditarSimposioFragment"
+        android:label="Editar Simposio">
+        <argument
+            android:name="simposioId"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/propuestasFragment"
+        android:name="com.example.jnab2025.ui.fragments.PropuestasFragment"
+        android:label="Propuestas">
+        <argument
+            android:name="simposioId"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_propuestasFragment_to_rechazarPropuestaFragment"
+            app:destination="@id/rechazarPropuestaFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/rechazarPropuestaFragment"
+        android:name="com.example.jnab2025.ui.fragments.RechazarPropuestaFragment"
+        android:label="Rechazar Propuesta">
+        <argument
+            android:name="propuestaId"
+            app:argType="integer" />
+    </fragment>
+
 
 </navigation>
 
