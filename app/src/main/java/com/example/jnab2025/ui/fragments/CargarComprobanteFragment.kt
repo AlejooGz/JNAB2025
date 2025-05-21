@@ -48,7 +48,7 @@ class CargarComprobanteFragment : Fragment() {
         val tramiteId = requireArguments().getInt("tramiteId")
         val titulo = requireArguments().getString("tituloTrabajo")
 
-        // binding.tvTituloTrabajo.text = "Trabajo: $titulo"
+        binding.tvTituloTrabajo.text = "Trabajo: $titulo"
 
         binding.btnSeleccionarArchivo.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)

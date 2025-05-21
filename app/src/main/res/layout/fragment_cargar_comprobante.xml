@@ -2,28 +2,32 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/mint_green"
     android:padding="16dp">
 
     <!-- Encabezado -->
-    <TextView
-        android:id="@+id/tvTituloEncabezado"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Cargar Comprobante"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:background="@color/dark_red"
-        android:textColor="@color/white"
-        android:padding="16dp"
-        android:textAlignment="center"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Card con el formulario -->
+    <TextView
+        android:id="@+id/tvTituloEncabezado"
+        android:layout_width="408dp"
+        android:layout_height="59dp"
+        android:background="@color/dark_red"
+        android:padding="16dp"
+        android:text="Cargar Comprobante"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/cardCargarComprobante"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.517"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.cardview.widget.CardView
         android:id="@+id/cardCargarComprobante"
         android:layout_width="0dp"

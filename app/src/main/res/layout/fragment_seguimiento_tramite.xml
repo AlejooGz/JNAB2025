@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:background="@color/dark_red"
         android:padding="16dp"
-        android:text="Mis Trámites"
+        android:text="Mis Trabajos"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="24sp"
