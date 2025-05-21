@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cream"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvTituloEditarSimposio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Editar simposio"
+        android:textAlignment="center"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilTituloSimposioEditar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:hint="Título del simposio"
+        app:layout_constraintTop_toBottomOf="@+id/tvTituloEditarSimposio"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etTituloSimposioEditar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilDescripcionSimposioEditar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="Descripción"
+        app:layout_constraintTop_toBottomOf="@+id/tilTituloSimposioEditar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDescripcionSimposioEditar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine"
+            android:minLines="3" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tvFechasEditar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Fechas del simposio"
+        android:textSize="18sp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/tilDescripcionSimposioEditar"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/btnFechaInicioEditar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Fecha inicio"
+        android:backgroundTint="@color/dark_red"
+        android:textColor="@color/white"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvFechasEditar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnFechaFinEditar"
+        app:layout_constraintHorizontal_weight="1" />
+
+    <Button
+        android:id="@+id/btnFechaFinEditar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Fecha fin"
+        android:backgroundTint="@color/dark_red"
+        android:textColor="@color/white"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvFechasEditar"
+        app:layout_constraintStart_toEndOf="@+id/btnFechaInicioEditar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1" />
+
+    <TextView
+        android:id="@+id/tvFechaInicioSeleccionadaEditar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="No seleccionada"
+        android:textAlignment="center"
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@+id/btnFechaInicioEditar"
+        app:layout_constraintStart_toStartOf="@+id/btnFechaInicioEditar"
+        app:layout_constraintEnd_toEndOf="@+id/btnFechaInicioEditar" />
+
+    <TextView
+        android:id="@+id/tvFechaFinSeleccionadaEditar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="No seleccionada"
+        android:textAlignment="center"
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@+id/btnFechaFinEditar"
+        app:layout_constraintStart_toStartOf="@+id/btnFechaFinEditar"
+        app:layout_constraintEnd_toEndOf="@+id/btnFechaFinEditar" />
+
+    <Button
+        android:id="@+id/btnGuardarCambiosSimposio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Guardar cambios"
+        android:backgroundTint="@color/dark_red"
+        android:textColor="@color/white"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvFechaInicioSeleccionadaEditar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
