@@ -62,8 +62,9 @@ class MainFragment : Fragment() {
 
         binding.btnTramite.visibility = View.VISIBLE
         binding.btnMisTramites.visibility = View.VISIBLE
-
         binding.btnMisSimposios.visibility = View.GONE
+        binding.btnVerInscriptos.visibility = View.GONE
+        binding.btnInscribirse.visibility = View.GONE
 
         binding.btnTramite.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_tramiteExpositorFragment)
