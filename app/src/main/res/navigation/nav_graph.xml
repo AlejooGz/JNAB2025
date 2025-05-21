@@ -23,6 +23,9 @@
         <action android:id="@+id/action_mainFragment_to_simposiosFragment" app:destination="@id/simposiosFragment" />
         <action android:id="@+id/action_mainFragment_to_novedadesFragment" app:destination="@id/novedadesFragment" />
         <action android:id="@+id/action_mainFragment_to_misSimposiosFragment" app:destination="@id/misSimposiosFragment" />
+        <action android:id="@+id/action_mainFragment_to_perfilFragment" app:destination="@id/perfilFragment" />
+        <action android:id="@+id/action_mainFragment_to_inscripcionFragment" app:destination="@id/inscripcionFragment" />
+        <action android:id="@+id/action_mainFragment_to_verInscriptosFragment" app:destination="@id/verInscriptosFragment" />
     </fragment>
 
     <fragment
@@ -90,7 +93,6 @@
             app:argType="integer" />
     </fragment>
 
-
     <fragment
         android:id="@+id/tramiteExpositorFragment"
         android:name="com.example.jnab2025.ui.fragments.TramiteExpositorFragment"
@@ -104,6 +106,12 @@
             android:id="@+id/action_seguimientoTramiteFragment_to_mainFragment"
             app:destination="@id/mainFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/perfilFragment"
+        android:name="com.example.jnab2025.ui.fragments.PerfilFragment"
+        android:label="Perfil"/>
+
     <action
         android:id="@+id/action_mainFragment_to_tramiteExpositorFragment"
         app:destination="@id/tramiteExpositorFragment" />
@@ -123,5 +131,15 @@
             android:name="tituloTrabajo"
             app:argType="string" />
     </fragment>
+
+    <fragment
+        android:id="@+id/inscripcionFragment"
+        android:name="com.example.jnab2025.ui.fragments.InscripcionFragment"
+        android:label="Inscripción" />
+
+    <fragment
+        android:id="@+id/verInscriptosFragment"
+        android:name="com.example.jnab2025.ui.fragments.VerInscriptosFragment"
+        android:label="Inscriptos" />
 </navigation>
 

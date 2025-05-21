@@ -2,7 +2,7 @@ package com.example.jnab2025.data
 
 import com.example.jnab2025.models.User
 
-object FakeUserRepository {
+object UserRepository {
 
     private val users = listOf(
         User("admin", "1234", "Organizador"),

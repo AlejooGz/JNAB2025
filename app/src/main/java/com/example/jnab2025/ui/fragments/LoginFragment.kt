@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import android.content.Context
 import androidx.navigation.fragment.findNavController
-import com.example.jnab2025.data.FakeUserRepository
+import com.example.jnab2025.data.UserRepository
 import com.example.jnab2025.databinding.FragmentLoginBinding
 import com.example.jnab2025.R
 
@@ -40,7 +40,7 @@ class LoginFragment : Fragment() {
             val username = binding.etUsername.text.toString()
             val password = binding.etPassword.text.toString()
 
-            if (FakeUserRepository.login(username, password)) {
+            if (UserRepository.login(username, password)) {
                 Toast.makeText(requireContext(), "Login exitoso", Toast.LENGTH_SHORT).show()
                 val rol = when (username) {
                     "usuario1" -> "expositor"
@@ -50,7 +50,11 @@ class LoginFragment : Fragment() {
                 }
 
                 val sharedPref = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                sharedPref.edit().putString("user_rol", rol).apply()
+                // sharedPref.edit().putString("user_rol", rol).apply()
+                sharedPref.edit()
+                    .putString("username", username)
+                    .putString("user_rol", rol)
+                    .apply()
 
                 // Navegar a otro fragmento (ajustar según tu navigation graph)
                 findNavController().navigate(R.id.action_loginFragment_to_mainFragment)

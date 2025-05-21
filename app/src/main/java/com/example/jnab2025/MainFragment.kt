@@ -47,6 +47,14 @@ class MainFragment : Fragment() {
         binding.btnMisSimposios.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_misSimposiosFragment)
         }
+
+        binding.btnInscribirse.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_inscripcionFragment)
+        }
+
+        binding.btnVerInscriptos.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_verInscriptosFragment)
+        }
     }
 
     private fun configurarVistaExpositor() {
