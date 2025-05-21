@@ -5,29 +5,38 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    tools:context=".ui.CargarComprobanteFragment">
+    android:background="@color/mint_green"
+    android:padding="16dp">
 
-    <!-- Card item_tramite (incluido arriba del formulario) -->
-    <include
-        android:id="@+id/item_tramite_card"
-        layout="@layout/item_tramite"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+    <!-- Encabezado -->
 
     <!-- Card con el formulario -->
+    <TextView
+        android:id="@+id/tvTituloEncabezado"
+        android:layout_width="408dp"
+        android:layout_height="59dp"
+        android:background="@color/dark_red"
+        android:padding="16dp"
+        android:text="Cargar Comprobante"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/cardCargarComprobante"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.517"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardFormulario"
+        android:id="@+id/cardCargarComprobante"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         app:cardElevation="4dp"
         app:cardCornerRadius="12dp"
         app:cardBackgroundColor="@color/cream"
-        app:layout_constraintTop_toBottomOf="@id/item_tramite_card"
+        app:layout_constraintTop_toBottomOf="@id/tvTituloEncabezado"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -36,33 +45,49 @@
             android:layout_height="wrap_content"
             android:padding="16dp">
 
+            <TextView
+                android:id="@+id/tvTituloTrabajo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Trabajo: "
+                android:textStyle="bold"
+                android:textSize="18sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
             <EditText
                 android:id="@+id/etNombre"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:hint="Nombre"
-                app:layout_constraintTop_toTopOf="parent"
+                android:minHeight="48dp"
+                app:layout_constraintTop_toBottomOf="@id/tvTituloTrabajo"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="16dp" />
 
             <EditText
                 android:id="@+id/etApellido"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:hint="Apellido"
-                android:layout_marginTop="12dp"
+                android:minHeight="48dp"
                 app:layout_constraintTop_toBottomOf="@id/etNombre"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="12dp" />
 
             <TextView
                 android:id="@+id/tvArchivoSeleccionado"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="Archivo no seleccionado"
-                android:layout_marginTop="16dp"
+                android:textColor="@android:color/darker_gray"
                 app:layout_constraintTop_toBottomOf="@id/etApellido"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="16dp" />
 
             <Button
                 android:id="@+id/btnSeleccionarArchivo"
@@ -71,9 +96,10 @@
                 android:text="Seleccionar archivo"
                 android:backgroundTint="@color/dark_red"
                 android:textColor="@color/white"
-                android:layout_marginTop="8dp"
                 app:layout_constraintTop_toBottomOf="@id/tvArchivoSeleccionado"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp" />
 
             <Button
                 android:id="@+id/btnEnviarComprobante"
@@ -82,9 +108,12 @@
                 android:text="Enviar comprobante"
                 android:backgroundTint="@color/dark_red"
                 android:textColor="@color/white"
-                android:layout_marginTop="24dp"
                 app:layout_constraintTop_toBottomOf="@id/btnSeleccionarArchivo"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 

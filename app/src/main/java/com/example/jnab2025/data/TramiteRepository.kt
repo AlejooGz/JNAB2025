@@ -26,7 +26,7 @@ object TramiteRepository {
         Tramite(
                 id = 4,
         tituloTrabajo = "Los secretos oscuros de Kotlin",
-        estado = "Aprobado",
+        estado = "Aceptado",
         nombreArchivo = "FundamentosKotlin.pdf"
     )
     )
