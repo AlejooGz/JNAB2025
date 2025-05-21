@@ -31,6 +31,7 @@ class SeguimientoTramiteFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val tramites = TramiteRepository.obtenerTramites()
+            .sortedBy { it.pagado }
 
         adapter = TramiteAdapter(tramites) { tramite ->
             val bundle = Bundle().apply {
