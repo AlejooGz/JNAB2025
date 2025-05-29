@@ -55,6 +55,10 @@ class MainFragment : Fragment() {
         binding.btnVerInscriptos.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_verInscriptosFragment)
         }
+
+        binding.btnMapaDescuentos.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_mapsFragment)
+        }
     }
 
     private fun configurarVistaExpositor() {
@@ -65,6 +69,7 @@ class MainFragment : Fragment() {
         binding.btnMisSimposios.visibility = View.GONE
         binding.btnVerInscriptos.visibility = View.GONE
         binding.btnInscribirse.visibility = View.GONE
+        binding.btnMapaDescuentos.visibility = View.VISIBLE
 
         binding.btnTramite.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_tramiteExpositorFragment)
@@ -78,7 +83,7 @@ class MainFragment : Fragment() {
 
     private fun configurarVistaComun() {
         Toast.makeText(requireContext(), "Bienvenido", Toast.LENGTH_SHORT).show()
-
+        binding.btnMapaDescuentos.visibility = View.VISIBLE
         // ocultar botones del expositor por si venía visible
         binding.btnTramite.visibility = View.GONE
         binding.btnMisTramites.visibility = View.GONE

@@ -26,6 +26,7 @@
         <action android:id="@+id/action_mainFragment_to_perfilFragment" app:destination="@id/perfilFragment" />
         <action android:id="@+id/action_mainFragment_to_inscripcionFragment" app:destination="@id/inscripcionFragment" />
         <action android:id="@+id/action_mainFragment_to_verInscriptosFragment" app:destination="@id/verInscriptosFragment" />
+        <action android:id="@+id/action_mainFragment_to_mapsFragment" app:destination="@id/mapsFragment" />
     </fragment>
 
     <fragment
@@ -141,5 +142,10 @@
         android:id="@+id/verInscriptosFragment"
         android:name="com.example.jnab2025.ui.fragments.VerInscriptosFragment"
         android:label="Inscriptos" />
+
+    <fragment
+        android:id="@+id/mapsFragment"
+        android:name="com.example.jnab2025.ui.fragments.MapsFragment"
+        android:label="Mapa Descuentos" />
 </navigation>
 
