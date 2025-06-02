@@ -8,11 +8,11 @@
         android:id="@+id/loginFragment"
         android:name="com.example.jnab2025.ui.fragments.LoginFragment"
         android:label="Login">
-
-        <!-- Acción hacia MainFragment (o el que quieras) -->
         <action
             android:id="@+id/action_loginFragment_to_mainFragment"
-            app:destination="@id/mainFragment" />
+            app:destination="@id/mainFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -27,6 +27,8 @@
         <action android:id="@+id/action_mainFragment_to_inscripcionFragment" app:destination="@id/inscripcionFragment" />
         <action android:id="@+id/action_mainFragment_to_verInscriptosFragment" app:destination="@id/verInscriptosFragment" />
         <action android:id="@+id/action_mainFragment_to_mapsFragment" app:destination="@id/mapsFragment" />
+        <action android:id="@+id/action_mainFragment_to_tramiteExpositorFragment2" app:destination="@id/tramiteExpositorFragment" />
+        <action android:id="@+id/action_mainFragment_to_seguimientoTramiteFragment2" app:destination="@id/seguimientoTramiteFragment" />
     </fragment>
 
     <fragment
@@ -97,15 +99,22 @@
     <fragment
         android:id="@+id/tramiteExpositorFragment"
         android:name="com.example.jnab2025.ui.fragments.TramiteExpositorFragment"
-        android:label="Trámite Expositor" />
+        android:label="Trámite Expositor" >
+        <action
+            android:id="@+id/action_tramiteExpositorFragment_to_seguimientoTramiteFragment2"
+            app:destination="@id/seguimientoTramiteFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/seguimientoTramiteFragment"
         android:name="com.example.jnab2025.ui.fragments.SeguimientoTramiteFragment"
         android:label="Seguimiento de Trámite" >
         <action
-            android:id="@+id/action_seguimientoTramiteFragment_to_mainFragment"
-            app:destination="@id/mainFragment" />
+            android:id="@+id/action_seguimientoTramiteFragment_to_editarTramiteFragment"
+            app:destination="@id/editarTramiteFragment" />
+        <action
+            android:id="@+id/action_seguimientoTramiteFragment_to_cargarComprobanteFragment"
+            app:destination="@id/cargarComprobanteFragment" />
     </fragment>
 
     <fragment
@@ -134,6 +143,15 @@
     </fragment>
 
     <fragment
+        android:id="@+id/editarTramiteFragment"
+        android:name="com.example.jnab2025.ui.fragments.EditarTramiteFragment"
+        android:label="Editar Trámite">
+        <argument
+            android:name="tramiteId"
+            app:argType="integer" />
+    </fragment>
+    
+    <fragment
         android:id="@+id/inscripcionFragment"
         android:name="com.example.jnab2025.ui.fragments.InscripcionFragment"
         android:label="Inscripción" />
@@ -147,5 +165,6 @@
         android:id="@+id/mapsFragment"
         android:name="com.example.jnab2025.ui.fragments.MapsFragment"
         android:label="Mapa Descuentos" />
+
 </navigation>
 

@@ -9,31 +9,51 @@
     tools:context=".MainActivity">
 
     <!-- Contenido principal -->
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <!-- Toolbar -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/dark_red"
             android:textColor="@color/white"
             android:visibility="gone"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:title="JNAB 2025" />
+            app:title="JNAB 2025"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Contenedor de fragmentos -->
+        <!-- Fragmentos entre Toolbar y BottomNavigation -->
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/nav_host_fragment"
             android:name="androidx.navigation.fragment.NavHostFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             app:defaultNavHost="true"
             app:navGraph="@navigation/nav_graph"
-            android:layout_marginTop="?attr/actionBarSize"/>
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- BottomNavigationView abajo -->
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@color/cream"
+            app:itemIconTint="@color/dark_red"
+            app:itemTextColor="@color/dark_red"
+            app:menu="@menu/bottom_nav_menu"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Menú lateral -->
     <com.google.android.material.navigation.NavigationView
@@ -47,6 +67,5 @@
         app:itemIconTint="@color/dark_red"
         app:menu="@menu/drawer_menu"
         app:headerLayout="@layout/nav_header_main" />
+
 </androidx.drawerlayout.widget.DrawerLayout>
-
-

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/mainFragment"
+        android:icon="@drawable/home"
+        android:title="Inicio" />
+    <item
+        android:id="@+id/agendaFragment"
+        android:icon="@drawable/baseline_sticky_note_2_24"
+        android:title="Charlas" />
+    <item
+        android:id="@+id/novedadesFragment"
+        android:icon="@drawable/outline_breaking_news_24"
+        android:title="Novedades" />
+    <item
+        android:id="@+id/mapsFragment"
+        android:icon="@drawable/outline_add_location_alt_24"
+        android:title="Mapa" />
+
+</menu>

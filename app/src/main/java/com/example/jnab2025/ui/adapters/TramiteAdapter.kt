@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.jnab2025.R
@@ -12,6 +13,7 @@ import com.example.jnab2025.models.Tramite
 
 class TramiteAdapter(
     private val tramites: List<Tramite>,
+    private val onItemClick: (Tramite) -> Unit,
     private val onSubirComprobanteClick: (Tramite) -> Unit
 ) : RecyclerView.Adapter<TramiteAdapter.TramiteViewHolder>() {
 
@@ -20,7 +22,6 @@ class TramiteAdapter(
         val tvFecha = itemView.findViewById<TextView>(R.id.tvFecha)
         val tvEstado = itemView.findViewById<TextView>(R.id.tvEstado)
         val tvArchivo = itemView.findViewById<TextView>(R.id.tvArchivo)
-        val btnSubirComprobante = itemView.findViewById<Button>(R.id.btnSubirComprobante)
         val ivPagado = itemView.findViewById<ImageView>(R.id.ivPagado)
     }
 
@@ -36,7 +37,12 @@ class TramiteAdapter(
         holder.tvFecha.text = "Fecha: ${tramite.fechaEnvio}"
         holder.tvEstado.text = "Estado: ${tramite.estado}"
         holder.tvArchivo.text = "Archivo: ${tramite.nombreArchivo}"
-        holder.ivPagado.visibility = if (tramite.pagado) View.VISIBLE else View.GONE
+        holder.itemView.findViewById<LinearLayout>(R.id.groupPagado).visibility =
+            if (tramite.pagado) View.VISIBLE else View.GONE
+
+        holder.itemView.setOnClickListener {
+            onItemClick(tramite)
+        }
     }
 
     override fun getItemCount(): Int = tramites.size

@@ -33,30 +33,38 @@ class SeguimientoTramiteFragment : Fragment() {
         val tramites = TramiteRepository.obtenerTramites()
             .sortedBy { it.pagado }
 
-        adapter = TramiteAdapter(tramites) { tramite ->
-            val bundle = Bundle().apply {
-                putInt("tramiteId", tramite.id)
-                putString("tituloTrabajo", tramite.tituloTrabajo)
+        adapter = TramiteAdapter(
+            tramites,
+            onItemClick = { tramite ->
+                val bundle = Bundle().apply {
+                    putInt("tramiteId", tramite.id)
+                    putString("tituloTrabajo", tramite.tituloTrabajo)
+                }
+
+                when (tramite.estado) {
+                    "Pendiente" -> {
+                        findNavController().navigate(R.id.editarTramiteFragment, bundle)
+                    }
+                    "Aceptado" -> {
+                        findNavController().navigate(R.id.cargarComprobanteFragment, bundle)
+                    }
+                    else -> {
+                        Toast.makeText(requireContext(), "Este trabajo no puede ser editado ni modificado", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            onSubirComprobanteClick = { tramite ->
+                val bundle = Bundle().apply {
+                    putInt("tramiteId", tramite.id)
+                    putString("tituloTrabajo", tramite.tituloTrabajo)
+                }
+                findNavController().navigate(R.id.cargarComprobanteFragment, bundle)
             }
-            findNavController().navigate(R.id.cargarComprobanteFragment, bundle)
-        }
+        )
 
         binding.recyclerViewTramites.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewTramites.adapter = adapter
-        binding.fabSubirComprobante.setOnClickListener {
-            val tramiteAprobado = TramiteRepository.obtenerTramites()
-                .firstOrNull { it.estado == "Aceptado" && !it.pagado }
 
-            if (tramiteAprobado != null) {
-                val bundle = Bundle().apply {
-                    putInt("tramiteId", tramiteAprobado.id)
-                    putString("tituloTrabajo", tramiteAprobado.tituloTrabajo)
-                }
-                findNavController().navigate(R.id.cargarComprobanteFragment, bundle)
-            } else {
-                Toast.makeText(requireContext(), "No hay trámites aprobados pendientes de pago", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
     override fun onDestroyView() {
