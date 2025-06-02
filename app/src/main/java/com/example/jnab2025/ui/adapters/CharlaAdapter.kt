@@ -14,10 +14,11 @@ import java.util.Locale
 
 class CharlaAdapter(
     private var charlas: List<Charla>,
-    private val onFavoritoClick: (Charla) -> Unit
+    private val onFavoritoClick: (Charla) -> Unit,
+    private val onItemClick: ((Charla) -> Unit)? = null
 ) : RecyclerView.Adapter<CharlaAdapter.CharlaViewHolder>() {
 
-    class CharlaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class CharlaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvFecha: TextView = itemView.findViewById(R.id.tvFecha)
         val tvTituloCharla: TextView = itemView.findViewById(R.id.tvTituloCharla)
         val tvExpositor: TextView = itemView.findViewById(R.id.tvExpositor)
@@ -25,6 +26,16 @@ class CharlaAdapter(
         val tvSala: TextView = itemView.findViewById(R.id.tvSala)
         val ivDestacado: ImageView = itemView.findViewById(R.id.ivDestacado)
         val ibFavorito: ImageButton = itemView.findViewById(R.id.ibFavorito)
+
+        init {
+            // Click listener para todo el item
+            itemView.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onItemClick?.invoke(charlas[position])
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CharlaViewHolder {
@@ -35,7 +46,6 @@ class CharlaAdapter(
 
     override fun onBindViewHolder(holder: CharlaViewHolder, position: Int) {
         val charla = charlas[position]
-
 
         val fechaFormateada = formatearFecha(charla.fecha)
 
@@ -62,12 +72,10 @@ class CharlaAdapter(
 
     override fun getItemCount(): Int = charlas.size
 
-
     fun actualizarCharlas(nuevasCharlas: List<Charla>) {
         charlas = nuevasCharlas
         notifyDataSetChanged()
     }
-
 
     private fun formatearFecha(fechaStr: String): String {
         try {

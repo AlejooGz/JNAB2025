@@ -169,5 +169,19 @@
         android:name="com.example.jnab2025.ui.fragments.MapsFragment"
         android:label="Mapa Descuentos" />
 
+    <fragment
+        android:id="@+id/charlaDetailFragment"
+        android:name="com.example.jnab2025.ui.fragments.CharlaDetailFragment"
+        android:label="Detalle de Charla"
+        tools:layout="@layout/fragment_charla_detail">
+        <argument
+            android:name="charlaId"
+            app:argType="integer" />
+    </fragment>
+
+    <action
+        android:id="@+id/action_agendaFragment_to_charlaDetailFragment"
+        app:destination="@id/charlaDetailFragment" />
+
 </navigation>
 
