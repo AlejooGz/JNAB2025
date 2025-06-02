@@ -4,6 +4,7 @@ plugins {
     // Kotlin serialization plugin for type safe routes and navigation arguments
     kotlin("plugin.serialization") version "2.0.21"
     id("androidx.navigation.safeargs.kotlin")
+    alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
 }
 
 android {
@@ -18,6 +19,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["MAPS_API_KEY"] = project.findProperty("MAPS_API_KEY") ?: "MISSING_KEY"
     }
 
     buildTypes {
@@ -43,6 +45,7 @@ android {
 
 dependencies {
     implementation(libs.protolite.well.known.types)
+    implementation(libs.play.services.maps)
     val nav_version = "2.8.9"
 
     implementation("androidx.constraintlayout:constraintlayout:2.2.0-beta01")
@@ -76,7 +79,9 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
 }

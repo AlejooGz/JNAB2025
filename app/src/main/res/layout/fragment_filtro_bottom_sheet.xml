@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@color/cream"
+    android:layout_height="wrap_content">
+
+    <ImageButton
+        android:id="@+id/btnCerrar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/baseline_close_24"
+        android:contentDescription="Cerrar"
+        android:background="?selectableItemBackgroundBorderless"
+        app:tint="@color/dark_red"
+        android:layout_gravity="end" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Filtrar por:"
+        android:textColor="@color/dark_red"
+        android:textSize="18sp"
+        android:layout_marginBottom="12dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnHospedaje"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hospedajes"
+        android:textColor="@color/dark_red"
+        app:icon="@drawable/night_shelter"
+        app:iconTint="@color/dark_red"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp" />
+
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRestaurante"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Restaurantes"
+        android:textColor="@color/dark_red"
+        app:icon="@drawable/outline_dining_24"
+        app:iconTint="@color/dark_red"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAgencia"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Agencias"
+        android:textColor="@color/dark_red"
+        app:icon="@drawable/travel_explore"
+        app:iconTint="@color/dark_red"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp" />
+
+</LinearLayout>

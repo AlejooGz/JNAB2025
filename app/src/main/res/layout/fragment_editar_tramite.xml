@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mint_green"
+    tools:context=".ui.fragments.EditarTramiteFragment">
+
+    <!-- Encabezado -->
+    <TextView
+        android:id="@+id/tvTituloEncabezado"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Editar Trabajo"
+        android:background="@color/dark_red"
+        android:padding="16dp"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Card con el formulario -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardFormulario"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardElevation="4dp"
+        app:cardCornerRadius="12dp"
+        app:cardBackgroundColor="@color/cream"
+        app:layout_constraintTop_toBottomOf="@id/tvTituloEncabezado"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <EditText
+                android:id="@+id/etTitulo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Título del trabajo"
+                android:inputType="text"
+                android:minHeight="48dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <EditText
+                android:id="@+id/etResumen"
+                android:layout_width="0dp"
+                android:layout_height="150dp"
+                android:hint="Resumen"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/etTitulo"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/tvArchivoSeleccionado"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Archivo actual: Ninguno"
+                android:textColor="@android:color/darker_gray"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/etResumen"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <Button
+                android:id="@+id/btnSeleccionarArchivo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Seleccionar nuevo PDF"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/dark_red"
+                android:textColor="@color/white"
+                app:layout_constraintTop_toBottomOf="@id/tvArchivoSeleccionado"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <Button
+                android:id="@+id/btnGuardarCambios"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Guardar cambios"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="@color/dark_red"
+                android:textColor="@color/white"
+                app:layout_constraintTop_toBottomOf="@id/btnSeleccionarArchivo"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

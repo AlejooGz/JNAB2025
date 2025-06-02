@@ -17,6 +17,8 @@ import androidx.navigation.findNavController
 import com.example.jnab2025.databinding.ActivityMainBinding
 import com.example.jnab2025.ui.fragments.LoginFragment
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.navigation.ui.setupWithNavController
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -64,21 +66,29 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         binding.navHostFragment.post {
             val navController = findNavController(R.id.nav_host_fragment)
+
+            val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            bottomNav.setupWithNavController(navController)
+
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 when (destination.id) {
                     R.id.loginFragment -> {
                         binding.toolbar.visibility = View.GONE
                         binding.navView.visibility = View.GONE
+                        bottomNav.visibility = View.GONE
                         binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                     }
                     else -> {
                         binding.toolbar.visibility = View.VISIBLE
                         binding.navView.visibility = View.VISIBLE
+                        bottomNav.visibility = View.VISIBLE
                         binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
                     }
                 }
             }
         }
+
+
         // if (isLoggedIn) {
         //     // Redirigir al Login si no está logueado
         //     startActivity(Intent(this, LoginFragment::class.java))

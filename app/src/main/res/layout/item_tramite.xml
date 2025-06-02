@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
+        <!-- Título -->
         <TextView
             android:id="@+id/tvTitulo"
             android:layout_width="0dp"
@@ -24,8 +25,39 @@
             android:textStyle="bold"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toStartOf="@+id/groupPagado"
+            android:layout_marginEnd="8dp"/>
 
+        <!-- Grupo Pagado (ícono + texto) -->
+        <LinearLayout
+            android:id="@+id/groupPagado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageView
+                android:id="@+id/ivPagado"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="4dp"
+                android:src="@drawable/outline_check_circle_24"
+                app:tint="@color/green"
+                android:contentDescription="Trabajo pagado" />
+
+            <TextView
+                android:id="@+id/tvPagado"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pagado"
+                android:textColor="@color/green"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <!-- Fecha -->
         <TextView
             android:id="@+id/tvFecha"
             android:layout_width="0dp"
@@ -38,6 +70,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="8dp" />
 
+        <!-- Estado -->
         <TextView
             android:id="@+id/tvEstado"
             android:layout_width="wrap_content"
@@ -49,6 +82,7 @@
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginTop="4dp" />
 
+        <!-- Archivo -->
         <TextView
             android:id="@+id/tvArchivo"
             android:layout_width="0dp"
@@ -62,6 +96,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="4dp" />
 
+        <!-- Botón Subir comprobante -->
         <Button
             android:id="@+id/btnSubirComprobante"
             android:layout_width="wrap_content"
@@ -71,16 +106,6 @@
             app:layout_constraintTop_toBottomOf="@id/tvArchivo"
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginTop="8dp" />
-        <ImageView
-            android:id="@+id/ivPagado"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="4dp"
-            android:src="@android:drawable/checkbox_on_background"
-            android:contentDescription="Trabajo pagado"
-            android:visibility="gone"
-            app:layout_constraintTop_toTopOf="@+id/tvTitulo"
-            app:layout_constraintEnd_toEndOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>
