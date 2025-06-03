@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import android.util.Log
 import android.view.View
+import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -19,17 +20,24 @@ import com.example.jnab2025.ui.fragments.LoginFragment
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.navigation.ui.setupWithNavController
+import com.example.jnab2025.ui.viewmodels.SimposioViewModel
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var toggle: ActionBarDrawerToggle
 
+    // Variable para la carga previa de simposios de prueba
+    private val simposioViewModel: SimposioViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Solo para pruebas: reinicia los datos al abrir la app
+        simposioViewModel.reiniciarConDatosDeEjemplo()
 
         // Configurar Toolbar
         setSupportActionBar(binding.toolbar)

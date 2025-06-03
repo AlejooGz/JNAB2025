@@ -7,9 +7,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentCrearSimposioBinding
+import com.example.jnab2025.ui.viewmodels.SimposioViewModel
 import com.example.jnab2025.models.Simposio
 import java.text.SimpleDateFormat
 import java.util.*
@@ -18,6 +20,8 @@ class CrearSimposioFragment : Fragment() {
 
     private var _binding: FragmentCrearSimposioBinding? = null
     private val binding get() = _binding!!
+
+    private val simposioViewModel: SimposioViewModel by viewModels()
 
     private var fechaInicio: String = ""
     private var fechaFin: String = ""
@@ -102,7 +106,7 @@ class CrearSimposioFragment : Fragment() {
 
         // Crear el objeto simposio (asumiendo que tienes un ViewModel o Repository)
         val nuevoSimposio = Simposio(
-            id = System.currentTimeMillis().toInt(), // ID temporal
+            id = 0, // ID temporal
             titulo = titulo,
             fechaInicio = fechaInicio,
             fechaFin = fechaFin
@@ -110,6 +114,8 @@ class CrearSimposioFragment : Fragment() {
 
         // Aquí deberías guardar el simposio en tu base de datos o repositorio
         // simposioViewModel.guardarSimposio(nuevoSimposio)
+
+        simposioViewModel.insertar(nuevoSimposio)
 
         Toast.makeText(requireContext(), "Simposio creado con éxito", Toast.LENGTH_SHORT).show()
 
