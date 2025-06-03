@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mint_green">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvTituloCharla"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="@color/dark_red"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Conferencia de Inteligencia Artificial" />
+
+        <TextView
+            android:id="@+id/tvExpositor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/dusty_rose"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvTituloCharla"
+            tools:text="Dr. Juan Pérez - Universidad Nacional" />
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="@color/dusty_rose"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvExpositor" />
+
+        <ImageView
+            android:id="@+id/ivCalendar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            android:src="@android:drawable/ic_menu_my_calendar"
+            app:tint="@color/dark_red"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider" />
+
+        <TextView
+            android:id="@+id/tvFecha"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="@color/dark_red"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/ivCalendar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivCalendar"
+            app:layout_constraintTop_toTopOf="@+id/ivCalendar"
+            tools:text="Viernes, 26 de abril de 2025" />
+
+        <ImageView
+            android:id="@+id/ivClock"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="12dp"
+            android:src="@android:drawable/ic_menu_recent_history"
+            app:tint="@color/dark_red"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivCalendar" />
+
+        <TextView
+            android:id="@+id/tvHorario"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="@color/dark_red"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/ivClock"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivClock"
+            app:layout_constraintTop_toTopOf="@+id/ivClock"
+            tools:text="14:00 - 14:30 (30 minutos)" />
+
+        <ImageView
+            android:id="@+id/ivLocation"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="12dp"
+            android:src="@android:drawable/ic_menu_mylocation"
+            app:tint="@color/dark_red"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivClock" />
+
+        <TextView
+            android:id="@+id/tvSala"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="@color/dark_red"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/ivLocation"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivLocation"
+            app:layout_constraintTop_toTopOf="@+id/ivLocation"
+            tools:text="Sala 1 - Edificio Principal" />
+
+        <TextView
+            android:id="@+id/tvDescripcionLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Descripción"
+            android:textColor="@color/dark_red"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivLocation" />
+
+        <TextView
+            android:id="@+id/tvDescripcion"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/dusty_rose"
+            android:textSize="16sp"
+            android:text="Esta charla explorará las últimas innovaciones en inteligencia artificial y su aplicación en el desarrollo de software moderno. Se discutirán casos de uso prácticos y las mejores prácticas para implementar soluciones de IA."
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvDescripcionLabel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnToggleFavorito"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Agregar a favoritos"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/dusty_rose"
+            app:icon="@android:drawable/btn_star"
+            app:iconTint="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvDescripcion" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

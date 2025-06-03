@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/loginFragment">
 
@@ -18,7 +19,8 @@
     <fragment
         android:id="@+id/mainFragment"
         android:name="com.example.jnab2025.MainFragment"
-        android:label="Inicio">
+        android:label="Inicio"
+        tools:layout="@layout/fragment_main">
         <action android:id="@+id/action_mainFragment_to_agendaFragment" app:destination="@id/agendaFragment" />
         <action android:id="@+id/action_mainFragment_to_simposiosFragment" app:destination="@id/simposiosFragment" />
         <action android:id="@+id/action_mainFragment_to_novedadesFragment" app:destination="@id/novedadesFragment" />
@@ -49,7 +51,8 @@
     <fragment
         android:id="@+id/misSimposiosFragment"
         android:name="com.example.jnab2025.ui.fragments.MisSimposiosFragment"
-        android:label="Mis Simposios">
+        android:label="Mis Simposios"
+        tools:layout="@layout/fragment_mis_simposios">
         <action
             android:id="@+id/action_misSimposiosFragment_to_crearSimposioFragment"
             app:destination="@id/crearSimposioFragment" />
@@ -165,6 +168,20 @@
         android:id="@+id/mapsFragment"
         android:name="com.example.jnab2025.ui.fragments.MapsFragment"
         android:label="Mapa Descuentos" />
+
+    <fragment
+        android:id="@+id/charlaDetailFragment"
+        android:name="com.example.jnab2025.ui.fragments.CharlaDetailFragment"
+        android:label="Detalle de Charla"
+        tools:layout="@layout/fragment_charla_detail">
+        <argument
+            android:name="charlaId"
+            app:argType="integer" />
+    </fragment>
+
+    <action
+        android:id="@+id/action_agendaFragment_to_charlaDetailFragment"
+        app:destination="@id/charlaDetailFragment" />
 
 </navigation>
 
