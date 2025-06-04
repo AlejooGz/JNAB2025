@@ -23,15 +23,32 @@ class VerInscriptosFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val prefs = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val json = prefs.getString("inscriptos", "[]")
-        val listType = object : TypeToken<List<User>>() {}.type
-        val usuarios = gson.fromJson<List<User>>(json, listType)
+    //override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+      //  val prefs = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        //val json = prefs.getString("inscriptos", "[]")
+        //val listType = object : TypeToken<List<User>>() {}.type
+        //val usuarios = gson.fromJson<List<User>>(json, listType)
 
-        val adapter = InscriptosAdapter(usuarios)
+        //val adapter = InscriptosAdapter(usuarios)
+        //binding.recyclerInscriptos.layoutManager = LinearLayoutManager(requireContext())
+        //binding.recyclerInscriptos.adapter = adapter
+    //}
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val inscriptos = listOf(
+            User(username = "Alejo Gonzalez", password = "", rol = "Asistente"),
+            User(username = "Santiago Toro", password = "", rol = "Asistente"),
+            User(username = "Luciana Pérez", password = "", rol = "Asistente"),
+            User(username = "Rafael Orbe", password = "", rol = "Asistente"),
+            User(username = "Ariel Blum", password = "", rol = "Asistente"),
+            User(username = "Leonardo Morales", password = "", rol = "Asistente")
+        )
+
+        val adapter = InscriptosAdapter(inscriptos)
         binding.recyclerInscriptos.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerInscriptos.adapter = adapter
+
+        binding.tvSinInscriptos.visibility = if (inscriptos.isEmpty()) View.VISIBLE else View.GONE
     }
 
     override fun onDestroyView() {

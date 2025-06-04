@@ -14,20 +14,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
+import androidx.navigation.ui.setupWithNavController
 import com.example.jnab2025.databinding.ActivityMainBinding
 import com.example.jnab2025.ui.fragments.LoginFragment
-import com.google.android.material.navigation.NavigationView
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import androidx.navigation.ui.setupWithNavController
 import com.example.jnab2025.ui.viewmodels.SimposioViewModel
+import com.example.jnab2025.utils.SesionUsuario
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var toggle: ActionBarDrawerToggle
 
-    // Variable para la carga previa de simposios de prueba
+    // Variable para la carga previa de simposios de prueba (de tu compañero)
     private val simposioViewModel: SimposioViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +38,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Solo para pruebas: reinicia los datos al abrir la app
+        // Solo para pruebas: reinicia los datos al abrir la app (SimposioViewModel)
         simposioViewModel.reiniciarConDatosDeEjemplo()
 
         // Configurar Toolbar
@@ -61,17 +63,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val usernameTextView = headerView.findViewById<TextView>(R.id.tvDrawerUsername)
 
         val sharedPref = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val username = sharedPref.getString("username", "Invitado")
+        usernameTextView.text = username
+
         val isLoggedIn = !sharedPref.getString("username", null).isNullOrEmpty()
-        val username = sharedPref.getString("username", null)
         Log.d("DEBUG", "Username: $username")
         Log.d("DEBUG", "isLoggedIn: $isLoggedIn")
 
-        // if (isLoggedIn) {
-        //     val headerView = binding.navView.getHeaderView(0)
-        //     val usernameTextView = headerView.findViewById<TextView>(R.id.tvDrawerUsername)
-        //     usernameTextView.text = username ?: "Invitado"
-        // }
+        // Configurar visibilidad del menú según el rol
+        configurarMenuPorRol()
 
+        // Configurar navegación con BottomNavigationView
         binding.navHostFragment.post {
             val navController = findNavController(R.id.nav_host_fragment)
 
@@ -96,42 +98,76 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
         }
 
+        // Código comentado que antes redirigía al login:
+        /*
+        if (isLoggedIn) {
+            startActivity(Intent(this, LoginFragment::class.java))
+            finish()
+            return
+        }
+        */
+    }
 
-        // if (isLoggedIn) {
-        //     // Redirigir al Login si no está logueado
-        //     startActivity(Intent(this, LoginFragment::class.java))
-        //     finish()
-        //     return
-        // }
+    private fun configurarMenuPorRol() {
+        val rol = SesionUsuario.obtenerRol(this)
+        Log.d("DEBUG", "Rol del usuario en MainActivity: $rol")
 
-        // val navigationView = binding.navView // o BottomNavigationView
-        // val menu = navigationView.menu
-        // menu.findItem(R.id.nav_perfil).isVisible = isLoggedIn
+        val navMenu = binding.navView.menu
 
-        // val toolBar = binding.toolbar // o BottomNavigationView
-        // toolBar.isVisible = isLoggedIn
+        // Ocultar todos los grupos primero
+        navMenu.setGroupVisible(R.id.group_expositor, false)
+        navMenu.setGroupVisible(R.id.group_admin, false)
+        navMenu.setGroupVisible(R.id.group_asistente, false)
 
-        val user = sharedPref.getString("username", "Invitado")
-        usernameTextView.text = user
+        // Mostrar el grupo correspondiente al rol
+        when {
+            SesionUsuario.esExpositor(this) -> navMenu.setGroupVisible(R.id.group_expositor, true)
+            SesionUsuario.esOrganizador(this) -> navMenu.setGroupVisible(R.id.group_admin, true)
+            SesionUsuario.esAsistente(this) -> navMenu.setGroupVisible(R.id.group_asistente, true)
+        }
+
+        // Mostrar siempre Simposios
+        navMenu.findItem(R.id.nav_simposios)?.isVisible = true
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_perfil -> {
-                findNavController(R.id.nav_host_fragment)
-                    .navigate(R.id.action_mainFragment_to_perfilFragment)
+                findNavController(R.id.nav_host_fragment).navigate(R.id.perfilFragment)
             }
-
+            R.id.nav_simposios -> {
+                if (findNavController(R.id.nav_host_fragment).currentDestination?.id != R.id.mainFragment) {
+                    findNavController(R.id.nav_host_fragment).popBackStack(R.id.mainFragment, false)
+                }
+                findNavController(R.id.nav_host_fragment).navigate(R.id.action_mainFragment_to_simposiosFragment)
+            }
+            R.id.nav_enviar_trabajo -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.tramiteExpositorFragment)
+            }
+            R.id.nav_mis_trabajos -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.seguimientoTramiteFragment)
+            }
+            R.id.nav_mis_simposios -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.misSimposiosFragment)
+            }
+            R.id.nav_ver_inscriptos -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.verInscriptosFragment)
+            }
+            R.id.nav_inscripcion -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
+            }
             R.id.nav_logout -> {
                 val sharedPref = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
                 sharedPref.edit().clear().apply()
-                Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show()
 
-                // Volver al login
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
+                // Navegar al login usando la acción global
+                findNavController(R.id.nav_host_fragment).navigate(
+                    R.id.loginFragment,
+                    null,
+                    NavOptions.Builder()
+                        .setPopUpTo(R.id.nav_graph, true)
+                        .build()
+                )
             }
         }
 

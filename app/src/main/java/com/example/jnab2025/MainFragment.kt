@@ -1,15 +1,14 @@
 package com.example.jnab2025
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.databinding.FragmentMainBinding
+import com.example.jnab2025.utils.SesionUsuario
 
 class MainFragment : Fragment() {
 
@@ -21,66 +20,67 @@ class MainFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val sharedPref = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val rol = sharedPref.getString("user_rol", "invitado") ?: "invitado"
+    override fun onResume() {
+        super.onResume()
 
-        if (rol == "expositor") {
-            configurarVistaExpositor()
-        } else {
-            configurarVistaComun()
+        val rol = SesionUsuario.obtenerRol(requireContext())
+        configurarVistaComun()
+
+        when {
+            SesionUsuario.esExpositor(requireContext()) -> configurarVistaExpositor()
+            SesionUsuario.esOrganizador(requireContext()) -> configurarVistaOrganizador()
+            SesionUsuario.esAsistente(requireContext()) -> configurarVistaAsistente()
         }
+    }
 
-        // botones comunes
-        binding.btnListSimposios.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_simposiosFragment)
-        }
-
-        //binding.btnVerAgenda.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_agendaFragment) }
-
-       // binding.btnFeedNovedades.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_novedadesFragment) }
-
-        binding.btnMisSimposios.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_misSimposiosFragment)
-        }
-
-        binding.btnInscribirse.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_inscripcionFragment)
-        }
-
-        binding.btnVerInscriptos.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_verInscriptosFragment)
-        }
-
-        //binding.btnMapaDescuentos.setOnClickListener {findNavController().navigate(R.id.action_mainFragment_to_mapsFragment) }
+    private fun configurarVistaComun() {
+        // Ocultar todos los botones
+        // binding.btnTramite.visibility = View.GONE
+        // binding.btnMisTramites.visibility = View.GONE
+        // binding.btnMisSimposios.visibility = View.GONE
+        // binding.btnVerInscriptos.visibility = View.GONE
+        // binding.btnInscribirse.visibility = View.GONE
+        // binding.btnListSimposios.visibility = View.VISIBLE
     }
 
     private fun configurarVistaExpositor() {
         Toast.makeText(requireContext(), "Bienvenido Expositor", Toast.LENGTH_SHORT).show()
 
-        binding.btnTramite.visibility = View.VISIBLE
-        binding.btnMisTramites.visibility = View.VISIBLE
-        binding.btnMisSimposios.visibility = View.GONE
-        binding.btnVerInscriptos.visibility = View.GONE
-        binding.btnInscribirse.visibility = View.GONE
-       // binding.btnMapaDescuentos.visibility = View.VISIBLE
+        // binding.btnTramite.visibility = View.VISIBLE
+        // binding.btnMisTramites.visibility = View.VISIBLE
 
-        binding.btnTramite.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_tramiteExpositorFragment)
-        }
+        // binding.btnTramite.setOnClickListener {
+        //     findNavController().navigate(R.id.tramiteExpositorFragment)
+        // }
 
-        binding.btnMisTramites.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_seguimientoTramiteFragment)
-        }
+        // binding.btnMisTramites.setOnClickListener {
+        //     findNavController().navigate(R.id.seguimientoTramiteFragment)
+        // }
     }
 
+    private fun configurarVistaOrganizador() {
+        Toast.makeText(requireContext(), "Bienvenido Organizador", Toast.LENGTH_SHORT).show()
 
-    private fun configurarVistaComun() {
-        Toast.makeText(requireContext(), "Bienvenido", Toast.LENGTH_SHORT).show()
-        //binding.btnMapaDescuentos.visibility = View.VISIBLE
-        // ocultar botones del expositor por si venía visible
-        binding.btnTramite.visibility = View.GONE
-        binding.btnMisTramites.visibility = View.GONE
+        // binding.btnMisSimposios.visibility = View.VISIBLE
+        // binding.btnVerInscriptos.visibility = View.VISIBLE
+
+        // binding.btnMisSimposios.setOnClickListener {
+        //     findNavController().navigate(R.id.misSimposiosFragment)
+        // }
+
+        // binding.btnVerInscriptos.setOnClickListener {
+        //     findNavController().navigate(R.id.verInscriptosFragment)
+        // }
+    }
+
+    private fun configurarVistaAsistente() {
+        Toast.makeText(requireContext(), "Bienvenido Asistente", Toast.LENGTH_SHORT).show()
+
+        // binding.btnInscribirse.visibility = View.VISIBLE
+
+        // binding.btnInscribirse.setOnClickListener {
+        //     findNavController().navigate(R.id.inscripcionFragment)
+        // }
     }
 
     override fun onDestroyView() {

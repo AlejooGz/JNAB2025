@@ -8,7 +8,7 @@
         android:title="Inicio" />
     <item
         android:id="@+id/agendaFragment"
-        android:icon="@drawable/baseline_sticky_note_2_24"
+        android:icon="@drawable/outline_event_available_24"
         android:title="Charlas" />
     <item
         android:id="@+id/novedadesFragment"

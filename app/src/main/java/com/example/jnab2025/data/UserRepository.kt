@@ -5,12 +5,13 @@ import com.example.jnab2025.models.User
 object UserRepository {
 
     private val users = listOf(
-        User("admin", "1234", "Organizador"),
-        User("usuario1", "pass1", "Expositor"),
-        User("usuario2", "pass2", "Asistente")
+        User("admin", "1234", "organizador"),
+        User("usuario1", "pass1", "expositor"),
+        User("usuario2", "pass2", "asistente")
     )
 
-    fun login(username: String, password: String): Boolean {
-        return users.any { it.username == username && it.password == password }
+    fun login(username: String, password: String): User? {
+        return users.find { it.username == username && it.password == password }
     }
+
 }

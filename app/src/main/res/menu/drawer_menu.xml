@@ -5,6 +5,46 @@
         android:title="Mi Perfil"
         android:icon="@drawable/perfil_icon" />
     <item
+        android:id="@+id/nav_simposios"
+        android:title="Simposios"
+        android:icon="@drawable/baseline_edit_square_24" />
+
+    <group
+        android:id="@+id/group_expositor"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_enviar_trabajo"
+            android:title="Enviar Trabajo"
+            android:icon="@drawable/outline_list_alt_add_24" />
+        <item
+            android:id="@+id/nav_mis_trabajos"
+            android:title="Mis Trabajos"
+            android:icon="@drawable/outline_business_center_24" />
+    </group>
+
+    <group
+        android:id="@+id/group_admin"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_mis_simposios"
+            android:title="Mis Simposios"
+            android:icon="@drawable/outline_edit_document_24" />
+        <item
+            android:id="@+id/nav_ver_inscriptos"
+            android:title="Inscriptos"
+            android:icon="@drawable/outline_group_24" />
+    </group>
+
+    <group
+        android:id="@+id/group_asistente"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_inscripcion"
+            android:title="Inscripción"
+            android:icon="@drawable/outline_edit_document_24" />
+    </group>
+
+    <item
         android:id="@+id/nav_logout"
         android:title="Cerrar sesión"
         android:icon="@drawable/logout_icon" />

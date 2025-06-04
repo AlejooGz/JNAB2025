@@ -36,34 +36,40 @@ class LoginFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val sharedPref = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val username = sharedPref.getString("username", null)
+
+        // 🔁 Si ya está logueado, redirigí automáticamente
+        if (!username.isNullOrEmpty()) {
+            findNavController().navigate(R.id.action_loginFragment_to_mainFragment)
+            return
+        }
+
         binding.btnLogin.setOnClickListener {
-            val username = binding.etUsername.text.toString()
+            val usernameInput = binding.etUsername.text.toString()
             val password = binding.etPassword.text.toString()
 
-            if (UserRepository.login(username, password)) {
+            val user = UserRepository.login(usernameInput, password)
+
+            if (user != null) {
                 Toast.makeText(requireContext(), "Login exitoso", Toast.LENGTH_SHORT).show()
-                val rol = when (username) {
-                    "usuario1" -> "expositor"
-                    "usuario2" -> "asistente"
-                    "admin" -> "organizador"
-                    else -> "invitado"
-                }
 
-                val sharedPref = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                // sharedPref.edit().putString("user_rol", rol).apply()
                 sharedPref.edit()
-                    .putString("username", username)
-                    .putString("user_rol", rol)
-                    .apply()
+                    .putString("username", user.username)
+                    .putString("user_rol", user.rol.lowercase())
+                    .commit()
 
-                // Navegar a otro fragmento (ajustar según tu navigation graph)
-                findNavController().navigate(R.id.action_loginFragment_to_mainFragment)
+                val intent = requireActivity().intent
+                requireActivity().finish()
+                startActivity(intent)
+
             } else {
                 Toast.makeText(requireContext(), "Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show()
             }
         }
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

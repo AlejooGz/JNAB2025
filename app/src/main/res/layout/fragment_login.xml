@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,48 +8,76 @@
     android:background="@color/mint_green"
     tools:context=".ui.fragments.LoginFragment">
 
-    <EditText
-        android:id="@+id/etUsername"
-        android:layout_width="match_parent"
+    <!-- Contenedor redondeado con imagen, título y formulario -->
+    <LinearLayout
+        android:id="@+id/loginContainer"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Usuario"
-        android:textColorHint="@color/dark_red"
-        android:textColor="@color/dark_red"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
-        app:layout_constraintBottom_toTopOf="@+id/etPassword"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:orientation="vertical"
+        android:background="@drawable/rounded_bg"
+        android:padding="24dp"
+        android:gravity="center_horizontal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginTop="80dp"
+        android:layout_marginBottom="80dp">
 
-    <EditText
-        android:id="@+id/etPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Contraseña"
-        android:inputType="textPassword"
-        android:textColorHint="@color/dark_red"
-        android:textColor="@color/dark_red"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
-        app:layout_constraintTop_toBottomOf="@+id/etUsername"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/btnLogin" />
+        <!-- Logo redondeado en la parte superior -->
+        <ImageView
+            android:id="@+id/ivLogo"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginBottom="50dp"
+            android:background="@drawable/rounded_imagen_bg"
+            android:src="@drawable/jnab"
+            android:scaleType="centerCrop"
+            android:contentDescription="Logo" />
 
-    <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="148dp"
-        android:backgroundTint="@color/dark_red"
-        android:textColor="@color/white"
-        android:text="Iniciar sesión"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
-        app:layout_constraintTop_toBottomOf="@+id/etPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        <!-- Título debajo del logo
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="JNAB 2025"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/dark_red"
+            android:layout_marginBottom="24dp" />
+        -->
+
+        <!-- Campos de texto -->
+        <EditText
+            android:id="@+id/etUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Usuario"
+            android:textColorHint="@color/dark_red"
+            android:textColor="@color/dark_red"
+            android:inputType="text"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Contraseña"
+            android:inputType="textPassword"
+            android:textColorHint="@color/dark_red"
+            android:textColor="@color/dark_red"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Botón -->
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/dark_red"
+            android:textColor="@color/white"
+            android:text="Iniciar sesión" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

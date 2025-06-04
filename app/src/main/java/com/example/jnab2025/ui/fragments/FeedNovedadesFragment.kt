@@ -33,6 +33,14 @@ class NovedadesFragment : Fragment() {
         novedadesList.apply {
             add(
                 Novedad(
+                    "¡Descuentos para la JNAB 2025!",
+                    "Descuentos exclusivos en alojamientos, restaurantes y más",
+                    "04/06/2025",
+                    R.drawable.turismo
+                )
+            )
+            add(
+                Novedad(
                     "Cambio de aula",
                     "El Simposio 3 se pasa al aula 27",
                     "27/04/2025",
