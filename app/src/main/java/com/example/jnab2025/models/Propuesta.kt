@@ -8,9 +8,3 @@ data class Propuesta(
     val descripcion: String,
     val estado: EstadoPropuesta
 )
-
-enum class EstadoPropuesta {
-    PENDIENTE,
-    APROBADA,
-    RECHAZADA
-}

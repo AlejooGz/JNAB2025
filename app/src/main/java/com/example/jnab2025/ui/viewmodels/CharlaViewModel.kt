@@ -1,143 +1,109 @@
 package com.example.jnab2025.ui.viewmodels
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import com.example.jnab2025.data.CharlaRepository
+import android.app.Application
+import androidx.lifecycle.*
+import com.example.jnab2025.data.db.AppDatabase
+import com.example.jnab2025.data.repository.CharlaRepository
 import com.example.jnab2025.models.Charla
+import com.example.jnab2025.models.EstadoPropuesta
+import kotlinx.coroutines.launch
 
-class CharlaViewModel : ViewModel() {
+class CharlaViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = CharlaRepository
-
-    // LiveData para la lista de charlas
+    private val repository: CharlaRepository
     private val _charlas = MutableLiveData<List<Charla>>()
-    val charlas: LiveData<List<Charla>> = _charlas
+    val charlas: LiveData<List<Charla>> get() = _charlas
 
-    // LiveData para el estado del filtro
-    private val _mostrandoSoloFavoritos = MutableLiveData<Boolean>(false)
-    val mostrandoSoloFavoritos: LiveData<Boolean> = _mostrandoSoloFavoritos
-
-    // LiveData para mensajes de estado
     private val _mensaje = MutableLiveData<String>()
-    val mensaje: LiveData<String> = _mensaje
+    val mensaje: LiveData<String> get() = _mensaje
 
-    // LiveData para charla seleccionada (por si necesitas detalle)
-    private val _charlaSeleccionada = MutableLiveData<Charla?>()
-    val charlaSeleccionada: LiveData<Charla?> = _charlaSeleccionada
+    // Para el filtro de favoritos
+    private val _mostrandoSoloFavoritos = MutableLiveData(false)
+    val mostrandoSoloFavoritos: LiveData<Boolean> get() = _mostrandoSoloFavoritos
 
     init {
+        val dao = AppDatabase.getDatabase(application).charlaDao()
+        repository = CharlaRepository(dao)
         cargarTodasLasCharlas()
     }
 
-    fun cargarTodasLasCharlas() {
-        val todasLasCharlas = repository.obtenerTodasLasCharlas()
-        _charlas.value = todasLasCharlas.sortedBy { it.fecha }
-    }
-
-    fun cargarCharlasFavoritas() {
-        val charlasFavoritas = repository.obtenerCharlasFavoritas()
-        _charlas.value = charlasFavoritas.sortedBy { it.fecha }
-    }
-
-    fun cargarCharlasDestacadas() {
-        val charlasDestacadas = repository.obtenerCharlasDestacadas()
-        _charlas.value = charlasDestacadas.sortedBy { it.fecha }
-    }
-
-    fun toggleFavorito(charla: Charla) {
-        val esFavorito = repository.toggleFavorito(charla.id)
-
-        // Actualizar mensaje
-        _mensaje.value = if (esFavorito) {
-            "Charla agregada a favoritos"
+    fun cargarTodasLasCharlas() = viewModelScope.launch {
+        val lista = repository.obtenerTodas()
+        _charlas.value = if (_mostrandoSoloFavoritos.value == true) {
+            lista.filter { it.esFavorito }
         } else {
-            "Charla eliminada de favoritos"
+            lista
         }
+    }
 
-        // Recargar lista según el filtro actual
-        actualizarListaSegunFiltro()
+    fun cargarCharlasPorSimposio(simposioId: Int) = viewModelScope.launch {
+        val lista = repository.obtenerPorSimposio(simposioId)
+        _charlas.value = filtrarPorFavoritosSiCorresponde(lista)
+    }
+
+    fun cargarCharlasPorExpositor(expositorId: Int) = viewModelScope.launch {
+        val lista = repository.obtenerPorExpositor(expositorId)
+        _charlas.value = filtrarPorFavoritosSiCorresponde(lista)
+    }
+
+    fun cargarCharlasPorEstado(estado: EstadoPropuesta) = viewModelScope.launch {
+        val lista = repository.obtenerPorEstado(estado)
+        _charlas.value = filtrarPorFavoritosSiCorresponde(lista)
+    }
+
+    private fun filtrarPorFavoritosSiCorresponde(lista: List<Charla>): List<Charla> {
+        return if (_mostrandoSoloFavoritos.value == true) {
+            lista.filter { it.esFavorito }
+        } else {
+            lista
+        }
+    }
+
+    fun crearCharla(charla: Charla) = viewModelScope.launch {
+        repository.crearCharla(charla)
+        _mensaje.value = "Charla enviada correctamente"
+        cargarTodasLasCharlas()
+    }
+
+    fun aprobarCharla(charla: Charla, fecha: String, inicio: String, fin: String, sala: String) = viewModelScope.launch {
+        val aprobada = charla.copy(
+            estado = EstadoPropuesta.APROBADA,
+            fechaExposicion = fecha,
+            horaInicio = inicio,
+            horaFin = fin,
+            sala = sala
+        )
+        repository.actualizarCharla(aprobada)
+        _mensaje.value = "Charla aprobada"
+        cargarTodasLasCharlas()
+    }
+
+    fun rechazarCharla(charla: Charla) = viewModelScope.launch {
+        val rechazada = charla.copy(estado = EstadoPropuesta.RECHAZADA)
+        repository.actualizarCharla(rechazada)
+        _mensaje.value = "Charla rechazada"
+        cargarTodasLasCharlas()
+    }
+
+    fun marcarComoPagada(charla: Charla) = viewModelScope.launch {
+        val pagada = charla.copy(pagado = true)
+        repository.actualizarCharla(pagada)
+        _mensaje.value = "Charla pagada correctamente"
+        cargarTodasLasCharlas()
+    }
+
+    fun toggleFavorito(charla: Charla) = viewModelScope.launch {
+        val charlaActualizada = charla.copy(esFavorito = !charla.esFavorito)
+        repository.actualizarCharla(charlaActualizada)
+        cargarTodasLasCharlas()
     }
 
     fun toggleFiltroFavoritos() {
-        val nuevoEstado = !(_mostrandoSoloFavoritos.value ?: false)
-        _mostrandoSoloFavoritos.value = nuevoEstado
-
-        // Actualizar mensaje
-        _mensaje.value = if (nuevoEstado) {
-            "Mostrando solo favoritos"
-        } else {
-            "Mostrando todas las charlas"
-        }
-
-        // Actualizar la lista
-        actualizarListaSegunFiltro()
-    }
-
-    private fun actualizarListaSegunFiltro() {
-        val charlasList = if (_mostrandoSoloFavoritos.value == true) {
-            repository.obtenerCharlasFavoritas()
-        } else {
-            repository.obtenerTodasLasCharlas()
-        }
-        _charlas.value = charlasList.sortedBy { it.fecha }
-    }
-
-    fun buscarCharlas(query: String) {
-        if (query.isEmpty()) {
-            actualizarListaSegunFiltro()
-            return
-        }
-
-        val resultadosTitulo = repository.buscarCharlasPorTitulo(query)
-        val resultadosExpositor = repository.buscarCharlasPorExpositor(query)
-
-        // Combinar resultados sin duplicados
-        val resultadosCombinados = (resultadosTitulo + resultadosExpositor).distinctBy { it.id }
-
-        _charlas.value = resultadosCombinados.sortedBy { it.fecha }
-    }
-
-    fun filtrarPorFecha(fecha: String) {
-        val charlasPorFecha = repository.obtenerCharlasPorFecha(fecha)
-        _charlas.value = charlasPorFecha.sortedBy { it.horaInicio }
-    }
-
-    fun filtrarPorSala(sala: String) {
-        val charlasPorSala = repository.buscarCharlasPorSala(sala)
-        _charlas.value = charlasPorSala.sortedBy { it.fecha }
-    }
-
-    fun seleccionarCharla(charla: Charla) {
-        _charlaSeleccionada.value = charla
-    }
-
-    fun limpiarSeleccion() {
-        _charlaSeleccionada.value = null
+        _mostrandoSoloFavoritos.value = !_mostrandoSoloFavoritos.value!!
+        cargarTodasLasCharlas()
     }
 
     fun limpiarMensaje() {
         _mensaje.value = ""
-    }
-
-    // Método para obtener todas las fechas disponibles
-    fun obtenerFechasDisponibles(): List<String> {
-        return repository.obtenerTodasLasCharlas()
-            .map { it.fecha }
-            .distinct()
-            .sorted()
-    }
-
-    // Método para obtener todas las salas disponibles
-    fun obtenerSalasDisponibles(): List<String> {
-        return repository.obtenerTodasLasCharlas()
-            .map { it.sala }
-            .distinct()
-            .sorted()
-    }
-
-    // Método para obtener una charla específica por ID
-    fun obtenerCharlaPorId(id: Int): Charla? {
-        return repository.obtenerCharlaPorId(id)
     }
 }

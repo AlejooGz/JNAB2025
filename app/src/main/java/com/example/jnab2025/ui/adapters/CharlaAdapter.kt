@@ -9,11 +9,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.jnab2025.R
 import com.example.jnab2025.models.Charla
+import com.example.jnab2025.models.User
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class CharlaAdapter(
     private var charlas: List<Charla>,
+    private val usuarios: List<User>, // 👈 nuevo parámetro
     private val onFavoritoClick: (Charla) -> Unit,
     private val onItemClick: ((Charla) -> Unit)? = null
 ) : RecyclerView.Adapter<CharlaAdapter.CharlaViewHolder>() {
@@ -47,16 +49,17 @@ class CharlaAdapter(
     override fun onBindViewHolder(holder: CharlaViewHolder, position: Int) {
         val charla = charlas[position]
 
-        val fechaFormateada = formatearFecha(charla.fecha)
+        val fechaFormateada = charla.fechaExposicion?.let { formatearFecha(it) } ?: "Sin fecha"
 
         holder.tvFecha.text = fechaFormateada
         holder.tvTituloCharla.text = charla.titulo
-        holder.tvExpositor.text = charla.expositor
+        val expositor = usuarios.find { it.id == charla.expositorId }?.username ?: "Desconocido"
+        holder.tvExpositor.text = expositor
         holder.tvHorario.text = "${charla.horaInicio} - ${charla.horaFin}"
         holder.tvSala.text = charla.sala
 
         // Mostrar icono de destacado si es una charla fundamental
-        holder.ivDestacado.visibility = if (charla.esDestacado) View.VISIBLE else View.GONE
+        // holder.ivDestacado.visibility = if (charla.esDestacado) View.VISIBLE else View.GONE
 
         // Configurar el estado del botón favorito
         holder.ibFavorito.setImageResource(

@@ -10,8 +10,10 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.jnab2025.databinding.FragmentCharlaBinding
+import com.example.jnab2025.models.User
 import com.example.jnab2025.ui.adapters.CharlaAdapter
 import com.example.jnab2025.ui.viewmodels.CharlaViewModel
+import com.example.jnab2025.ui.viewmodels.UserViewModel
 
 class AgendaFragment : Fragment() {
 
@@ -20,6 +22,7 @@ class AgendaFragment : Fragment() {
 
     // ViewModel
     private val viewModel: CharlaViewModel by viewModels()
+    private val userViewModel: UserViewModel by viewModels()
 
     private lateinit var adapter: CharlaAdapter
 
@@ -35,19 +38,22 @@ class AgendaFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        configurarRecyclerView()
+        userViewModel.usuarios.observe(viewLifecycleOwner) { usuarios ->
+            configurarRecyclerView(usuarios)
+            viewModel.cargarTodasLasCharlas()
+        }
         configurarObservadores()
         configurarListeners()
     }
 
-    private fun configurarRecyclerView() {
+    private fun configurarRecyclerView(usuarios: List<User>) {
         adapter = CharlaAdapter(
             charlas = emptyList(),
+            usuarios = usuarios,
             onFavoritoClick = { charla ->
                 viewModel.toggleFavorito(charla)
             },
             onItemClick = { charla ->
-                // Navegar al detalle de la charla
                 val action = AgendaFragmentDirections
                     .actionAgendaFragmentToCharlaDetailFragment(charla.id)
                 findNavController().navigate(action)
