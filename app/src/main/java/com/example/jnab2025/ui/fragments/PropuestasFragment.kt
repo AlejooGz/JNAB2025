@@ -6,14 +6,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.jnab2025.databinding.FragmentPropuestasBinding
+import com.example.jnab2025.models.Charla
 import com.example.jnab2025.models.EstadoPropuesta
-import com.example.jnab2025.models.Propuesta
+// import com.example.jnab2025.models.Propuesta
 import com.example.jnab2025.models.Simposio
-import com.example.jnab2025.ui.adapters.PropuestasAdapter
+import com.example.jnab2025.models.User
+import com.example.jnab2025.ui.viewmodels.CharlaViewModel
+import com.example.jnab2025.ui.viewmodels.UserViewModel
+import com.example.jnab2025.ui.adapters.CharlaOrganizadorAdapter
 
 class PropuestasFragment : Fragment() {
 
@@ -23,8 +28,12 @@ class PropuestasFragment : Fragment() {
     private val args: PropuestasFragmentArgs by navArgs()
     private var simposioId: Int = 0
 
-    private lateinit var adapter: PropuestasAdapter
-    private val listaPropuestas = mutableListOf<Propuesta>()
+    private lateinit var adapter: CharlaOrganizadorAdapter
+    private val listaPropuestas = mutableListOf<Charla>()
+
+    private val userViewModel: UserViewModel by viewModels()
+    private val charlaViewModel: CharlaViewModel by viewModels()
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,18 +48,30 @@ class PropuestasFragment : Fragment() {
 
         simposioId = args.simposioId
 
+        // Pedir las charlas pendientes para este simposio
+        charlaViewModel.cargarCharlasPendientesPorSimposio(simposioId)
+
+        charlaViewModel.charlas.observe(viewLifecycleOwner) { propuestasFiltradas ->
+            listaPropuestas.clear()
+            listaPropuestas.addAll(propuestasFiltradas)
+            adapter.notifyDataSetChanged()
+            mostrarOcultarMensajeSiListaVacia()
+        }
+
         // Obtener información del simposio
-        val simposio = obtenerSimposioEjemplo(simposioId)
-        binding.tvTituloSimposioActual.text = simposio.titulo
+        // val simposio = charlaViewModel
+        // binding.tvTituloSimposioActual.text = simposio.titulo
 
         // Configurar RecyclerView
         binding.rvPropuestas.layoutManager = LinearLayoutManager(requireContext())
-        cargarPropuestasEjemplo()
+        // cargarPropuestasEjemplo()
 
-        adapter = PropuestasAdapter(
-            propuestas = listaPropuestas,
+        adapter = CharlaOrganizadorAdapter(
+            charlasPendientes = listaPropuestas,
+            usuarios =  listOf(),
             onAceptarClick = { propuesta ->
-                aceptarPropuesta(propuesta)
+                val action = PropuestasFragmentDirections.actionPropuestasFragmentToAceptarPropuestaFragment(propuesta.id)
+                findNavController().navigate(action)
             },
             onRechazarClick = { propuesta ->
                 // Navegar al fragment de rechazo con mensaje
@@ -81,44 +102,21 @@ class PropuestasFragment : Fragment() {
         )
     }
 
-    private fun cargarPropuestasEjemplo() {
-        // Datos de ejemplo - Estos serían reemplazados por datos reales
-        listaPropuestas.apply {
-            clear()
-            add(
-                Propuesta(
-                    id = 1,
-                    simposioId = simposioId,
-                    titulo = "Avances en genética de poblaciones",
-                    expositor = "Dr. Juan Pérez",
-                    descripcion = "Presentación sobre los últimos avances en genética de poblaciones humanas...",
-                    estado = EstadoPropuesta.PENDIENTE
-                )
-            )
-            add(
-                Propuesta(
-                    id = 2,
-                    simposioId = simposioId,
-                    titulo = "Técnicas de análisis de ADN antiguo",
-                    expositor = "Dra. María Rodríguez",
-                    descripcion = "Recientes desarrollos en técnicas para analizar ADN de restos arqueológicos...",
-                    estado = EstadoPropuesta.PENDIENTE
-                )
-            )
-            add(
-                Propuesta(
-                    id = 3,
-                    simposioId = simposioId,
-                    titulo = "Aplicaciones de la inteligencia artificial en paleoantropología",
-                    expositor = "Dr. Carlos Sánchez",
-                    descripcion = "Uso de IA para la reconstrucción de especímenes fósiles y análisis de patrones evolutivos...",
-                    estado = EstadoPropuesta.PENDIENTE
-                )
-            )
+    private fun mostrarOcultarMensajeSiListaVacia() {
+        if (listaPropuestas.isEmpty()) {
+            binding.tvNoPropuestas.visibility = View.VISIBLE
+            binding.rvPropuestas.visibility = View.GONE
+        } else {
+            binding.tvNoPropuestas.visibility = View.GONE
+            binding.rvPropuestas.visibility = View.VISIBLE
         }
     }
 
-    private fun aceptarPropuesta(propuesta: Propuesta) {
+    private fun cargarPropuestasEjemplo() {
+        // Datos de ejemplo - Estos serían reemplazados por datos reales
+    }
+
+    private fun aceptarPropuesta(propuesta: Charla) {
         // Actualizar estado de la propuesta
         // En un caso real esto se haría a través del ViewModel
         Toast.makeText(requireContext(), "Propuesta aceptada: ${propuesta.titulo}", Toast.LENGTH_SHORT).show()

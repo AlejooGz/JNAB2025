@@ -7,7 +7,7 @@ import com.example.jnab2025.models.User
 @Dao
 interface UserDao {
     @Query("SELECT * FROM users")
-    fun obtenerTodos(): LiveData<List<User>>
+    suspend fun obtenerTodos(): List<User>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(user: User)

@@ -3,6 +3,7 @@ package com.example.jnab2025.ui.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.jnab2025.data.SimposioFakeData
 import com.example.jnab2025.data.UserFakeData
@@ -14,13 +15,26 @@ import kotlinx.coroutines.launch
 class UserViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: UserRepository
-    val usuarios: LiveData<List<User>>
+    private val _usuarios = MutableLiveData<List<User>>()
+    val usuarios: LiveData<List<User>> get() = _usuarios
+
+    private val _mensaje = MutableLiveData<String>()
+    val mensaje: LiveData<String> get() = _mensaje
 
     init {
         val dao = AppDatabase.getDatabase(application).userDao()
         repository = UserRepository(dao)
-        usuarios = repository.usuarios
     }
+
+    fun obtenerTodos() = viewModelScope.launch {
+        try {
+            val lista = repository.obtenerTodos()
+            _usuarios.value = lista
+        } catch (e: Exception) {
+            _mensaje.value = "Error al obtener usuarios: ${e.localizedMessage}"
+        }
+    }
+
 
     fun insertar(user: User) = viewModelScope.launch {
         repository.insertar(user)

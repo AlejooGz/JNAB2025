@@ -39,6 +39,12 @@ class CharlaViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun cargarCharlasPendientesPorSimposio(simposioId: Int) = viewModelScope.launch {
+        val todas = repository.obtenerPorSimposio(simposioId)
+        val filtradas = todas.filter { it.estado == EstadoPropuesta.PENDIENTE }
+        _charlas.value = filtrarPorFavoritosSiCorresponde(filtradas)
+    }
+
     fun cargarCharlasPorSimposio(simposioId: Int) = viewModelScope.launch {
         val lista = repository.obtenerPorSimposio(simposioId)
         _charlas.value = filtrarPorFavoritosSiCorresponde(lista)

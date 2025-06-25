@@ -106,12 +106,24 @@
         <action
             android:id="@+id/action_propuestasFragment_to_rechazarPropuestaFragment"
             app:destination="@id/rechazarPropuestaFragment" />
+        <action
+            android:id="@+id/action_propuestasFragment_to_aceptarPropuestaFragment"
+            app:destination="@id/aceptarPropuestaFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/rechazarPropuestaFragment"
         android:name="com.example.jnab2025.ui.fragments.RechazarPropuestaFragment"
         android:label="Rechazar Propuesta">
+        <argument
+            android:name="propuestaId"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/aceptarPropuestaFragment"
+        android:name="com.example.jnab2025.ui.fragments.AceptarPropuestaFragment"
+        android:label="Aceptar Propuesta">
         <argument
             android:name="propuestaId"
             app:argType="integer" />
