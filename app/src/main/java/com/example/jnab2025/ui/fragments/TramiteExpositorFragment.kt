@@ -74,8 +74,8 @@ class TramiteExpositorFragment : Fragment() {
                 }
 
                 val sharedPref = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                val allPrefs = sharedPref.all
-                Log.d("SharedPrefsDebug", "Contenido actual: $allPrefs")
+                // val allPrefs = sharedPref.all
+                // Log.d("SharedPrefsDebug", "Contenido actual: $allPrefs")
 
                 // val sharedPref = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                 val expositorId = sharedPref.getInt("usuario_id", -1)

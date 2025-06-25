@@ -7,7 +7,7 @@ object CharlaFakeData {
 
     private val charlas = mutableListOf<Charla>(
         Charla(
-            id = 0,
+            id = 1,
             titulo = "Test1",
             descripcion = "Test 1",
             nombreArchivo = "Archivo 1",
@@ -23,7 +23,7 @@ object CharlaFakeData {
             expositorId = 2,  // TODO: reemplazar con el expositor logueado
         ),
         Charla(
-            id = 1,
+            id = 2,
             titulo = "Test2",
             descripcion = "Test 2",
             nombreArchivo = "Archivo 3",
@@ -39,7 +39,7 @@ object CharlaFakeData {
             expositorId = 3,  // TODO: reemplazar con el expositor logueado
         ),
         Charla(
-            id = 2,
+            id = 3,
             titulo = "Test3",
             descripcion = "Test 3",
             nombreArchivo = "Archivo 3",
@@ -55,7 +55,7 @@ object CharlaFakeData {
             expositorId = 3,  // TODO: reemplazar con el expositor logueado
         ),
         Charla(
-            id = 3,
+            id = 4,
             titulo = "Test4",
             descripcion = "Test 4",
             nombreArchivo = "Archivo 4",

@@ -17,7 +17,7 @@ class CharlaExpositorAdapter(
 ) : RecyclerView.Adapter<CharlaExpositorAdapter.ViewHolder>() {
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tvTitulo: TextView = itemView.findViewById(R.id.tvTituloCharla)
+        val tvTitulo: TextView = itemView.findViewById(R.id.tvTitulo)
         val tvEstado: TextView = itemView.findViewById(R.id.tvEstado)
         val tvArchivo: TextView = itemView.findViewById(R.id.tvArchivo)
         val btnSubirComprobante: Button = itemView.findViewById(R.id.btnSubirComprobante)

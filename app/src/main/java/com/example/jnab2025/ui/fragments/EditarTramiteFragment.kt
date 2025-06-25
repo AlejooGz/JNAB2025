@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.*
 import android.widget.Toast
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -26,27 +27,15 @@ class EditarTramiteFragment : Fragment() {
 
     private val charlaViewModel: CharlaViewModel by activityViewModels()
 
-    private val seleccionarArchivo = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (it.resultCode == Activity.RESULT_OK) {
-            archivoUri = it.data?.data
-            archivoUri?.let { uri ->
-                nombreArchivo = obtenerNombreArchivo(uri)
-                binding.tvArchivoSeleccionado.text = "Archivo: $nombreArchivo"
-            }
-        }
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentEditarTramiteBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         tramiteId = arguments?.getInt("tramiteId") ?: -1
 
         val tramite = charlaViewModel.charlas.value?.find { it.id == tramiteId }
+
+        Log.d("EditarTramiteFragment", "tramiteId recibido: $tramiteId")
+        charlaViewModel.charlas.value?.forEach {
+            Log.d("EditarTramiteFragment", "Charla en VM: id=${it.id}, titulo=${it.titulo}")
+        }
 
         if (tramite == null) {
             Toast.makeText(requireContext(), "Trámite no encontrado", Toast.LENGTH_SHORT).show()
@@ -81,6 +70,23 @@ class EditarTramiteFragment : Fragment() {
             Toast.makeText(requireContext(), "Trámite actualizado", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.seguimientoTramiteFragment)
         }
+    }
+
+    private val seleccionarArchivo = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (it.resultCode == Activity.RESULT_OK) {
+            archivoUri = it.data?.data
+            archivoUri?.let { uri ->
+                nombreArchivo = obtenerNombreArchivo(uri)
+                binding.tvArchivoSeleccionado.text = "Archivo: $nombreArchivo"
+            }
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentEditarTramiteBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     private fun obtenerNombreArchivo(uri: Uri): String {

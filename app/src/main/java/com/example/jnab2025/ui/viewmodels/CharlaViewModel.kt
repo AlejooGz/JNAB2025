@@ -93,13 +93,6 @@ class CharlaViewModel(application: Application) : AndroidViewModel(application) 
     }
 
 
-    fun reiniciarConDatosDeEjemplo() {
-        viewModelScope.launch {
-            repository.eliminarTodos()
-            val datos = CharlaFakeData.getCharlasDeEjemplo()
-            repository.insertarTodos(datos)
-        }
-    }
 
     fun aprobarCharla(charla: Charla, fecha: String, inicio: String, fin: String, sala: String) = viewModelScope.launch {
         val aprobada = charla.copy(

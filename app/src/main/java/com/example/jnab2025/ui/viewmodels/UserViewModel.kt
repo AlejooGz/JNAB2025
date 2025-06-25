@@ -38,14 +38,6 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
         repository.eliminarTodos()
     }
 
-    fun reiniciarConDatosDeEjemplo() {
-        viewModelScope.launch {
-            repository.eliminarTodos()
-            val datos = UserFakeData.getUsersDeEjemplo()
-            repository.insertarTodos(datos)
-        }
-    }
-
     suspend fun autenticar(username: String, password: String): User? {
         return repository.autenticar(username, password)
     }

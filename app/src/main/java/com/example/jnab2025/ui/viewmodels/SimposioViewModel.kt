@@ -31,11 +31,9 @@ class SimposioViewModel(application: Application) : AndroidViewModel(application
         repository.eliminar(simposio)
     }
 
-    fun reiniciarConDatosDeEjemplo() {
-        viewModelScope.launch {
-            repository.eliminarTodos()
-            val datos = SimposioFakeData.getSimposiosDeEjemplo()
-            repository.insertarTodos(datos)
-        }
+    fun eliminarTodos() = viewModelScope.launch {
+        repository.eliminarTodos()
     }
+
+
 }

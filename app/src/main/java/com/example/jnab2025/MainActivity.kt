@@ -25,6 +25,9 @@ import com.example.jnab2025.ui.viewmodels.UserViewModel
 import com.example.jnab2025.utils.SesionUsuario
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
+import com.example.jnab2025.data.SimposioFakeData
+import com.example.jnab2025.data.UserFakeData
+import com.example.jnab2025.data.CharlaFakeData
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -43,9 +46,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(binding.root)
 
         // Solo para pruebas: reinicia los datos al abrir la app (SimposioViewModel)
-        simposioViewModel.reiniciarConDatosDeEjemplo()
-        userViewModel.reiniciarConDatosDeEjemplo()
-        charlaViewModel.reiniciarConDatosDeEjemplo()
+        charlaViewModel.eliminarTodos()
+        simposioViewModel.eliminarTodos()
+        userViewModel.eliminarTodos()
+
+        val simposios = SimposioFakeData.getSimposiosDeEjemplo()
+        val users = UserFakeData.getUsersDeEjemplo()
+        val charlas = CharlaFakeData.getCharlasDeEjemplo()
+
+        simposioViewModel.insertarTodos(simposios)
+        userViewModel.insertarTodos(users)
+        charlaViewModel.insertarTodos(charlas)
 
         // Configurar Toolbar
         setSupportActionBar(binding.toolbar)

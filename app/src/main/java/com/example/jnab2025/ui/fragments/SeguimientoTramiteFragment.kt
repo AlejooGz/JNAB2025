@@ -3,6 +3,7 @@
 
 package com.example.jnab2025.ui.fragments
 
+import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -36,14 +37,20 @@ class SeguimientoTramiteFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         charlaViewModel.charlas.observe(viewLifecycleOwner) { charlas ->
-            val delExpositor = charlas.filter { it.expositorId == 1 } // Reemplazar con ID real del expositor logueado
-                .sortedBy { it.pagado }
+            val sharedPref = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+            val userId = sharedPref.getInt("usuario_id", -1)
+
+            val delExpositor = if (userId != -1) {
+                charlas.filter { it.expositorId == userId }.sortedBy { it.pagado }
+            } else {
+                emptyList()
+            }
 
             adapter = CharlaExpositorAdapter(
                 charlas = delExpositor,
                 onItemClick = { charla ->
                     val bundle = Bundle().apply {
-                        putInt("charlaId", charla.id)
+                        putInt("tramiteId", charla.id)
                         putString("tituloTrabajo", charla.titulo)
                     }
                     when (charla.estado) {
