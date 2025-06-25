@@ -1,27 +1,33 @@
 package com.example.jnab2025.ui.fragments
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.NavOptions
 import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentTramiteExpositorBinding
-import com.example.jnab2025.models.Tramite
-import com.example.jnab2025.data.TramiteRepository // o donde esté tu repositorio
+import com.example.jnab2025.models.Charla
+import com.example.jnab2025.models.EstadoPropuesta
+import com.example.jnab2025.ui.viewmodels.CharlaViewModel
 
 class TramiteExpositorFragment : Fragment() {
 
     private var _binding: FragmentTramiteExpositorBinding? = null
     private val binding get() = _binding!!
+
+    private val charlaViewModel: CharlaViewModel by viewModels()
 
     private var archivoSeleccionadoUri: Uri? = null
     private var nombreArchivoSeleccionado: String = "Sin archivo"
@@ -61,19 +67,50 @@ class TramiteExpositorFragment : Fragment() {
             if (titulo.isBlank() || resumen.isBlank() || archivoSeleccionadoUri == null) {
                 Toast.makeText(requireContext(), "Completá todos los campos y seleccioná un archivo", Toast.LENGTH_SHORT).show()
             } else {
-                val nuevo = TramiteRepository.agregarTramite(
+                val simposioId = arguments?.getInt("simposioId") ?: -1
+                if (simposioId == -1) {
+                    Toast.makeText(requireContext(), "Error al obtener el simposio", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val sharedPref = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+                val allPrefs = sharedPref.all
+                Log.d("SharedPrefsDebug", "Contenido actual: $allPrefs")
+
+                // val sharedPref = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                val expositorId = sharedPref.getInt("usuario_id", -1)
+
+                if (expositorId == -1) {
+                    Toast.makeText(requireContext(), "Error al obtener el usuario", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val nuevaCharla = Charla(
+                    id = 0,
                     titulo = titulo,
-                    nombreArchivo = nombreArchivoSeleccionado
+                    descripcion = resumen,
+                    nombreArchivo = nombreArchivoSeleccionado,
+                    fechaEnvio = "24/06/2024",
+                    estado = EstadoPropuesta.PENDIENTE,
+                    motivoRechazo = "",
+                    pagado = false,
+                    sala = "",
+                    horaInicio = "",
+                    horaFin = "",
+                    esFavorito = false,
+                    simposioId = simposioId,
+                    expositorId = expositorId,  // TODO: reemplazar con el expositor logueado
                 )
 
-                Toast.makeText(requireContext(), "Trámite enviado correctamente", Toast.LENGTH_SHORT).show()
+                charlaViewModel.crearCharla(nuevaCharla)
 
-                // Redirigir al home (MainFragment)
+                Toast.makeText(requireContext(), "Charla enviada correctamente", Toast.LENGTH_SHORT).show()
+
                 findNavController().navigate(
                     R.id.seguimientoTramiteFragment,
                     null,
                     NavOptions.Builder()
-                        .setPopUpTo(R.id.mainFragment, false) // deja MainFragment en el backstack
+                        .setPopUpTo(R.id.mainFragment, false)
                         .build()
                 )
             }

@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
+import com.example.jnab2025.data.SimposioFakeData
+import com.example.jnab2025.data.UserFakeData
 import com.example.jnab2025.data.db.AppDatabase
 import com.example.jnab2025.data.repository.UserRepository
 import com.example.jnab2025.models.User
@@ -34,6 +36,14 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
 
     fun eliminarTodos() = viewModelScope.launch {
         repository.eliminarTodos()
+    }
+
+    fun reiniciarConDatosDeEjemplo() {
+        viewModelScope.launch {
+            repository.eliminarTodos()
+            val datos = UserFakeData.getUsersDeEjemplo()
+            repository.insertarTodos(datos)
+        }
     }
 
     suspend fun autenticar(username: String, password: String): User? {

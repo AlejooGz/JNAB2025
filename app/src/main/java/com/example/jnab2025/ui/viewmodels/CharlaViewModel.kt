@@ -2,10 +2,13 @@ package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.*
+import com.example.jnab2025.data.CharlaFakeData
+import com.example.jnab2025.data.UserFakeData
 import com.example.jnab2025.data.db.AppDatabase
 import com.example.jnab2025.data.repository.CharlaRepository
 import com.example.jnab2025.models.Charla
 import com.example.jnab2025.models.EstadoPropuesta
+import com.example.jnab2025.models.User
 import kotlinx.coroutines.launch
 
 class CharlaViewModel(application: Application) : AndroidViewModel(application) {
@@ -63,6 +66,39 @@ class CharlaViewModel(application: Application) : AndroidViewModel(application) 
         repository.crearCharla(charla)
         _mensaje.value = "Charla enviada correctamente"
         cargarTodasLasCharlas()
+    }
+
+    fun insertarTodos(lista: List<Charla>) = viewModelScope.launch {
+        repository.insertarTodos(lista)
+    }
+
+    fun editarCharla(charlaOriginal: Charla, nuevoTitulo: String, nuevaDescripcion: String?, nuevoNombreArchivo: String) = viewModelScope.launch {
+        val charlaEditada = charlaOriginal.copy(
+            titulo = nuevoTitulo,
+            descripcion = nuevaDescripcion,
+            nombreArchivo = nuevoNombreArchivo
+        )
+
+        repository.actualizarCharla(charlaEditada)
+        _mensaje.value = "Charla actualizada correctamente"
+        cargarTodasLasCharlas()
+    }
+
+    fun eliminar(charla: Charla) = viewModelScope.launch {
+        repository.eliminar(charla)
+    }
+
+    fun eliminarTodos() = viewModelScope.launch {
+        repository.eliminarTodos()
+    }
+
+
+    fun reiniciarConDatosDeEjemplo() {
+        viewModelScope.launch {
+            repository.eliminarTodos()
+            val datos = CharlaFakeData.getCharlasDeEjemplo()
+            repository.insertarTodos(datos)
+        }
     }
 
     fun aprobarCharla(charla: Charla, fecha: String, inicio: String, fin: String, sala: String) = viewModelScope.launch {

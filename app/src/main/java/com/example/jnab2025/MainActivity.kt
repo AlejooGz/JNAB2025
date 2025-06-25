@@ -20,6 +20,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.jnab2025.databinding.ActivityMainBinding
 import com.example.jnab2025.ui.fragments.LoginFragment
 import com.example.jnab2025.ui.viewmodels.SimposioViewModel
+import com.example.jnab2025.ui.viewmodels.CharlaViewModel
+import com.example.jnab2025.ui.viewmodels.UserViewModel
 import com.example.jnab2025.utils.SesionUsuario
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
@@ -29,8 +31,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var binding: ActivityMainBinding
     private lateinit var toggle: ActionBarDrawerToggle
 
-    // Variable para la carga previa de simposios de prueba (de tu compañero)
+    // Variables para la carga previa de simposios, charlas y usuarios de prueba
     private val simposioViewModel: SimposioViewModel by viewModels()
+    private val charlaViewModel: CharlaViewModel by viewModels()
+    private val userViewModel: UserViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +44,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         // Solo para pruebas: reinicia los datos al abrir la app (SimposioViewModel)
         simposioViewModel.reiniciarConDatosDeEjemplo()
+        userViewModel.reiniciarConDatosDeEjemplo()
+        charlaViewModel.reiniciarConDatosDeEjemplo()
 
         // Configurar Toolbar
         setSupportActionBar(binding.toolbar)
@@ -142,7 +148,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 findNavController(R.id.nav_host_fragment).navigate(R.id.action_mainFragment_to_simposiosFragment)
             }
             R.id.nav_enviar_trabajo -> {
-                findNavController(R.id.nav_host_fragment).navigate(R.id.tramiteExpositorFragment)
+                findNavController(R.id.nav_host_fragment).navigate(R.id.simposiosTramiteFragment)
             }
             R.id.nav_mis_trabajos -> {
                 findNavController(R.id.nav_host_fragment).navigate(R.id.seguimientoTramiteFragment)

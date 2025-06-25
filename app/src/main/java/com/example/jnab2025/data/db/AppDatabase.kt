@@ -12,7 +12,7 @@ import com.example.jnab2025.data.dao.UserDao
 
 @Database(
     entities = [Simposio::class, Charla::class, User::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)  // Necesario para enums como EstadoPropuesta

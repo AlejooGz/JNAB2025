@@ -34,7 +34,7 @@
         <action android:id="@+id/action_mainFragment_to_inscripcionFragment" app:destination="@id/inscripcionFragment" />
         <action android:id="@+id/action_mainFragment_to_verInscriptosFragment" app:destination="@id/verInscriptosFragment" />
         <action android:id="@+id/action_mainFragment_to_mapsFragment" app:destination="@id/mapsFragment" />
-        <action android:id="@+id/action_mainFragment_to_tramiteExpositorFragment2" app:destination="@id/tramiteExpositorFragment" />
+        <action android:id="@+id/action_mainFragment_to_tramiteExpositorFragment2" app:destination="@id/simposiosTramiteFragment" />
         <action android:id="@+id/action_mainFragment_to_seguimientoTramiteFragment2" app:destination="@id/seguimientoTramiteFragment" />
     </fragment>
 
@@ -47,6 +47,19 @@
         android:id="@+id/simposiosFragment"
         android:name="com.example.jnab2025.ui.fragments.SimposiosFragment"
         android:label="Simposios" />
+
+    <fragment
+        android:id="@+id/simposiosTramiteFragment"
+        android:name="com.example.jnab2025.ui.fragments.SimposioTramiteFragment"
+        android:label="Simposios">
+        <action
+            android:id="@+id/actionSimposiosTramiteFragment_to_tramiteExpositorFragment"
+            app:destination="@id/tramiteExpositorFragment">
+            <argument
+                android:name="simposioId"
+                app:argType="integer" />
+        </action>
+    </fragment>
 
     <fragment
         android:id="@+id/novedadesFragment"

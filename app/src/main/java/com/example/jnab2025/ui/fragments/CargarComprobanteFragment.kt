@@ -11,14 +11,17 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.databinding.FragmentCargarComprobanteBinding
-import com.example.jnab2025.data.TramiteRepository
+import com.example.jnab2025.ui.viewmodels.CharlaViewModel
 
 class CargarComprobanteFragment : Fragment() {
 
     private var _binding: FragmentCargarComprobanteBinding? = null
     private val binding get() = _binding!!
+
+    private val charlaViewModel: CharlaViewModel by activityViewModels()
 
     private var archivoUri: Uri? = null
     private var nombreArchivo = ""
@@ -44,17 +47,18 @@ class CargarComprobanteFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // Obtener datos enviados por Bundle (trabajoId y título)
         val tramiteId = requireArguments().getInt("tramiteId")
         val titulo = requireArguments().getString("tituloTrabajo")
-
         binding.tvTituloTrabajo.text = "Trabajo: $titulo"
 
+        val charla = charlaViewModel.charlas.value?.find { it.id == tramiteId }
+
         binding.btnSeleccionarArchivo.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-            intent.addCategory(Intent.CATEGORY_OPENABLE)
-            intent.type = "*/*"
-            intent.putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "image/*"))
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "image/*"))
+            }
             seleccionarArchivoLauncher.launch(intent)
         }
 
@@ -62,11 +66,10 @@ class CargarComprobanteFragment : Fragment() {
             val nombre = binding.etNombre.text.toString()
             val apellido = binding.etApellido.text.toString()
 
-            if (nombre.isBlank() || apellido.isBlank() || archivoUri == null) {
+            if (nombre.isBlank() || apellido.isBlank() || archivoUri == null || charla == null) {
                 Toast.makeText(requireContext(), "Completá todos los campos y subí el archivo", Toast.LENGTH_SHORT).show()
             } else {
-                // Marcamos como pagado el trámite
-                TramiteRepository.marcarComoPagado(tramiteId)
+                charlaViewModel.marcarComoPagada(charla)
                 Toast.makeText(requireContext(), "Comprobante enviado", Toast.LENGTH_SHORT).show()
                 findNavController().navigateUp()
             }

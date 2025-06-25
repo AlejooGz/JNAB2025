@@ -12,6 +12,10 @@ class CharlaRepository(private val charlaDao: CharlaDao) {
 
     suspend fun actualizarCharla(charla: Charla) = charlaDao.actualizarCharla(charla)
 
+    suspend fun insertarTodos(lista: List<Charla>) = charlaDao.insertarTodos(lista)
+    suspend fun eliminar(charla: Charla) = charlaDao.eliminar(charla)
+    suspend fun eliminarTodos() = charlaDao.eliminarTodos()
+
     suspend fun obtenerPorSimposio(id: Int) = charlaDao.obtenerCharlasPorSimposio(id)
 
     suspend fun obtenerPorExpositor(id: Int) = charlaDao.obtenerCharlasPorExpositor(id)

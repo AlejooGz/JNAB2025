@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import android.content.Context
 import androidx.navigation.fragment.findNavController
-import com.example.jnab2025.data.UserRepository
+import com.example.jnab2025.data.UserFakeData
 import com.example.jnab2025.databinding.FragmentLoginBinding
 import com.example.jnab2025.R
 
@@ -51,7 +51,7 @@ class LoginFragment : Fragment() {
             val usernameInput = binding.etUsername.text.toString()
             val password = binding.etPassword.text.toString()
 
-            val user = UserRepository.login(usernameInput, password)
+            val user = UserFakeData.login(usernameInput, password)
 
             if (user != null) {
                 Toast.makeText(requireContext(), "Login exitoso", Toast.LENGTH_SHORT).show()
@@ -59,12 +59,12 @@ class LoginFragment : Fragment() {
                 sharedPref.edit()
                     .putString("username", user.username)
                     .putString("user_rol", user.rol.lowercase())
-                    .commit()
+                    .putInt("usuario_id", user.id) // 👈 Agregado acá
+                    .apply()
 
                 val intent = requireActivity().intent
                 requireActivity().finish()
                 startActivity(intent)
-
             } else {
                 Toast.makeText(requireContext(), "Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show()
             }

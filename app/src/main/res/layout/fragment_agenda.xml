@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/mint_green"
-    tools:context=".CharlaFragment">
+    tools:context=".AgendaFragment">
 
     <TextView
         android:id="@+id/tvTitulo"
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:background="@color/dark_red"
         android:padding="16dp"
-        android:text="Charlas del Simposio"
+        android:text="Mis Charlas Favoritas"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="24sp"

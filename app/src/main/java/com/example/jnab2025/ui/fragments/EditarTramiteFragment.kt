@@ -9,10 +9,11 @@ import android.view.*
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.R
-import com.example.jnab2025.data.TramiteRepository
 import com.example.jnab2025.databinding.FragmentEditarTramiteBinding
+import com.example.jnab2025.ui.viewmodels.CharlaViewModel
 
 class EditarTramiteFragment : Fragment() {
 
@@ -22,6 +23,8 @@ class EditarTramiteFragment : Fragment() {
     private var archivoUri: Uri? = null
     private var nombreArchivo: String = "Sin archivo"
     private var tramiteId: Int = -1
+
+    private val charlaViewModel: CharlaViewModel by activityViewModels()
 
     private val seleccionarArchivo = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -43,7 +46,7 @@ class EditarTramiteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         tramiteId = arguments?.getInt("tramiteId") ?: -1
 
-        val tramite = TramiteRepository.obtenerTramites().find { it.id == tramiteId }
+        val tramite = charlaViewModel.charlas.value?.find { it.id == tramiteId }
 
         if (tramite == null) {
             Toast.makeText(requireContext(), "Trámite no encontrado", Toast.LENGTH_SHORT).show()
@@ -51,8 +54,8 @@ class EditarTramiteFragment : Fragment() {
             return
         }
 
-        binding.etTitulo.setText(tramite.tituloTrabajo)
-        binding.etResumen.setText(tramite.resumen ?: "")
+        binding.etTitulo.setText(tramite.titulo)
+        binding.etResumen.setText(tramite.descripcion ?: "")
         binding.tvArchivoSeleccionado.text = "Archivo: ${tramite.nombreArchivo}"
         nombreArchivo = tramite.nombreArchivo
 
@@ -73,7 +76,7 @@ class EditarTramiteFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            TramiteRepository.editarTramite(tramiteId, nuevoTitulo, nuevoResumen, nombreArchivo)
+            charlaViewModel.editarCharla(tramite, nuevoTitulo, nuevoResumen, nombreArchivo)
 
             Toast.makeText(requireContext(), "Trámite actualizado", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.seguimientoTramiteFragment)

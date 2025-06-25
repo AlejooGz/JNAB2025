@@ -3,7 +3,6 @@ package com.example.jnab2025.ui.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -27,7 +26,7 @@ class TramiteAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TramiteViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_tramite, parent, false)
+            .inflate(R.layout.item_charla_expositor, parent, false)
         return TramiteViewHolder(view)
     }
 
