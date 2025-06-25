@@ -17,7 +17,7 @@ import com.example.jnab2025.data.dao.AgendaDao
 
 @Database(
     entities = [Simposio::class, Charla::class, User::class, AgendaCharlaEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)  // Necesario para enums como EstadoPropuesta
