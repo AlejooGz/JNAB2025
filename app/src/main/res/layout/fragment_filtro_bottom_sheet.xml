@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="@color/cream"
-    android:layout_height="wrap_content">
+    android:background="@color/cream">
 
     <ImageButton
         android:id="@+id/btnCerrar"
@@ -23,43 +22,50 @@
         android:text="Filtrar por:"
         android:textColor="@color/dark_red"
         android:textSize="18sp"
-        android:layout_marginBottom="12dp"/>
+        android:layout_marginBottom="12dp" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnHospedaje"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/toggleGroupFiltros"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hospedajes"
-        android:textColor="@color/dark_red"
-        app:icon="@drawable/night_shelter"
-        app:iconTint="@color/dark_red"
-        app:iconGravity="textStart"
-        app:iconPadding="8dp" />
+        android:orientation="vertical"
+        app:singleSelection="false"
+        app:selectionRequired="false">
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnHospedaje"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hospedajes"
+            android:textColor="@color/dark_red" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRestaurante"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Restaurantes"
+            android:textColor="@color/dark_red" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAgencia"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Agencias"
+            android:textColor="@color/dark_red" />
+
+    </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnRestaurante"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:id="@+id/btnQuitarFiltro"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Restaurantes"
+        android:text="Quitar filtros"
         android:textColor="@color/dark_red"
-        app:icon="@drawable/outline_dining_24"
-        app:iconTint="@color/dark_red"
-        app:iconGravity="textStart"
-        app:iconPadding="8dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnAgencia"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Agencias"
-        android:textColor="@color/dark_red"
-        app:icon="@drawable/travel_explore"
-        app:iconTint="@color/dark_red"
-        app:iconGravity="textStart"
-        app:iconPadding="8dp" />
-
+        android:backgroundTint="@android:color/transparent"
+        app:strokeWidth="0dp"
+        android:layout_marginTop="12dp"/>
 </LinearLayout>

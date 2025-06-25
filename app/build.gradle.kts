@@ -49,6 +49,12 @@ dependencies {
     implementation(libs.play.services.maps)
     val nav_version = "2.8.9"
 
+    implementation("com.google.android.material:material:1.10.0")
+
+    implementation("com.prolificinteractive:material-calendarview:1.4.3") {
+        exclude(group = "com.android.support")
+    }
+
     implementation("androidx.constraintlayout:constraintlayout:2.2.0-beta01")
     // To use constraintlayout in compose
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0-beta01")

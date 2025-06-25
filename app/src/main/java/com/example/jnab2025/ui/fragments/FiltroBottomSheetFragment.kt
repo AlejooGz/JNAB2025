@@ -11,6 +11,7 @@ import com.example.jnab2025.ui.viewmodels.FiltroViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.button.MaterialButtonToggleGroup
 
 class FiltroBottomSheetFragment : BottomSheetDialogFragment() {
 
@@ -19,6 +20,10 @@ class FiltroBottomSheetFragment : BottomSheetDialogFragment() {
     private lateinit var btnRestaurante: MaterialButton
     private lateinit var btnAgencia: MaterialButton
     private lateinit var btnCerrar: ImageButton
+    private lateinit var btnQuitarFiltro: MaterialButton
+    private lateinit var toggleGroupFiltros: MaterialButtonToggleGroup
+
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_filtro_bottom_sheet, container, false)
@@ -33,25 +38,29 @@ class FiltroBottomSheetFragment : BottomSheetDialogFragment() {
         btnRestaurante = view.findViewById(R.id.btnRestaurante)
         btnAgencia = view.findViewById(R.id.btnAgencia)
         btnCerrar = view.findViewById(R.id.btnCerrar)
+        btnQuitarFiltro = view.findViewById(R.id.btnQuitarFiltro)
+
+        toggleGroupFiltros = view.findViewById(R.id.toggleGroupFiltros)
 
         btnHospedaje.setOnClickListener {
-            filtroViewModel.aplicarFiltro(Categoria.HOSPEDAJE)
-            dismiss()
+            filtroViewModel.toggleFiltro(Categoria.HOSPEDAJE)
         }
 
         btnRestaurante.setOnClickListener {
-            filtroViewModel.aplicarFiltro(Categoria.RESTAURANTE)
-            dismiss()
+            filtroViewModel.toggleFiltro(Categoria.RESTAURANTE)
         }
 
         btnAgencia.setOnClickListener {
-            filtroViewModel.aplicarFiltro(Categoria.AGENCIA)
-            dismiss()
+            filtroViewModel.toggleFiltro(Categoria.AGENCIA)
         }
 
         btnCerrar.setOnClickListener {
-            filtroViewModel.limpiarFiltro()
             dismiss()
+        }
+
+        btnQuitarFiltro.setOnClickListener {
+            filtroViewModel.limpiarFiltros()
+            toggleGroupFiltros.clearChecked()
         }
     }
 }

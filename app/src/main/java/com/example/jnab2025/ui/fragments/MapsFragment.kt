@@ -12,6 +12,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
@@ -113,12 +114,23 @@ class MapsFragment : Fragment() {
         marcadoresVisibles.clear()
 
         lugares.forEach { lugar ->
+            val color = when (lugar.categoria) {
+                Categoria.HOSPEDAJE -> BitmapDescriptorFactory.HUE_MAGENTA
+                Categoria.RESTAURANTE -> BitmapDescriptorFactory.HUE_ORANGE
+                Categoria.AGENCIA -> BitmapDescriptorFactory.HUE_CYAN
+            }
+
             val marker = googleMap.addMarker(
-                MarkerOptions().position(lugar.ubicacion).title(lugar.nombre)
+                MarkerOptions()
+                    .position(lugar.ubicacion)
+                    .title(lugar.nombre)
+                    .icon(BitmapDescriptorFactory.defaultMarker(color))
             )
+
             marker?.let { marcadoresVisibles.add(it) }
         }
     }
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_maps, container, false)
@@ -129,11 +141,13 @@ class MapsFragment : Fragment() {
 
         filtroViewModel = ViewModelProvider(requireActivity())[FiltroViewModel::class.java]
 
-        filtroViewModel.filtroSeleccionado.observe(viewLifecycleOwner) { categoria ->
-            if (categoria != null) {
-                mostrarLugares(todosLosLugares.filter { it.categoria == categoria })
-            } else {
-                mostrarLugares(todosLosLugares)
+        filtroViewModel.filtrosSeleccionados.observe(viewLifecycleOwner) { categorias ->
+            if (::todosLosLugares.isInitialized) {
+                if (categorias.isEmpty()) {
+                    mostrarLugares(todosLosLugares)
+                } else {
+                    mostrarLugares(todosLosLugares.filter { it.categoria in categorias })
+                }
             }
         }
 

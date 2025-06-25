@@ -9,6 +9,8 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.jnab2025.databinding.FragmentMainBinding
 import com.example.jnab2025.utils.SesionUsuario
+import androidx.navigation.fragment.findNavController
+
 
 class MainFragment : Fragment() {
 
@@ -82,6 +84,7 @@ class MainFragment : Fragment() {
         //     findNavController().navigate(R.id.inscripcionFragment)
         // }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
