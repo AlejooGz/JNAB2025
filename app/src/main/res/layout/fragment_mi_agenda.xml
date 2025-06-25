@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_mi_agenda"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:padding="16dp">
+
+    <!-- Título -->
+    <TextView
+        android:id="@+id/tvTituloAgenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mi Agenda"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/dark_red"
+        android:paddingBottom="8dp" />
+
+    <!-- Calendario -->
+    <com.prolificinteractive.materialcalendarview.MaterialCalendarView
+        android:id="@+id/calendarView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:mcv_showOtherDates="all"
+        app:mcv_firstDayOfWeek="monday"
+        app:mcv_selectionColor="@color/dark_red"
+        app:mcv_dateTextAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+    <!-- Subtítulo -->
+    <TextView
+        android:id="@+id/tvCharlasDia"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Charlas del día"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp" />
+
+    <!-- Lista de charlas -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerCharlasDia"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
+
+    <!-- Botón flotante para agregar -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAgregarCharla"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_margin="16dp"
+        android:contentDescription="Agregar charla"
+        app:srcCompat="@drawable/baseline_add_24"
+        app:backgroundTint="@color/dark_red" />
+
+</LinearLayout>

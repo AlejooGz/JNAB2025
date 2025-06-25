@@ -7,14 +7,21 @@ import com.example.jnab2025.models.Categoria
 
 class FiltroViewModel : ViewModel() {
 
-    private val _filtroSeleccionado = MutableLiveData<Categoria?>()
-    val filtroSeleccionado: LiveData<Categoria?> = _filtroSeleccionado
+    private val _filtrosSeleccionados = MutableLiveData<Set<Categoria>>(emptySet())
+    val filtrosSeleccionados: LiveData<Set<Categoria>> = _filtrosSeleccionados
 
-    fun aplicarFiltro(categoria: Categoria) {
-        _filtroSeleccionado.value = categoria
+    fun toggleFiltro(categoria: Categoria) {
+        val filtrosActuales = _filtrosSeleccionados.value ?: emptySet()
+        _filtrosSeleccionados.value =
+            if (filtrosActuales.contains(categoria)) {
+                filtrosActuales - categoria
+            } else {
+                filtrosActuales + categoria
+            }
     }
 
-    fun limpiarFiltro() {
-        _filtroSeleccionado.value = null
+    fun limpiarFiltros() {
+        _filtrosSeleccionados.value = emptySet()
     }
 }
+

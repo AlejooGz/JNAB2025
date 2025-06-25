@@ -26,7 +26,7 @@
         android:name="com.example.jnab2025.MainFragment"
         android:label="Inicio"
         tools:layout="@layout/fragment_main">
-        <action android:id="@+id/action_mainFragment_to_agendaFragment" app:destination="@id/agendaFragment" />
+        <action android:id="@+id/action_mainFragment_to_AgendaFragment" app:destination="@id/agendaFragment" />
         <action android:id="@+id/action_mainFragment_to_simposiosFragment" app:destination="@id/simposiosFragment" />
         <action android:id="@+id/action_mainFragment_to_novedadesFragment" app:destination="@id/novedadesFragment" />
         <action android:id="@+id/action_mainFragment_to_misSimposiosFragment" app:destination="@id/misSimposiosFragment" />
@@ -36,7 +36,20 @@
         <action android:id="@+id/action_mainFragment_to_mapsFragment" app:destination="@id/mapsFragment" />
         <action android:id="@+id/action_mainFragment_to_tramiteExpositorFragment2" app:destination="@id/simposiosTramiteFragment" />
         <action android:id="@+id/action_mainFragment_to_seguimientoTramiteFragment2" app:destination="@id/seguimientoTramiteFragment" />
+        <action android:id="@+id/action_mainFragment_to_FAQFragment" app:destination="@id/FAQFragment" />
     </fragment>
+
+
+
+    <!--
+
+
+        <fragment
+        android:id="@+id/miAgendaFragment"
+        android:name="com.example.jnab2025.ui.fragments.MiAgendaFragment"
+        android:label="Mi Agenda"
+        tools:layout="@layout/fragment_mi_agenda" />
+    -->
 
     <fragment
         android:id="@+id/agendaFragment"
@@ -200,6 +213,19 @@
     <action
         android:id="@+id/action_agendaFragment_to_charlaDetailFragment"
         app:destination="@id/charlaDetailFragment" />
+    <fragment
+        android:id="@+id/FAQFragment"
+        android:name="com.example.jnab2025.ui.fragments.FAQFragment"
+        android:label="FAQFragment" >
+        <action
+            android:id="@+id/action_FAQFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/faqFragment"
+        android:name="com.example.jnab2025.ui.fragments.FAQFragment"
+        android:label="Preguntas Frecuentes"
+        tools:layout="@layout/fragment_faq" />
 
 </navigation>
 
