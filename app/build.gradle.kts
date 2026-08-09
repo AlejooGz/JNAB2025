@@ -35,6 +35,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // El esquema nuevo usa LocalDate / LocalTime / Instant, que entraron en
+        // la API 26. Como el minSdk es 24, hace falta desugaring.
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -109,4 +112,7 @@ dependencies {
     // Kotlin Coroutines
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // java.time en minSdk 24
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
