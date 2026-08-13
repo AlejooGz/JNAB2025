@@ -1,10 +1,16 @@
 package com.example.jnab2025.data.local
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import com.example.jnab2025.data.local.dao.AgendaUsuarioDao
 import com.example.jnab2025.data.local.dao.CharlaDao
 import com.example.jnab2025.data.local.dao.ContenidoDao
@@ -68,18 +74,32 @@ abstract class JnabDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: JnabDatabase? = null
 
+        /** Vive lo que vive el proceso: solo lo usa el seed inicial. */
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         fun get(context: Context): JnabDatabase =
             INSTANCE ?: synchronized(this) {
-                INSTANCE ?: Room.databaseBuilder(
-                    context.applicationContext,
-                    JnabDatabase::class.java,
-                    "jnab.db"
-                )
-                    // Provisorio mientras el esquema se sigue moviendo. Antes de
-                    // entregar hay que reemplazarlo por migraciones de verdad.
-                    .fallbackToDestructiveMigration()
-                    .build()
-                    .also { INSTANCE = it }
+                INSTANCE ?: construir(context.applicationContext).also { INSTANCE = it }
             }
+
+        private fun construir(app: Context): JnabDatabase =
+            Room.databaseBuilder(app, JnabDatabase::class.java, "jnab.db")
+                .addCallback(object : Callback() {
+                    // Solo corre cuando Room crea el archivo por primera vez.
+                    // A diferencia del seed viejo, no se repite en cada arranque.
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        super.onCreate(db)
+                        scope.launch { poblar(app) }
+                    }
+                })
+                // Provisorio mientras el esquema se sigue moviendo. Antes de
+                // entregar hay que reemplazarlo por migraciones de verdad.
+                .fallbackToDestructiveMigration()
+                .build()
+
+        private suspend fun poblar(app: Context) {
+            runCatching { SeedJnab.poblar(get(app)) }
+                .onFailure { Log.e("JnabDatabase", "Fallo el seed inicial", it) }
+        }
     }
 }

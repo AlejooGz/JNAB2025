@@ -8,36 +8,29 @@ import android.widget.TextView
 import android.widget.Toast
 import android.util.Log
 import android.view.View
-import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
-import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.jnab2025.databinding.ActivityMainBinding
-import com.example.jnab2025.ui.fragments.LoginFragment
-import com.example.jnab2025.ui.viewmodels.SimposioViewModel
-import com.example.jnab2025.ui.viewmodels.CharlaViewModel
-import com.example.jnab2025.ui.viewmodels.UserViewModel
-import com.example.jnab2025.utils.SesionUsuario
+import com.example.jnab2025.utils.Sesion
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.example.jnab2025.data.SimposioFakeData
 import com.example.jnab2025.data.UserFakeData
 import com.example.jnab2025.data.CharlaFakeData
+import com.example.jnab2025.data.db.AppDatabase
+import com.example.jnab2025.data.local.JnabDatabase
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var toggle: ActionBarDrawerToggle
-
-    // Variables para la carga previa de simposios, charlas y usuarios de prueba
-    private val simposioViewModel: SimposioViewModel by viewModels()
-    private val charlaViewModel: CharlaViewModel by viewModels()
-    private val userViewModel: UserViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,18 +38,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Solo para pruebas: reinicia los datos al abrir la app (SimposioViewModel)
-        charlaViewModel.eliminarTodos()
-        simposioViewModel.eliminarTodos()
-        userViewModel.eliminarTodos()
-
-        val simposios = SimposioFakeData.getSimposiosDeEjemplo()
-        val users = UserFakeData.getUsersDeEjemplo()
-        val charlas = CharlaFakeData.getCharlasDeEjemplo()
-
-        simposioViewModel.insertarTodos(simposios)
-        userViewModel.insertarTodos(users)
-        charlaViewModel.insertarTodos(charlas)
+        prepararDatos()
 
         // Configurar Toolbar
         setSupportActionBar(binding.toolbar)
@@ -75,20 +57,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // Listener para los ítems del NavigationView
         binding.navView.setNavigationItemSelectedListener(this)
 
-        // Mostrar el nombre del usuario logueado en el header
-        val headerView = binding.navView.getHeaderView(0)
-        val usernameTextView = headerView.findViewById<TextView>(R.id.tvDrawerUsername)
-
-        val sharedPref = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val username = sharedPref.getString("username", "Invitado")
-        usernameTextView.text = username
-
-        val isLoggedIn = !sharedPref.getString("username", null).isNullOrEmpty()
-        Log.d("DEBUG", "Username: $username")
-        Log.d("DEBUG", "isLoggedIn: $isLoggedIn")
-
-        // Configurar visibilidad del menú según el rol
-        configurarMenuPorRol()
+        // Mostrar el nombre del usuario logueado y el menú que le corresponde
+        refrescarSesionEnUi()
 
         // Configurar navegación con BottomNavigationView
         binding.navHostFragment.post {
@@ -110,6 +80,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         binding.navView.visibility = View.VISIBLE
                         bottomNav.visibility = View.VISIBLE
                         binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+                        // Al salir del login la sesión recién existe: hay que
+                        // rearmar el menú sin reiniciar la Activity.
+                        refrescarSesionEnUi()
                     }
                 }
             }
@@ -125,26 +98,39 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         */
     }
 
-    private fun configurarMenuPorRol() {
-        val rol = SesionUsuario.obtenerRol(this)
-        Log.d("DEBUG", "Rol del usuario en MainActivity: $rol")
+    /**
+     * Siembra la base vieja una sola vez (las pantallas sin migrar todavía la
+     * usan) y fuerza la creación de la base nueva para que corra su seed.
+     *
+     * Antes esto borraba y reinsertaba todo en cada arranque, con seis corrutinas
+     * sin orden garantizado: se perdían los datos del usuario y podía fallar por
+     * foreign key. Ahora es secuencial y sólo corre si está vacía.
+     */
+    private fun prepararDatos() {
+        lifecycleScope.launch {
+            val vieja = AppDatabase.getDatabase(this@MainActivity)
+            if (vieja.userDao().obtenerTodos().isEmpty()) {
+                vieja.userDao().insertarTodos(UserFakeData.getUsersDeEjemplo())
+                vieja.simposioDao().insertarTodos(SimposioFakeData.getSimposiosDeEjemplo())
+                vieja.charlaDao().insertarTodos(CharlaFakeData.getCharlasDeEjemplo())
+            }
+
+            // La primera consulta crea jnab.db y dispara SeedJnab.
+            JnabDatabase.get(this@MainActivity).eventoDao().actual()
+        }
+    }
+
+    private fun refrescarSesionEnUi() {
+        val headerView = binding.navView.getHeaderView(0)
+        headerView.findViewById<TextView>(R.id.tvDrawerUsername).text = Sesion.nombre(this)
 
         val navMenu = binding.navView.menu
-
-        // Ocultar todos los grupos primero
-        navMenu.setGroupVisible(R.id.group_expositor, false)
-        navMenu.setGroupVisible(R.id.group_admin, false)
-        navMenu.setGroupVisible(R.id.group_asistente, false)
-
-        // Mostrar el grupo correspondiente al rol
-        when {
-            SesionUsuario.esExpositor(this) -> navMenu.setGroupVisible(R.id.group_expositor, true)
-            SesionUsuario.esOrganizador(this) -> navMenu.setGroupVisible(R.id.group_admin, true)
-            SesionUsuario.esAsistente(this) -> navMenu.setGroupVisible(R.id.group_asistente, true)
-        }
-
-        // Mostrar siempre Simposios
+        navMenu.setGroupVisible(R.id.group_expositor, Sesion.esExpositor(this))
+        navMenu.setGroupVisible(R.id.group_admin, Sesion.esOrganizador(this))
+        navMenu.setGroupVisible(R.id.group_asistente, Sesion.esAsistente(this))
         navMenu.findItem(R.id.nav_simposios)?.isVisible = true
+
+        Log.d("Sesion", "usuario=${Sesion.usuarioId(this)} roles=${Sesion.roles(this)}")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -174,8 +160,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
             }
             R.id.nav_logout -> {
-                val sharedPref = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                sharedPref.edit().clear().apply()
+                Sesion.cerrar(this)
+                // Las pantallas sin migrar todavía leen de acá.
+                getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+                    .edit().clear().apply()
 
                 // Navegar al login usando la acción global
                 findNavController(R.id.nav_host_fragment).navigate(
