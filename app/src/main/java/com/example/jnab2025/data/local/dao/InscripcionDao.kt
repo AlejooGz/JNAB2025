@@ -2,6 +2,7 @@ package com.example.jnab2025.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.jnab2025.data.model.ComprobantePago
@@ -23,10 +24,17 @@ interface InscripcionDao {
     @Query("SELECT * FROM inscripcion WHERE usuarioId = :usuarioId AND eventoId = :eventoId")
     suspend fun de(usuarioId: Long, eventoId: Long): Inscripcion?
 
+    @Query("SELECT * FROM inscripcion WHERE usuarioId = :usuarioId AND eventoId = :eventoId")
+    fun observar(usuarioId: Long, eventoId: Long): Flow<Inscripcion?>
+
+    @Query("SELECT * FROM comprobante_pago WHERE inscripcionId = :inscripcionId")
+    fun observarComprobante(inscripcionId: Long): Flow<ComprobantePago?>
+
     @Query("UPDATE inscripcion SET estado = :estado WHERE id = :inscripcionId")
     suspend fun cambiarEstado(inscripcionId: Long, estado: EstadoInscripcion)
 
-    @Insert
+    /** REPLACE porque hay un unico comprobante por inscripcion: si sube otro, pisa el anterior. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarComprobante(comprobante: ComprobantePago): Long
 
     @Query("SELECT * FROM comprobante_pago WHERE inscripcionId = :inscripcionId")

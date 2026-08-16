@@ -1,41 +1,55 @@
 package com.example.jnab2025.ui.fragments
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
-import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.databinding.FragmentCargarComprobanteBinding
-import com.example.jnab2025.ui.viewmodels.CharlaViewModel
+import com.example.jnab2025.ui.viewmodels.InscripcionViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
+/**
+ * Carga del comprobante de pago. Ya no recibe argumentos: el comprobante cuelga
+ * de la inscripcion del usuario logueado, no de un trabajo. Eso elimina de raiz
+ * el bug de la clave de bundle que hacia fallar la navegacion.
+ */
 class CargarComprobanteFragment : Fragment() {
 
     private var _binding: FragmentCargarComprobanteBinding? = null
     private val binding get() = _binding!!
 
-    private val charlaViewModel: CharlaViewModel by activityViewModels()
+    private val viewModel: InscripcionViewModel by viewModels()
 
     private var archivoUri: Uri? = null
-    private var nombreArchivo = ""
+    private var nombreArchivo: String? = null
 
-    private val seleccionarArchivoLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            archivoUri = result.data?.data
-            archivoUri?.let { uri ->
-                nombreArchivo = obtenerNombreArchivo(uri)
-                binding.tvArchivoSeleccionado.text = "Archivo seleccionado: $nombreArchivo"
-            }
+    private val elegirArchivo = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+
+        runCatching {
+            requireContext().contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
         }
+
+        archivoUri = uri
+        nombreArchivo = nombreDe(uri)
+        binding.tvArchivoSeleccionado.text = "Archivo: $nombreArchivo"
     }
 
     override fun onCreateView(
@@ -47,42 +61,48 @@ class CargarComprobanteFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val tramiteId = requireArguments().getInt("tramiteId")
-        val titulo = requireArguments().getString("tituloTrabajo")
-        binding.tvTituloTrabajo.text = "Trabajo: $titulo"
-
-        val charla = charlaViewModel.charlas.value?.find { it.id == tramiteId }
+        super.onViewCreated(view, savedInstanceState)
 
         binding.btnSeleccionarArchivo.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"
-                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "image/*"))
-            }
-            seleccionarArchivoLauncher.launch(intent)
+            elegirArchivo.launch(arrayOf("application/pdf", "image/*"))
         }
 
         binding.btnEnviarComprobante.setOnClickListener {
-            val nombre = binding.etNombre.text.toString()
-            val apellido = binding.etApellido.text.toString()
+            viewModel.cargarComprobante(archivoUri?.toString(), nombreArchivo)
+        }
 
-            if (nombre.isBlank() || apellido.isBlank() || archivoUri == null || charla == null) {
-                Toast.makeText(requireContext(), "Completá todos los campos y subí el archivo", Toast.LENGTH_SHORT).show()
-            } else {
-                charlaViewModel.marcarComoPagada(charla)
-                Toast.makeText(requireContext(), "Comprobante enviado", Toast.LENGTH_SHORT).show()
-                findNavController().navigateUp()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.vista.collectLatest { vista ->
+                        val inscripcion = vista.inscripcion
+                        binding.tvDetalle.text = if (inscripcion == null) {
+                            "Primero tenes que inscribirte al evento."
+                        } else {
+                            val tipo = inscripcion.tipo.name.lowercase()
+                            "Inscripcion de $tipo por $${inscripcion.monto.toInt()}"
+                        }
+                        binding.btnEnviarComprobante.isEnabled = inscripcion != null
+                    }
+                }
+                launch {
+                    viewModel.avisos.collectLatest { aviso ->
+                        Toast.makeText(requireContext(), aviso, Toast.LENGTH_LONG).show()
+                        if (aviso.startsWith("Comprobante enviado")) {
+                            findNavController().popBackStack()
+                        }
+                    }
+                }
             }
         }
     }
 
-    private fun obtenerNombreArchivo(uri: Uri): String {
+    private fun nombreDe(uri: Uri): String {
         val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
         return cursor?.use {
-            val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            it.moveToFirst()
-            it.getString(nameIndex)
-        } ?: "archivo.pdf"
+            val indice = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (indice >= 0 && it.moveToFirst()) it.getString(indice) else null
+        } ?: "comprobante"
     }
 
     override fun onDestroyView() {

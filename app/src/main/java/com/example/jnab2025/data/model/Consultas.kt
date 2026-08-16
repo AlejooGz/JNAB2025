@@ -33,7 +33,9 @@ data class TrabajoConEstado(
     val fecha: LocalDate?,
     val horaInicio: LocalTime?,
     val aula: String?,
-    val inscripcionPagada: Boolean
+    val inscripcionPagada: Boolean,
+    /** Ya subio el comprobante, aunque la organizacion todavia no lo haya verificado. */
+    val comprobanteEnviado: Boolean
 )
 
 /** Un simposio con el aula donde se dicta, listo para listar. */

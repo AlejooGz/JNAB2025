@@ -83,7 +83,13 @@ interface TrabajoDao {
                    WHERE i.usuarioId = t.autorId
                      AND i.eventoId = s.eventoId
                      AND i.estado = :estadoPagada
-               )                AS inscripcionPagada
+               )                AS inscripcionPagada,
+               EXISTS(
+                   SELECT 1 FROM inscripcion i
+                   JOIN comprobante_pago cp ON cp.inscripcionId = i.id
+                   WHERE i.usuarioId = t.autorId
+                     AND i.eventoId = s.eventoId
+               )                AS comprobanteEnviado
         FROM trabajo t
         JOIN simposio s ON s.id = t.simposioId
         LEFT JOIN charla c ON c.trabajoId = t.id

@@ -231,11 +231,10 @@ object SeedJnab {
             inscripcion(alejo, eventoId, TipoInscripcion.ESTUDIANTE, EstadoInscripcion.PAGADA)
         )
         inscripciones.insertar(
-            inscripcion(luciana, eventoId, TipoInscripcion.ASISTENTE, EstadoInscripcion.PAGADA)
+            inscripcion(luciana, eventoId, TipoInscripcion.ASISTENTE, EstadoInscripcion.PENDIENTE_PAGO)
         )
-        inscripciones.insertar(
-            inscripcion(santiago, eventoId, TipoInscripcion.ASISTENTE, EstadoInscripcion.PENDIENTE_PAGO)
-        )
+        // Santiago queda sin inscripcion a proposito, para poder probar el
+        // circuito completo desde cero: inscribirse y despues pagar.
 
         // ---------- agenda de ejemplo ----------
         agenda.agregar(AgendaUsuario(alejo, c1, 15, Instant.parse("2025-05-01T10:00:00Z")))

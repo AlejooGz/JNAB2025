@@ -14,7 +14,8 @@ import com.example.jnab2025.data.model.TrabajoConEstado
 import java.time.format.DateTimeFormatter
 
 class MisTrabajosAdapter(
-    private val onClick: (TrabajoConEstado) -> Unit
+    private val onClick: (TrabajoConEstado) -> Unit,
+    private val onPagoClick: () -> Unit
 ) : ListAdapter<TrabajoConEstado, MisTrabajosAdapter.ItemViewHolder>(Diff()) {
 
     private val formatoFecha = DateTimeFormatter.ofPattern("dd/MM")
@@ -71,8 +72,20 @@ class MisTrabajosAdapter(
 
             // El pago es de la persona, no del trabajo: el aviso es el mismo
             // en todos sus trabajos.
-            pago.visibility = if (trabajo.inscripcionPagada) View.GONE else View.VISIBLE
-            pago.text = "Tu inscripcion figura impaga"
+            when {
+                trabajo.inscripcionPagada -> pago.visibility = View.GONE
+
+                trabajo.comprobanteEnviado -> {
+                    pago.visibility = View.VISIBLE
+                    pago.text = "Comprobante enviado, esperando verificacion"
+                }
+
+                else -> {
+                    pago.visibility = View.VISIBLE
+                    pago.text = "Tu inscripcion figura impaga. Toca para pagarla"
+                }
+            }
+            pago.setOnClickListener { onPagoClick() }
 
             itemView.setOnClickListener { onClick(trabajo) }
         }

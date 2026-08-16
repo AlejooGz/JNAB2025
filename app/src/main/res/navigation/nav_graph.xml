@@ -158,8 +158,8 @@
             android:id="@+id/action_seguimientoTramiteFragment_to_editarTramiteFragment"
             app:destination="@id/editarTramiteFragment" />
         <action
-            android:id="@+id/action_seguimientoTramiteFragment_to_cargarComprobanteFragment"
-            app:destination="@id/cargarComprobanteFragment" />
+            android:id="@+id/action_seguimientoTramiteFragment_to_inscripcionFragment"
+            app:destination="@id/inscripcionFragment" />
     </fragment>
 
     <fragment
@@ -178,14 +178,7 @@
     <fragment
         android:id="@+id/cargarComprobanteFragment"
         android:name="com.example.jnab2025.ui.fragments.CargarComprobanteFragment"
-        android:label="Cargar Comprobante">
-        <argument
-            android:name="tramiteId"
-            app:argType="integer" />
-        <argument
-            android:name="tituloTrabajo"
-            app:argType="string" />
-    </fragment>
+        android:label="Cargar Comprobante" />
 
     <fragment
         android:id="@+id/editarTramiteFragment"

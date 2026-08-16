@@ -10,7 +10,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentSeguimientoTramiteBinding
 import com.example.jnab2025.ui.adapters.MisTrabajosAdapter
 import com.example.jnab2025.ui.viewmodels.MisTrabajosViewModel
@@ -50,9 +52,17 @@ class SeguimientoTramiteFragment : Fragment() {
             return
         }
 
-        adapter = MisTrabajosAdapter { trabajo ->
-            Toast.makeText(requireContext(), trabajo.titulo, Toast.LENGTH_SHORT).show()
-        }
+        adapter = MisTrabajosAdapter(
+            onClick = { trabajo ->
+                Toast.makeText(requireContext(), trabajo.titulo, Toast.LENGTH_SHORT).show()
+            },
+            // El aviso de inscripcion impaga lleva a la pantalla donde se paga.
+            onPagoClick = {
+                findNavController().navigate(
+                    R.id.action_seguimientoTramiteFragment_to_inscripcionFragment
+                )
+            }
+        )
         binding.recyclerViewTramites.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewTramites.adapter = adapter
 
