@@ -1,60 +1,65 @@
 package com.example.jnab2025.ui.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.jnab2025.R
-import com.example.jnab2025.databinding.FragmentSimposioBinding
-import com.example.jnab2025.ui.adapters.SimposioTramiteAdapter
-import com.example.jnab2025.ui.viewmodels.SimposioViewModel
-import kotlin.getValue
+import com.example.jnab2025.databinding.FragmentElegirSimposioBinding
+import com.example.jnab2025.ui.adapters.SimposioPickerAdapter
+import com.example.jnab2025.ui.viewmodels.EnviarTrabajoViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
+/** Primer paso del envio: elegir a que simposio va el trabajo. */
 class SimposioTramiteFragment : Fragment() {
-    private var _binding: FragmentSimposioBinding? = null
+
+    private var _binding: FragmentElegirSimposioBinding? = null
     private val binding get() = _binding!!
 
-    // private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: SimposioTramiteAdapter
-    private val simposioViewModel: SimposioViewModel by viewModels()
+    private val viewModel: EnviarTrabajoViewModel by viewModels()
+    private lateinit var adapter: SimposioPickerAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?)
-            : View {
-        // return inflater.inflate(R.layout.fragment_simposio, container, false)
-        _binding = FragmentSimposioBinding.inflate(inflater, container, false)
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentElegirSimposioBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.rvEventos.layoutManager = LinearLayoutManager(requireContext())
-
-        adapter = SimposioTramiteAdapter(emptyList()) { simposioId ->
-            // Acción por defecto al iniciar: podrías dejarlo vacío o con un Toast
+        adapter = SimposioPickerAdapter { simposio ->
+            val accion = SimposioTramiteFragmentDirections
+                .actionSimposiosTramiteFragmentToTramiteExpositorFragment(simposio.id)
+            findNavController().navigate(accion)
         }
-        binding.rvEventos.adapter = adapter
+        binding.rvSimposios.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvSimposios.adapter = adapter
 
-        simposioViewModel.simposios.observe(viewLifecycleOwner, Observer { simposios ->
-            adapter = SimposioTramiteAdapter(simposios) { simposioId ->
-                val action = SimposioTramiteFragmentDirections
-                    .actionSimposiosTramiteFragmentToTramiteExpositorFragment(simposioId)
-                findNavController().navigate(action)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.simposios.collectLatest { simposios ->
+                    adapter.submitList(simposios)
+                    binding.tvVacio.visibility =
+                        if (simposios.isEmpty()) View.VISIBLE else View.GONE
+                }
             }
-            binding.rvEventos.adapter = adapter
-        })
+        }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.rvSimposios.adapter = null
         _binding = null
     }
 }

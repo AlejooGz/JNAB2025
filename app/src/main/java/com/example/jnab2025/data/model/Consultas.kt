@@ -36,6 +36,19 @@ data class TrabajoConEstado(
     val inscripcionPagada: Boolean
 )
 
+/** Un simposio con el aula donde se dicta, listo para listar. */
+data class SimposioConAula(
+    val id: Long,
+    val titulo: String,
+    val descripcion: String,
+    val temaCentral: String,
+    val fechaInicio: LocalDate,
+    val fechaFin: LocalDate,
+    val aula: String,
+    val edificio: String,
+    val piso: Int
+)
+
 /** Una propuesta pendiente tal como la ve el organizador. */
 data class PropuestaPendiente(
     val trabajoId: Long,

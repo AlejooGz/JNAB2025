@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.example.jnab2025.data.model.Aula
 import com.example.jnab2025.data.model.Simposio
+import com.example.jnab2025.data.model.SimposioConAula
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -40,6 +41,26 @@ interface SimposioDao {
 
     @Query("SELECT * FROM aula WHERE id = (SELECT aulaId FROM simposio WHERE id = :simposioId)")
     suspend fun aulaDe(simposioId: Long): Aula?
+
+    /** Los simposios del evento con el aula ya resuelta, para listarlos. */
+    @Query(
+        """
+        SELECT s.id          AS id,
+               s.titulo      AS titulo,
+               s.descripcion AS descripcion,
+               s.temaCentral AS temaCentral,
+               s.fechaInicio AS fechaInicio,
+               s.fechaFin    AS fechaFin,
+               a.nombre      AS aula,
+               a.edificio    AS edificio,
+               a.piso        AS piso
+        FROM simposio s
+        JOIN aula a ON a.id = s.aulaId
+        WHERE s.eventoId = :eventoId
+        ORDER BY s.fechaInicio, s.titulo
+        """
+    )
+    fun conAula(eventoId: Long): Flow<List<SimposioConAula>>
 
     /**
      * Otros simposios que ya ocupan esa aula con fechas que se pisan.

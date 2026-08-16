@@ -1,34 +1,37 @@
-// === 1. SeguimientoTramiteFragment.kt ===
-// Reemplazado para usar CharlaViewModel
-
 package com.example.jnab2025.ui.fragments
 
-import android.content.Context
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentSeguimientoTramiteBinding
-import com.example.jnab2025.models.EstadoPropuesta
-import com.example.jnab2025.ui.adapters.CharlaExpositorAdapter
-import com.example.jnab2025.ui.viewmodels.CharlaViewModel
+import com.example.jnab2025.ui.adapters.MisTrabajosAdapter
+import com.example.jnab2025.ui.viewmodels.MisTrabajosViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
+/**
+ * Seguimiento de los trabajos del expositor. Los datos salen de una sola
+ * consulta que ya trae el estado, la programacion y si la inscripcion esta paga.
+ */
 class SeguimientoTramiteFragment : Fragment() {
 
     private var _binding: FragmentSeguimientoTramiteBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var adapter: CharlaExpositorAdapter
-    private val charlaViewModel: CharlaViewModel by viewModels()
+    private val viewModel: MisTrabajosViewModel by viewModels()
+    private lateinit var adapter: MisTrabajosAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSeguimientoTramiteBinding.inflate(inflater, container, false)
@@ -36,45 +39,33 @@ class SeguimientoTramiteFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        charlaViewModel.charlas.observe(viewLifecycleOwner) { charlas ->
-            val sharedPref = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-            val userId = sharedPref.getInt("usuario_id", -1)
+        super.onViewCreated(view, savedInstanceState)
 
-            val delExpositor = if (userId != -1) {
-                charlas.filter { it.expositorId == userId }.sortedBy { it.pagado }
-            } else {
-                emptyList()
+        if (!viewModel.haySesion) {
+            Toast.makeText(
+                requireContext(),
+                "Inicia sesion para ver tus trabajos",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        adapter = MisTrabajosAdapter { trabajo ->
+            Toast.makeText(requireContext(), trabajo.titulo, Toast.LENGTH_SHORT).show()
+        }
+        binding.recyclerViewTramites.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerViewTramites.adapter = adapter
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.trabajos.collectLatest { adapter.submitList(it) }
             }
-
-            adapter = CharlaExpositorAdapter(
-                charlas = delExpositor,
-                onItemClick = { charla ->
-                    val bundle = Bundle().apply {
-                        putInt("tramiteId", charla.id)
-                        putString("tituloTrabajo", charla.titulo)
-                    }
-                    when (charla.estado) {
-                        EstadoPropuesta.PENDIENTE -> findNavController().navigate(R.id.editarTramiteFragment, bundle)
-                        EstadoPropuesta.APROBADA -> findNavController().navigate(R.id.cargarComprobanteFragment, bundle)
-                        else -> Toast.makeText(requireContext(), "Esta charla no puede ser modificada", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                onSubirComprobanteClick = { charla ->
-                    val bundle = Bundle().apply {
-                        putInt("charlaId", charla.id)
-                        putString("tituloTrabajo", charla.titulo)
-                    }
-                    findNavController().navigate(R.id.cargarComprobanteFragment, bundle)
-                }
-            )
-
-            binding.recyclerViewTramites.layoutManager = LinearLayoutManager(requireContext())
-            binding.recyclerViewTramites.adapter = adapter
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.recyclerViewTramites.adapter = null
         _binding = null
     }
 }

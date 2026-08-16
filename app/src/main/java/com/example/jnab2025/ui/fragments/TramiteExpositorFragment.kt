@@ -1,12 +1,9 @@
 package com.example.jnab2025.ui.fragments
 
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,38 +11,53 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.NavOptions
+import androidx.navigation.fragment.navArgs
 import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentTramiteExpositorBinding
-import com.example.jnab2025.models.Charla
-import com.example.jnab2025.models.EstadoPropuesta
-import com.example.jnab2025.ui.viewmodels.CharlaViewModel
+import com.example.jnab2025.ui.viewmodels.EnviarTrabajoViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class TramiteExpositorFragment : Fragment() {
 
     private var _binding: FragmentTramiteExpositorBinding? = null
     private val binding get() = _binding!!
 
-    private val charlaViewModel: CharlaViewModel by viewModels()
+    private val viewModel: EnviarTrabajoViewModel by viewModels()
+    private val args: TramiteExpositorFragmentArgs by navArgs()
 
-    private var archivoSeleccionadoUri: Uri? = null
-    private var nombreArchivoSeleccionado: String = "Sin archivo"
+    private var archivoUri: Uri? = null
+    private var nombreArchivo: String? = null
 
-    private val seleccionarArchivoLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            archivoSeleccionadoUri = result.data?.data
-            archivoSeleccionadoUri?.let { uri ->
-                nombreArchivoSeleccionado = obtenerNombreArchivo(uri)
-                binding.tvArchivoSeleccionado.text = "Archivo: $nombreArchivoSeleccionado"
-            }
+    /**
+     * OpenDocument en lugar de un Intent suelto: devuelve un URI al que se le
+     * puede pedir permiso persistente, para que el PDF siga siendo accesible
+     * despues de cerrar la app. Antes solo se guardaba el nombre del archivo.
+     */
+    private val elegirPdf = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+
+        runCatching {
+            requireContext().contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
         }
+
+        archivoUri = uri
+        nombreArchivo = nombreDe(uri)
+        binding.tvArchivoSeleccionado.text = "Archivo: $nombreArchivo"
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTramiteExpositorBinding.inflate(inflater, container, false)
@@ -53,77 +65,50 @@ class TramiteExpositorFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         binding.btnSeleccionarArchivo.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-            intent.addCategory(Intent.CATEGORY_OPENABLE)
-            intent.type = "application/pdf"
-            seleccionarArchivoLauncher.launch(intent)
+            elegirPdf.launch(arrayOf("application/pdf"))
         }
 
         binding.btnEnviarTramite.setOnClickListener {
-            val titulo = binding.etTituloTrabajo.text.toString()
-            val resumen = binding.etResumenTrabajo.text.toString()
+            viewModel.enviar(
+                simposioId = args.simposioId,
+                titulo = binding.etTituloTrabajo.text.toString(),
+                resumen = binding.etResumenTrabajo.text.toString(),
+                archivoUri = archivoUri?.toString(),
+                nombreArchivo = nombreArchivo
+            )
+        }
 
-            if (titulo.isBlank() || resumen.isBlank() || archivoSeleccionadoUri == null) {
-                Toast.makeText(requireContext(), "Completá todos los campos y seleccioná un archivo", Toast.LENGTH_SHORT).show()
-            } else {
-                val simposioId = arguments?.getInt("simposioId") ?: -1
-                if (simposioId == -1) {
-                    Toast.makeText(requireContext(), "Error al obtener el simposio", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.envios.collectLatest { envio ->
+                    when (envio) {
+                        EnviarTrabajoViewModel.Envio.Ok -> {
+                            avisar("Trabajo enviado")
+                            findNavController().navigate(
+                                R.id.action_tramiteExpositorFragment_to_seguimientoTramiteFragment2
+                            )
+                        }
+
+                        is EnviarTrabajoViewModel.Envio.Error -> avisar(envio.mensaje)
+                    }
                 }
-
-                val sharedPref = requireContext().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                // val allPrefs = sharedPref.all
-                // Log.d("SharedPrefsDebug", "Contenido actual: $allPrefs")
-
-                // val sharedPref = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-                val expositorId = sharedPref.getInt("usuario_id", -1)
-
-                if (expositorId == -1) {
-                    Toast.makeText(requireContext(), "Error al obtener el usuario", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                val nuevaCharla = Charla(
-                    id = 0,
-                    titulo = titulo,
-                    descripcion = resumen,
-                    nombreArchivo = nombreArchivoSeleccionado,
-                    fechaEnvio = "24/06/2024",
-                    estado = EstadoPropuesta.PENDIENTE,
-                    motivoRechazo = "",
-                    pagado = false,
-                    sala = "",
-                    horaInicio = "",
-                    horaFin = "",
-                    esFavorito = false,
-                    simposioId = simposioId,
-                    expositorId = expositorId,  // TODO: reemplazar con el expositor logueado
-                )
-
-                charlaViewModel.crearCharla(nuevaCharla)
-
-                Toast.makeText(requireContext(), "Charla enviada correctamente", Toast.LENGTH_SHORT).show()
-
-                findNavController().navigate(
-                    R.id.seguimientoTramiteFragment,
-                    null,
-                    NavOptions.Builder()
-                        .setPopUpTo(R.id.mainFragment, false)
-                        .build()
-                )
             }
         }
     }
 
-    private fun obtenerNombreArchivo(uri: Uri): String {
+    private fun nombreDe(uri: Uri): String {
         val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
         return cursor?.use {
-            val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            it.moveToFirst()
-            it.getString(nameIndex)
-        } ?: "archivo.pdf"
+            val indice = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (indice >= 0 && it.moveToFirst()) it.getString(indice) else null
+        } ?: "trabajo.pdf"
+    }
+
+    private fun avisar(mensaje: String) {
+        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {

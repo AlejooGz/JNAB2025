@@ -67,11 +67,7 @@
         android:label="Simposios">
         <action
             android:id="@+id/actionSimposiosTramiteFragment_to_tramiteExpositorFragment"
-            app:destination="@id/tramiteExpositorFragment">
-            <argument
-                android:name="simposioId"
-                app:argType="integer" />
-        </action>
+            app:destination="@id/tramiteExpositorFragment" />
     </fragment>
 
     <fragment
@@ -146,6 +142,9 @@
         android:id="@+id/tramiteExpositorFragment"
         android:name="com.example.jnab2025.ui.fragments.TramiteExpositorFragment"
         android:label="Trámite Expositor" >
+        <argument
+            android:name="simposioId"
+            app:argType="long" />
         <action
             android:id="@+id/action_tramiteExpositorFragment_to_seguimientoTramiteFragment2"
             app:destination="@id/seguimientoTramiteFragment" />
