@@ -1,108 +1,150 @@
 package com.example.jnab2025.ui.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.jnab2025.R
-import com.example.jnab2025.databinding.FragmentCharlaBinding
-import com.example.jnab2025.models.User
-import com.example.jnab2025.ui.adapters.CharlaAdapter
-import com.example.jnab2025.ui.fragments.CharlaFragment
-import com.example.jnab2025.ui.viewmodels.CharlaViewModel
-import com.example.jnab2025.ui.viewmodels.UserViewModel
-import kotlin.getValue
+import com.example.jnab2025.databinding.FragmentCronogramaBinding
+import com.example.jnab2025.ui.adapters.CronogramaAdapter
+import com.example.jnab2025.ui.viewmodels.CronogramaViewModel
+import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
+/**
+ * Cronograma del congreso, dia por dia. Reemplaza a la pantalla que leia de la
+ * base vieja y que nunca llegaba a mostrar nada porque su observador no se
+ * disparaba.
+ */
 class AgendaFragment : Fragment() {
-    private var _binding: FragmentCharlaBinding? = null
+
+    private var _binding: FragmentCronogramaBinding? = null
     private val binding get() = _binding!!
 
-    // ViewModel
-    private val viewModel: CharlaViewModel by viewModels()
-    private val userViewModel: UserViewModel by viewModels()
+    private val viewModel: CronogramaViewModel by viewModels()
+    private lateinit var adapter: CronogramaAdapter
 
-    private lateinit var adapter: CharlaAdapter
+    /** Evita que seleccionar la pestania por codigo dispare el listener. */
+    private var actualizandoTabs = false
+
+    private val formatoDia = DateTimeFormatter.ofPattern("EEE d/MM", Locale("es", "AR"))
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentCharlaBinding.inflate(inflater, container, false)
+        _binding = FragmentCronogramaBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        userViewModel.usuarios.observe(viewLifecycleOwner) { usuarios ->
-            configurarRecyclerView(usuarios)
-            configurarObservadores() // ✅ Solo después de crear el adapter
-            viewModel.cargarTodasLasCharlas()
-        }
-        configurarListeners()
+        configurarLista()
+        configurarTabs()
+        configurarFiltro()
+        observar()
     }
 
-    private fun configurarRecyclerView(usuarios: List<User>) {
-        adapter = CharlaAdapter(
-            charlas = emptyList(),
-            usuarios = usuarios,
-            onFavoritoClick = { charla ->
-                viewModel.toggleFavorito(charla)
-            },
-            onItemClick = { charla ->
-                val action = AgendaFragmentDirections
-                    .actionAgendaFragmentToCharlaDetailFragment(charla.id)
-                findNavController().navigate(action)
+    private fun configurarLista() {
+        adapter = CronogramaAdapter(
+            onAgendaClick = { viewModel.alternarAgenda(it) },
+            onItemClick = { item ->
+                Toast.makeText(requireContext(), item.titulo, Toast.LENGTH_SHORT).show()
             }
         )
-
-        binding.rvEventos.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = this@AgendaFragment.adapter
-        }
+        binding.rvCronograma.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvCronograma.adapter = adapter
     }
 
-    private fun configurarObservadores() {
-        // Observar cambios en la lista de charlas
-        viewModel.charlas.observe(viewLifecycleOwner) { charlas ->
-            adapter.actualizarCharlas(charlas)
-        }
+    private fun configurarTabs() {
+        binding.tabsDias.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                if (actualizandoTabs) return
+                (tab.tag as? LocalDate)?.let { viewModel.seleccionarDia(it) }
+            }
 
-        // Observar mensajes
-        viewModel.mensaje.observe(viewLifecycleOwner) { mensaje ->
-            if (mensaje.isNotEmpty()) {
-                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
-                viewModel.limpiarMensaje()
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
+        })
+    }
+
+    private fun configurarFiltro() {
+        binding.fabSoloAgenda.setOnClickListener { viewModel.alternarSoloMiAgenda() }
+    }
+
+    private fun observar() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+
+                launch {
+                    viewModel.dias.collectLatest { dias -> pintarTabs(dias) }
+                }
+
+                launch {
+                    viewModel.items.collectLatest { items ->
+                        adapter.submitList(items)
+                        binding.tvVacio.visibility =
+                            if (items.isEmpty()) View.VISIBLE else View.GONE
+                    }
+                }
+
+                launch {
+                    viewModel.soloMiAgenda.collectLatest { solo ->
+                        binding.fabSoloAgenda.setImageResource(
+                            if (solo) android.R.drawable.btn_star_big_on
+                            else android.R.drawable.btn_star_big_off
+                        )
+                        binding.tvTitulo.text = if (solo) "Mi agenda" else "Cronograma"
+                        binding.tvVacio.text = if (solo) {
+                            "Todavia no agendaste nada de este dia"
+                        } else {
+                            "No hay actividades para mostrar"
+                        }
+                    }
+                }
+
+                launch {
+                    viewModel.avisos.collectLatest { aviso ->
+                        Toast.makeText(requireContext(), aviso, Toast.LENGTH_LONG).show()
+                    }
+                }
             }
         }
-
-        // Observar estado del filtro (opcional, por si quieres cambiar el icono del FAB)
-        viewModel.mostrandoSoloFavoritos.observe(viewLifecycleOwner) { soloFavoritos ->
-            // Aquí podrías cambiar el icono del FAB si quisieras
-            // Por ejemplo:
-            // val iconResource = if (soloFavoritos) {
-            //     android.R.drawable.ic_menu_sort_alphabetically
-            // } else {
-            //     android.R.drawable.ic_menu_sort_by_size
-            // }
-            // binding.fabFiltrar.setImageResource(iconResource)
-        }
     }
 
-    private fun configurarListeners() {
-        binding.fabFiltrar.setOnClickListener {
-            viewModel.toggleFiltroFavoritos()
+    private fun pintarTabs(dias: List<LocalDate>) {
+        if (dias.isEmpty()) return
+
+        val yaEstan = (0 until binding.tabsDias.tabCount)
+            .mapNotNull { binding.tabsDias.getTabAt(it)?.tag as? LocalDate }
+        if (yaEstan == dias) return
+
+        actualizandoTabs = true
+        binding.tabsDias.removeAllTabs()
+        dias.forEach { dia ->
+            val tab = binding.tabsDias.newTab()
+                .setText(dia.format(formatoDia).replaceFirstChar { it.uppercase() })
+            tab.tag = dia
+            binding.tabsDias.addTab(tab, dia == viewModel.dia.value)
         }
+        actualizandoTabs = false
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.rvCronograma.adapter = null
         _binding = null
     }
 }

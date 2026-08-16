@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="3dp"
+    app:cardBackgroundColor="@color/cream">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Columna de horario -->
+        <TextView
+            android:id="@+id/tvHoraInicio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/dark_red"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="14:00" />
+
+        <TextView
+            android:id="@+id/tvHoraFin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/dusty_rose"
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvHoraInicio"
+            tools:text="14:30" />
+
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/barrierHora"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="end"
+            app:constraint_referenced_ids="tvHoraInicio,tvHoraFin" />
+
+        <!-- Contenido -->
+        <TextView
+            android:id="@+id/tvTitulo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:textColor="@color/dark_red"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/barrierHora"
+            app:layout_constraintEnd_toStartOf="@id/ibAgenda"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Variabilidad craneofacial en poblaciones patagonicas" />
+
+        <TextView
+            android:id="@+id/tvDetalle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/black"
+            android:textSize="13sp"
+            app:layout_constraintStart_toEndOf="@id/barrierHora"
+            app:layout_constraintEnd_toStartOf="@id/ibAgenda"
+            app:layout_constraintTop_toBottomOf="@id/tvTitulo"
+            tools:text="Leonardo Morales" />
+
+        <TextView
+            android:id="@+id/tvSimposio"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/dusty_rose"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            app:layout_constraintStart_toEndOf="@id/barrierHora"
+            app:layout_constraintEnd_toStartOf="@id/ibAgenda"
+            app:layout_constraintTop_toBottomOf="@id/tvDetalle"
+            tools:text="Raices de la Humanidad" />
+
+        <TextView
+            android:id="@+id/tvAula"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_chip_aula"
+            android:paddingStart="10dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="3dp"
+            android:textColor="@color/dark_red"
+            android:textSize="12sp"
+            app:layout_constraintStart_toEndOf="@id/barrierHora"
+            app:layout_constraintTop_toBottomOf="@id/tvSimposio"
+            tools:text="Aula 1 - piso 0" />
+
+        <ImageButton
+            android:id="@+id/ibAgenda"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Agregar a mi agenda"
+            android:src="@android:drawable/btn_star_big_off"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>
