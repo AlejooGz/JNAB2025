@@ -1,60 +1,147 @@
 package com.example.jnab2025.ui.fragments
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.jnab2025.R
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
+import com.example.jnab2025.data.model.Charla
+import com.example.jnab2025.databinding.FragmentAceptarPropuestaBinding
+import com.example.jnab2025.ui.viewmodels.PropuestasViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 /**
- * A simple [Fragment] subclass.
- * Use the [AceptarPropuestaFragment.newInstance] factory method to
- * create an instance of this fragment.
+ * Aprueba una propuesta y le da dia, hora y aula. Antes este fragment era el
+ * template vacio de Android Studio: aceptar una propuesta no hacia nada, y por
+ * eso ninguna charla llegaba nunca al cronograma.
  */
 class AceptarPropuestaFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private var _binding: FragmentAceptarPropuestaBinding? = null
+    private val binding get() = _binding!!
+
+    private val args: AceptarPropuestaFragmentArgs by navArgs()
+    private val viewModel: PropuestasViewModel by viewModels()
+
+    private var fecha: LocalDate? = null
+    private var hora: LocalTime? = null
+
+    private val formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_aceptar_propuesta, container, false)
+    ): View {
+        _binding = FragmentAceptarPropuestaBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AceptarPropuestaFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AceptarPropuestaFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewModel.cargarTrabajo(args.trabajoId)
+
+        binding.btnFecha.setOnClickListener { elegirFecha() }
+        binding.btnHora.setOnClickListener { elegirHora() }
+        binding.btnCancelar.setOnClickListener { findNavController().popBackStack() }
+
+        binding.btnConfirmar.setOnClickListener {
+            val dia = fecha
+            val desde = hora
+            if (dia == null || desde == null) {
+                avisar("Elegi el dia y la hora")
+                return@setOnClickListener
+            }
+            viewModel.aprobar(args.trabajoId, dia, desde)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.trabajo.collectLatest { trabajo ->
+                        binding.tvTituloTrabajo.text = trabajo?.titulo.orEmpty()
+                    }
+                }
+                launch {
+                    viewModel.simposio.collectLatest { simposio ->
+                        simposio ?: return@collectLatest
+                        // El simposio ya define el aula, asi que el organizador
+                        // solo elige cuando.
+                        binding.tvSimposio.text = buildString {
+                            append(simposio.titulo)
+                            append("\nDel ${simposio.fechaInicio.format(formatoFecha)}")
+                            append(" al ${simposio.fechaFin.format(formatoFecha)}")
+                        }
+                        if (fecha == null) fecha = simposio.fechaInicio
+                        pintarSeleccion()
+                    }
+                }
+                launch {
+                    viewModel.avisos.collectLatest { avisar(it) }
+                }
+                launch {
+                    viewModel.resueltas.collectLatest { findNavController().popBackStack() }
                 }
             }
+        }
+    }
+
+    private fun elegirFecha() {
+        val base = fecha ?: LocalDate.now()
+        DatePickerDialog(
+            requireContext(),
+            { _, anio, mes, dia ->
+                fecha = LocalDate.of(anio, mes + 1, dia)
+                pintarSeleccion()
+            },
+            base.year, base.monthValue - 1, base.dayOfMonth
+        ).show()
+    }
+
+    private fun elegirHora() {
+        val base = hora ?: LocalTime.of(14, 0)
+        TimePickerDialog(
+            requireContext(),
+            { _, h, m ->
+                hora = LocalTime.of(h, m)
+                pintarSeleccion()
+            },
+            base.hour, base.minute, true
+        ).show()
+    }
+
+    private fun pintarSeleccion() {
+        val dia = fecha
+        val desde = hora
+        binding.tvSeleccion.text = when {
+            dia == null -> "Todavia no elegiste dia ni hora"
+            desde == null -> "${dia.format(formatoFecha)} — falta la hora"
+            else -> {
+                val hasta = desde.plusMinutes(Charla.MINUTOS_PRESENTACION.toLong())
+                "${dia.format(formatoFecha)} de $desde a $hasta"
+            }
+        }
+    }
+
+    private fun avisar(mensaje: String) {
+        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

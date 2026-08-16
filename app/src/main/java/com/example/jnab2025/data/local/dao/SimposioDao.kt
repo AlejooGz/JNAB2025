@@ -62,6 +62,26 @@ interface SimposioDao {
     )
     fun conAula(eventoId: Long): Flow<List<SimposioConAula>>
 
+    /** Lo mismo, pero solo los que organiza esa persona. */
+    @Query(
+        """
+        SELECT s.id          AS id,
+               s.titulo      AS titulo,
+               s.descripcion AS descripcion,
+               s.temaCentral AS temaCentral,
+               s.fechaInicio AS fechaInicio,
+               s.fechaFin    AS fechaFin,
+               a.nombre      AS aula,
+               a.edificio    AS edificio,
+               a.piso        AS piso
+        FROM simposio s
+        JOIN aula a ON a.id = s.aulaId
+        WHERE s.eventoId = :eventoId AND s.organizadorId = :organizadorId
+        ORDER BY s.fechaInicio, s.titulo
+        """
+    )
+    fun conAulaDeOrganizador(eventoId: Long, organizadorId: Long): Flow<List<SimposioConAula>>
+
     /**
      * Otros simposios que ya ocupan esa aula con fechas que se pisan.
      * Si devuelve algo, el aula no se puede asignar.

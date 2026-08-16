@@ -102,7 +102,7 @@
         android:label="Editar Simposio">
         <argument
             android:name="simposioId"
-            app:argType="integer" />
+            app:argType="long" />
     </fragment>
 
     <fragment
@@ -111,7 +111,7 @@
         android:label="Propuestas">
         <argument
             android:name="simposioId"
-            app:argType="integer" />
+            app:argType="long" />
         <action
             android:id="@+id/action_propuestasFragment_to_rechazarPropuestaFragment"
             app:destination="@id/rechazarPropuestaFragment" />
@@ -125,8 +125,8 @@
         android:name="com.example.jnab2025.ui.fragments.RechazarPropuestaFragment"
         android:label="Rechazar Propuesta">
         <argument
-            android:name="propuestaId"
-            app:argType="integer" />
+            android:name="trabajoId"
+            app:argType="long" />
     </fragment>
 
     <fragment
@@ -134,8 +134,8 @@
         android:name="com.example.jnab2025.ui.fragments.AceptarPropuestaFragment"
         android:label="Aceptar Propuesta">
         <argument
-            android:name="propuestaId"
-            app:argType="integer" />
+            android:name="trabajoId"
+            app:argType="long" />
     </fragment>
 
     <fragment
