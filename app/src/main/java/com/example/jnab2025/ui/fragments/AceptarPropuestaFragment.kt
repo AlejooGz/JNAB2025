@@ -17,6 +17,7 @@ import androidx.navigation.fragment.navArgs
 import com.example.jnab2025.data.model.Charla
 import com.example.jnab2025.databinding.FragmentAceptarPropuestaBinding
 import com.example.jnab2025.ui.viewmodels.PropuestasViewModel
+import com.example.jnab2025.utils.Archivos
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -54,6 +55,12 @@ class AceptarPropuestaFragment : Fragment() {
 
         viewModel.cargarTrabajo(args.trabajoId)
 
+        binding.btnVerPdf.setOnClickListener {
+            val trabajo = viewModel.trabajo.value
+            Archivos.mensajeDe(Archivos.abrirPdf(requireContext(), trabajo?.archivoUri))
+                ?.let { avisar(it) }
+        }
+
         binding.btnFecha.setOnClickListener { elegirFecha() }
         binding.btnHora.setOnClickListener { elegirHora() }
         binding.btnCancelar.setOnClickListener { findNavController().popBackStack() }
@@ -73,6 +80,8 @@ class AceptarPropuestaFragment : Fragment() {
                 launch {
                     viewModel.trabajo.collectLatest { trabajo ->
                         binding.tvTituloTrabajo.text = trabajo?.titulo.orEmpty()
+                        binding.btnVerPdf.text = trabajo?.nombreArchivo
+                            ?.let { "Ver PDF: $it" } ?: "Ver PDF adjunto"
                     }
                 }
                 launch {

@@ -64,10 +64,22 @@
                 tools:text="Huella Genetica · Aula 8 · del 16/05 al 16/05" />
 
             <Button
+                android:id="@+id/btnVerPdf"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Ver PDF adjunto"
+                android:textColor="@color/dark_red"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvSimposio" />
+
+            <Button
                 android:id="@+id/btnFecha"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="14dp"
                 android:layout_marginEnd="6dp"
                 android:backgroundTint="@color/dark_red"
                 android:text="Elegir dia"
@@ -75,7 +87,7 @@
                 app:layout_constraintEnd_toStartOf="@id/btnHora"
                 app:layout_constraintHorizontal_weight="1"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvSimposio" />
+                app:layout_constraintTop_toBottomOf="@id/btnVerPdf" />
 
             <Button
                 android:id="@+id/btnHora"

@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.jnab2025.databinding.FragmentRechazarPropuestaBinding
 import com.example.jnab2025.ui.viewmodels.PropuestasViewModel
+import com.example.jnab2025.utils.Archivos
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -42,6 +43,12 @@ class RechazarPropuestaFragment : Fragment() {
 
         viewModel.cargarTrabajo(args.trabajoId)
 
+        binding.btnVerPdf.setOnClickListener {
+            val trabajo = viewModel.trabajo.value
+            Archivos.mensajeDe(Archivos.abrirPdf(requireContext(), trabajo?.archivoUri))
+                ?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show() }
+        }
+
         binding.btnCancelarRechazo.setOnClickListener { findNavController().popBackStack() }
 
         binding.btnConfirmarRechazo.setOnClickListener {
@@ -59,6 +66,8 @@ class RechazarPropuestaFragment : Fragment() {
                 launch {
                     viewModel.trabajo.collectLatest { trabajo ->
                         binding.tvPropuestaARechazar.text = trabajo?.titulo.orEmpty()
+                        binding.btnVerPdf.text = trabajo?.nombreArchivo
+                            ?.let { "Ver PDF: $it" } ?: "Ver PDF adjunto"
                     }
                 }
                 launch {

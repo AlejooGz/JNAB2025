@@ -9,6 +9,7 @@ import com.example.jnab2025.data.model.PropuestaPendiente
 import com.example.jnab2025.databinding.ItemPropuestaBinding
 
 class PropuestasAdapter(
+    private val onVerPdfClick: (PropuestaPendiente) -> Unit,
     private val onAceptarClick: (PropuestaPendiente) -> Unit,
     private val onRechazarClick: (PropuestaPendiente) -> Unit
 ) : ListAdapter<PropuestaPendiente, PropuestasAdapter.ViewHolder>(Diff()) {
@@ -34,6 +35,9 @@ class PropuestasAdapter(
                 propuesta.institucion?.let { append(" ($it)") }
             }
             tvDescripcionPropuesta.text = propuesta.resumen
+
+            btnVerPdf.text = "Ver PDF: ${propuesta.nombreArchivo}"
+            btnVerPdf.setOnClickListener { onVerPdfClick(propuesta) }
 
             btnAceptarPropuesta.setOnClickListener { onAceptarClick(propuesta) }
             btnRechazarPropuesta.setOnClickListener { onRechazarClick(propuesta) }

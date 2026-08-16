@@ -51,6 +51,7 @@ interface TrabajoDao {
                t.titulo                    AS titulo,
                t.resumen                   AS resumen,
                t.nombreArchivo             AS nombreArchivo,
+               t.archivoUri                AS archivoUri,
                u.nombre || ' ' || u.apellido AS autor,
                u.email                     AS autorEmail,
                u.institucion               AS institucion

@@ -55,6 +55,7 @@ data class PropuestaPendiente(
     val titulo: String,
     val resumen: String,
     val nombreArchivo: String,
+    val archivoUri: String,
     val autor: String,
     val autorEmail: String,
     val institucion: String?

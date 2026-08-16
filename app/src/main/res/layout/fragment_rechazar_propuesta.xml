@@ -33,13 +33,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <Button
+        android:id="@+id/btnVerPdf"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Ver PDF adjunto"
+        android:textColor="@color/dark_red"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvPropuestaARechazar" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilMensajeRechazo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:hint="Mensaje para el expositor"
-        app:layout_constraintTop_toBottomOf="@+id/tvPropuestaARechazar"
+        app:layout_constraintTop_toBottomOf="@+id/btnVerPdf"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 

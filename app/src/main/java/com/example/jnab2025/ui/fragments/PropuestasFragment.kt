@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.jnab2025.databinding.FragmentPropuestasBinding
 import com.example.jnab2025.ui.adapters.PropuestasAdapter
 import com.example.jnab2025.ui.viewmodels.PropuestasViewModel
+import com.example.jnab2025.utils.Archivos
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -41,6 +43,7 @@ class PropuestasFragment : Fragment() {
         // El adapter se crea antes de observar: al reves, el observador podia
         // dispararse con el adapter todavia sin inicializar.
         adapter = PropuestasAdapter(
+            onVerPdfClick = { propuesta -> abrirPdf(propuesta.archivoUri) },
             onAceptarClick = { propuesta ->
                 val accion = PropuestasFragmentDirections
                     .actionPropuestasFragmentToAceptarPropuestaFragment(propuesta.trabajoId)
@@ -73,6 +76,13 @@ class PropuestasFragment : Fragment() {
                     }
                 }
             }
+        }
+    }
+
+    /** Abre el PDF que adjunto el expositor, para poder revisarlo antes de decidir. */
+    private fun abrirPdf(archivoUri: String?) {
+        Archivos.mensajeDe(Archivos.abrirPdf(requireContext(), archivoUri))?.let { mensaje ->
+            Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show()
         }
     }
 
