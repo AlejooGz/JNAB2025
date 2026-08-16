@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.example.jnab2025.data.local.dao.AgendaUsuarioDao
 import com.example.jnab2025.data.local.dao.CharlaDao
@@ -71,6 +72,8 @@ abstract class JnabDatabase : RoomDatabase() {
     abstract fun contenidoDao(): ContenidoDao
 
     companion object {
+        private const val TAG = "SeedJnab"
+
         @Volatile
         private var INSTANCE: JnabDatabase? = null
 
@@ -98,8 +101,41 @@ abstract class JnabDatabase : RoomDatabase() {
                 .build()
 
         private suspend fun poblar(app: Context) {
-            runCatching { SeedJnab.poblar(get(app)) }
-                .onFailure { Log.e("JnabDatabase", "Fallo el seed inicial", it) }
+            runCatching {
+                val db = get(app)
+                SeedJnab.poblar(db)
+                verificar(db)
+            }.onFailure { Log.e(TAG, "Fallo el seed inicial", it) }
+        }
+
+        /**
+         * Chequeo de desarrollo: imprime el cronograma del primer dia en Logcat.
+         * Sirve para ver de un vistazo que el seed cargo bien y que la consulta
+         * resuelve el aula (propia o la del simposio) y la marca de agenda.
+         * Se puede borrar cuando las pantallas ya muestren estos datos.
+         */
+        private suspend fun verificar(db: JnabDatabase) {
+            val evento = db.eventoDao().actual()
+            if (evento == null) {
+                Log.w(TAG, "No hay evento: el seed no cargo nada")
+                return
+            }
+            val demo = db.usuarioDao().porEmail("alejo@jnab.ar")
+            Log.i(TAG, "Evento: ${evento.nombre} (${evento.fechaInicio} a ${evento.fechaFin})")
+            Log.i(TAG, "Cronograma del ${evento.fechaInicio}:")
+
+            db.charlaDao()
+                .cronogramaDelDia(evento.id, evento.fechaInicio, demo?.id ?: -1L)
+                .first()
+                .forEach { item ->
+                    Log.i(
+                        TAG,
+                        "  ${item.horaInicio}-${item.horaFin}  ${item.titulo}" +
+                            "  [aula: ${item.aula ?: "sin aula"}]" +
+                            "  [expositor: ${item.expositor ?: "-"}]" +
+                            "  [en agenda de Alejo: ${item.enMiAgenda}]"
+                    )
+                }
         }
     }
 }
