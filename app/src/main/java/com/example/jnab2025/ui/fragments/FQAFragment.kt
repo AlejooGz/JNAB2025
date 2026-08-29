@@ -1,90 +1,138 @@
 package com.example.jnab2025.ui.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.jnab2025.R
+import com.example.jnab2025.data.model.FaqFirebase
+import com.example.jnab2025.databinding.FragmentFaqBinding
 import com.example.jnab2025.models.FaqItem
 import com.example.jnab2025.ui.adapters.FaqAdapter
+import com.example.jnab2025.ui.viewmodels.FaqViewModel
+import kotlinx.coroutines.launch
 
 class FAQFragment : Fragment() {
-
+    private var _binding: FragmentFaqBinding? = null
+    private val binding get() = _binding!!
+    private val viewModel: FaqViewModel by viewModels()
+    private lateinit var adapter: FaqAdapter
+    private val items = mutableListOf<FaqItem>()
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_faq, container, false)
-
-        val faqList = listOf(
-            FaqItem("Asistentes", isHeader = true),
-            FaqItem(
-                "¿Cómo me inscribo a las Jornadas?",
-                "Desde la app podés inscribirte seleccionando las charlas en la sección 'Charlas'."
-            ),
-            FaqItem(
-                "¿Puedo seleccionar las charlas que me interesan?",
-                "Sí. Marcando una charla como 'Me interesa' o 'Voy a asistir' se guarda en tu agenda."
-            ),
-            FaqItem(
-                "¿Dónde se llevarán a cabo las charlas?",
-                " Este año las charlas se llevaran a cabo en la UNPSJB de Pto. Madryn, el aula y su horario estaran publicados en el simposio."
-            ),
-            FaqItem(
-                "¿La app me notifica cuándo empieza una actividad?",
-                "Sí(en un futuro). Recibirás recordatorios antes de las actividades guardadas en tu agenda."
-            ),
-            FaqItem(
-                "¿Cómo armo mi agenda personalizada?",
-                "Simplemente tocá el ícono de estrella en las charlas que te interesen y se agregará en tu agenda."
-            ),
-            FaqItem(
-                "¿Qué hacer si no puedo asistir a una charla?",
-                "Podés desmarcarla desde tu agenda en cualquier momento."
-            ),
-            FaqItem(
-                "¿Dónde consultar cambios de último momento?",
-                "En la sección 'Novedades' encontrarás los anuncios importantes del evento."
-            ),
-
-            FaqItem("Expositores", isHeader = true),
-            FaqItem(
-                "¿Cómo subo mi trabajo?",
-                "Desde tu perfil de expositor podés cargar el archivo PDF y enviarlo."
-            ),
-            FaqItem(
-                "¿Dónde envío el comprobante de pago?",
-                "Una vez tu trabajo sea aceptado, en la misma sección donde subís tu trabajo vas podés cargar el comprobante."
-            ),
-            FaqItem(
-                "¿Puedo ver el estado de evaluación de mi trabajo?",
-                "Sí. El estado aparece junto al título del trabajo en tu perfil."
-            ),
-            FaqItem(
-                "¿Qué pasa si necesito modificar un resumen ya enviado?",
-                "Podes usar la opción 'Modificar' si está habilitada sino tendrás que contactar a la organización."
-            ),
-            FaqItem(
-                "¿Cómo sé en qué horario presentaré?",
-                "Una vez confirmado el simposio, verás tu charla con tu nombre, el horario y aula en donde expondrás!."
-            ),
-            FaqItem(
-                "¿Dónde consultar si mi presentación fue aceptada?",
-                "La app mostrará el estado actualizado en tu perfil de expositor."
-            ),
-            FaqItem(
-                "¿La app me avisa de fechas importantes?",
-                "Sí, recibirás notificaciones sobre vencimientos(en un futuro), envíos y agenda."
-            )
+    ): View {
+        _binding = FragmentFaqBinding.inflate(
+            inflater,
+            container,
+            false
         )
+        return binding.root
+    }
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        configurarRecycler()
+        observarFaqs()
+        observarAvisos()
+    }
+    private fun configurarRecycler() {
+        adapter = FaqAdapter(items)
+        binding.recyclerFaq.layoutManager =
+            LinearLayoutManager(requireContext())
+        binding.recyclerFaq.adapter = adapter
+    }
 
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerFaq)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = FaqAdapter(faqList)
+    private fun observarFaqs() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.faqs.collect { faqsFirebase ->
+                    actualizarListado(faqsFirebase)
+                }
+            }
+        }
+    }
+    private fun actualizarListado(
+        faqs: List<FaqFirebase>
+    ) {
+        items.clear()
+        val asistentes =
+            faqs
+                .filter {
+                    it.publico == "ASISTENTE"
+                }
+                .sortedBy {
+                    it.orden
+                }
+        val expositores =
+            faqs
+                .filter { it.publico == "EXPOSITOR" }
+                .sortedBy { it.orden }
+        if (asistentes.isNotEmpty()) {
+            items.add(
+                FaqItem(
+                    question = "Asistentes",
+                    isHeader = true
+                )
+            )
+            asistentes.forEach { faq ->
+                items.add(faq.toFaqItem())
+            }
+        }
+        if (expositores.isNotEmpty()) {
+            items.add(
+                FaqItem(
+                    question = "Expositores",
+                    isHeader = true
+                )
+            )
+            expositores.forEach { faq ->
+                items.add(
+                    faq.toFaqItem()
+                )
+            }
+        }
+        adapter.notifyDataSetChanged()
+    }
 
-        return view
+    private fun FaqFirebase.toFaqItem(): FaqItem {
+        return FaqItem(
+            question = pregunta,
+            answer = respuesta,
+            isExpanded = false,
+            isHeader = false
+        )
+    }
+
+    private fun observarAvisos() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.avisos.collect { mensaje ->
+                    Toast.makeText(
+                        requireContext(),
+                        mensaje,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

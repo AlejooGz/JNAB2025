@@ -5,50 +5,71 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.jnab2025.data.model.PropuestaPendiente
+import com.example.jnab2025.data.model.TrabajoFirebase
 import com.example.jnab2025.databinding.ItemPropuestaBinding
 
 class PropuestasAdapter(
-    private val onVerPdfClick: (PropuestaPendiente) -> Unit,
-    private val onAceptarClick: (PropuestaPendiente) -> Unit,
-    private val onRechazarClick: (PropuestaPendiente) -> Unit
-) : ListAdapter<PropuestaPendiente, PropuestasAdapter.ViewHolder>(Diff()) {
+    private val onVerPdfClick: (TrabajoFirebase) -> Unit,
+    private val onAceptarClick: (TrabajoFirebase) -> Unit,
+    private val onRechazarClick: (TrabajoFirebase) -> Unit
+) : ListAdapter<TrabajoFirebase, PropuestasAdapter.ViewHolder>(Diff()) {
 
-    class ViewHolder(val binding: ItemPropuestaBinding) : RecyclerView.ViewHolder(binding.root)
+    class ViewHolder(
+        val binding: ItemPropuestaBinding
+    ) : RecyclerView.ViewHolder(binding.root)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): ViewHolder {
+
         val binding = ItemPropuestaBinding.inflate(
-            LayoutInflater.from(parent.context), parent, false
+            LayoutInflater.from(parent.context),
+            parent,
+            false
         )
         return ViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val propuesta = getItem(position)
-
+    override fun onBindViewHolder(
+        holder: ViewHolder,
+        position: Int
+    ) {
+        val trabajo = getItem(position)
         with(holder.binding) {
-            tvTituloPropuesta.text = propuesta.titulo
-            // El nombre sale del join con usuario: antes siempre decia "Desconocido"
-            // porque el fragment le pasaba una lista de usuarios vacia.
-            tvExpositor.text = buildString {
-                append("Expositor: ${propuesta.autor}")
-                propuesta.institucion?.let { append(" ($it)") }
+            tvTituloPropuesta.text = trabajo.titulo
+            tvExpositor.text = "Expositor: ${trabajo.autorNombre}"
+            tvDescripcionPropuesta.text = trabajo.resumen
+            btnVerPdf.text = "Ver PDF: ${trabajo.nombreArchivo}"
+            btnVerPdf.setOnClickListener {
+                onVerPdfClick(trabajo)
             }
-            tvDescripcionPropuesta.text = propuesta.resumen
-
-            btnVerPdf.text = "Ver PDF: ${propuesta.nombreArchivo}"
-            btnVerPdf.setOnClickListener { onVerPdfClick(propuesta) }
-
-            btnAceptarPropuesta.setOnClickListener { onAceptarClick(propuesta) }
-            btnRechazarPropuesta.setOnClickListener { onRechazarClick(propuesta) }
+            btnAceptarPropuesta.setOnClickListener {
+                onAceptarClick(trabajo)
+            }
+            btnRechazarPropuesta.setOnClickListener {
+                onRechazarClick(trabajo)
+            }
         }
     }
+    private class Diff :
+        DiffUtil.ItemCallback<TrabajoFirebase>() {
+        override fun areItemsTheSame(
+            oldItem: TrabajoFirebase,
+            newItem: TrabajoFirebase
+        ): Boolean {
+            return oldItem.id == newItem.id
+        }
 
-    private class Diff : DiffUtil.ItemCallback<PropuestaPendiente>() {
-        override fun areItemsTheSame(oldItem: PropuestaPendiente, newItem: PropuestaPendiente) =
-            oldItem.trabajoId == newItem.trabajoId
-
-        override fun areContentsTheSame(oldItem: PropuestaPendiente, newItem: PropuestaPendiente) =
-            oldItem == newItem
+        override fun areContentsTheSame(
+            oldItem: TrabajoFirebase,
+            newItem: TrabajoFirebase
+        ): Boolean {
+            return oldItem.id == newItem.id &&
+                    oldItem.estado == newItem.estado &&
+                    oldItem.titulo == newItem.titulo &&
+                    oldItem.resumen == newItem.resumen &&
+                    oldItem.archivoUrl == newItem.archivoUrl
+        }
     }
 }

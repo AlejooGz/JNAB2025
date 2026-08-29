@@ -24,10 +24,8 @@ import kotlinx.coroutines.launch
  * consulta que ya trae el estado, la programacion y si la inscripcion esta paga.
  */
 class SeguimientoTramiteFragment : Fragment() {
-
     private var _binding: FragmentSeguimientoTramiteBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: MisTrabajosViewModel by viewModels()
     private lateinit var adapter: MisTrabajosAdapter
 
@@ -51,12 +49,14 @@ class SeguimientoTramiteFragment : Fragment() {
             ).show()
             return
         }
-
         adapter = MisTrabajosAdapter(
-            onClick = { trabajo ->
-                Toast.makeText(requireContext(), trabajo.titulo, Toast.LENGTH_SHORT).show()
+            onClick = { seguimiento ->
+                Toast.makeText(
+                    requireContext(),
+                    seguimiento.trabajo.titulo,
+                    Toast.LENGTH_SHORT
+                ).show()
             },
-            // El aviso de inscripcion impaga lleva a la pantalla donde se paga.
             onPagoClick = {
                 findNavController().navigate(
                     R.id.action_seguimientoTramiteFragment_to_inscripcionFragment

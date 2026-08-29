@@ -2,97 +2,522 @@ package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.jnab2025.data.local.JnabDatabase
-import com.example.jnab2025.data.model.PropuestaPendiente
-import com.example.jnab2025.data.model.Simposio
-import com.example.jnab2025.data.model.Trabajo
-import com.example.jnab2025.data.repository.Aprobacion
-import com.example.jnab2025.data.repository.OrganizadorRepository
+import com.example.jnab2025.data.model.SimposioFirebase
+import com.example.jnab2025.data.model.TrabajoFirebase
 import com.example.jnab2025.utils.Sesion
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import com.example.jnab2025.data.model.CharlaFirebase
+import com.example.jnab2025.data.model.TipoActividad
+import com.example.jnab2025.data.model.InscripcionFirebase
+import com.example.jnab2025.data.model.EstadoInscripcion
+import com.example.jnab2025.data.model.EstadoTrabajo
+import com.google.firebase.firestore.WriteBatch
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-class PropuestasViewModel(application: Application) : AndroidViewModel(application) {
+class PropuestasViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+    private val firestore = FirebaseFirestore.getInstance()
+    private var listenerPropuestas: ListenerRegistration? = null
+    private val _simposio = MutableStateFlow<SimposioFirebase?>(null)
+    val simposio: StateFlow<SimposioFirebase?> = _simposio.asStateFlow()
+    private val _trabajo = MutableStateFlow<TrabajoFirebase?>(null)
+    val trabajo: StateFlow<TrabajoFirebase?> = _trabajo.asStateFlow()
 
-    private val repo = OrganizadorRepository(JnabDatabase.get(application))
-    private val usuarioId = Sesion.usuarioId(application)
-
-    private val _simposioId = MutableStateFlow(0L)
-
-    private val _simposio = MutableStateFlow<Simposio?>(null)
-    val simposio: StateFlow<Simposio?> = _simposio.asStateFlow()
-
-    private val _trabajo = MutableStateFlow<Trabajo?>(null)
-    val trabajo: StateFlow<Trabajo?> = _trabajo.asStateFlow()
-
+    private val _propuestas = MutableStateFlow<List<TrabajoFirebase>>(emptyList())
+    val propuestas: StateFlow<List<TrabajoFirebase>> = _propuestas.asStateFlow()
     private val _avisos = Channel<String>(Channel.BUFFERED)
     val avisos: Flow<String> = _avisos.receiveAsFlow()
-
     private val _resueltas = Channel<Unit>(Channel.BUFFERED)
     val resueltas: Flow<Unit> = _resueltas.receiveAsFlow()
+    fun cargarSimposio(simposioId: String) {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val propuestas: StateFlow<List<PropuestaPendiente>> = _simposioId
-        .flatMapLatest { id -> repo.propuestasPendientes(id) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    fun cargarSimposio(simposioId: Long) {
-        _simposioId.value = simposioId
-        viewModelScope.launch { _simposio.value = repo.simposio(simposioId) }
-    }
-
-    /** Para las pantallas de aceptar y rechazar, que reciben el trabajo. */
-    fun cargarTrabajo(trabajoId: Long) = viewModelScope.launch {
-        val trabajo = repo.trabajo(trabajoId)
-        _trabajo.value = trabajo
-        _simposio.value = trabajo?.let { repo.simposio(it.simposioId) }
-    }
-
-    fun aprobar(trabajoId: Long, fecha: LocalDate, horaInicio: LocalTime) = viewModelScope.launch {
-        val resultado = runCatching { repo.aprobar(trabajoId, usuarioId, fecha, horaInicio) }
-            .getOrElse {
-                _avisos.send("No se pudo programar: ${it.message}")
-                return@launch
+        firestore
+            .collection("simposios")
+            .document(simposioId)
+            .get()
+            .addOnSuccessListener { documento ->
+                _simposio.value =
+                    documento.toObject(
+                        SimposioFirebase::class.java
+                    )
             }
-
-        when (resultado) {
-            is Aprobacion.Ok -> {
-                _avisos.send("Programada el ${resultado.fecha} de ${resultado.desde} a ${resultado.hasta}")
-                _resueltas.send(Unit)
-            }
-
-            is Aprobacion.FueraDelSimposio ->
-                _avisos.send("El simposio va del ${resultado.desde} al ${resultado.hasta}")
-
-            is Aprobacion.HorarioOcupado ->
-                _avisos.send(
-                    "Ese horario ya lo ocupa \"${resultado.titulo}\" " +
-                        "(${resultado.desde}-${resultado.hasta})"
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo cargar el simposio: ${error.message}"
                 )
-
-            Aprobacion.NoExiste -> _avisos.send("No se encontro el trabajo")
-        }
+            }
+        escucharPropuestas(simposioId)
     }
-
-    fun rechazar(trabajoId: Long, motivo: String) = viewModelScope.launch {
+    private fun escucharPropuestas(
+        simposioId: String
+    ) {
+        listenerPropuestas?.remove()
+        listenerPropuestas = firestore
+            .collection("trabajos")
+            .whereEqualTo(
+                "simposioId",
+                simposioId
+            )
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _avisos.trySend(
+                        "No se pudieron cargar las propuestas: ${error.message}"
+                    )
+                    _propuestas.value = emptyList()
+                    return@addSnapshotListener
+                }
+                val lista = snapshot
+                    ?.documents
+                    ?.mapNotNull { documento -> documento.toObject(
+                            TrabajoFirebase::class.java
+                        )
+                    }
+                    ?.filter { it.estado == EstadoTrabajo.ENVIADO.name
+                    }
+                    .orEmpty()
+                _propuestas.value = lista
+            }
+    }
+    fun cargarTrabajo(
+        trabajoId: String
+    ) {
+        firestore
+            .collection("trabajos")
+            .document(trabajoId)
+            .get()
+            .addOnSuccessListener { documento ->
+                val trabajo =
+                    documento.toObject(
+                        TrabajoFirebase::class.java
+                    )
+                _trabajo.value = trabajo
+                trabajo?.let {
+                    cargarSimposioDelTrabajo(
+                        it.simposioId
+                    )
+                }
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo cargar el trabajo: ${error.message}"
+                )
+            }
+    }
+    private fun cargarSimposioDelTrabajo(
+        simposioId: String
+    ) {
+        firestore
+            .collection("simposios")
+            .document(simposioId)
+            .get()
+            .addOnSuccessListener { documento ->
+                _simposio.value =
+                    documento.toObject(
+                        SimposioFirebase::class.java
+                    )
+            }
+    }
+    fun rechazar(
+        trabajoId: String,
+        motivo: String
+    ) {
         if (motivo.isBlank()) {
-            _avisos.send("Escribi el motivo del rechazo")
-            return@launch
+            _avisos.trySend(
+                "Escribí el motivo del rechazo"
+            )
+            return
         }
-        repo.rechazar(trabajoId, usuarioId, motivo.trim())
-        _avisos.send("Propuesta rechazada")
-        _resueltas.send(Unit)
+        val organizadorUid = Sesion.firebaseUid(
+                getApplication()
+            )
+        if (organizadorUid == null) {
+            _avisos.trySend(
+                "No hay un organizador autenticado"
+            )
+            return
+        }
+        val cambios = mapOf(
+            "estado" to "RECHAZADO",
+            "motivoRechazo" to motivo.trim(),
+            "fechaResolucion" to Timestamp.now(),
+            "resueltoPorUid" to organizadorUid
+        )
+        firestore
+            .collection("trabajos")
+            .document(trabajoId)
+            .update(cambios)
+            .addOnSuccessListener {
+                _avisos.trySend(
+                    "Propuesta rechazada"
+                )
+                _resueltas.trySend(Unit)
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo rechazar: ${error.message}"
+                )
+            }
+    }
+    fun aprobar(
+        trabajoId: String
+    ) {
+        val organizadorUid =
+            Sesion.firebaseUid(getApplication())
+
+        if (organizadorUid == null) {
+            _avisos.trySend(
+                "No hay un organizador autenticado"
+            )
+            return
+        }
+        firestore
+            .collection("trabajos")
+            .document(trabajoId)
+            .get()
+            .addOnSuccessListener { documentoTrabajo ->
+
+                val trabajo =
+                    documentoTrabajo.toObject(
+                        TrabajoFirebase::class.java
+                    )
+
+                if (trabajo == null) {
+                    _avisos.trySend(
+                        "No se encontró el trabajo"
+                    )
+                    return@addOnSuccessListener
+                }
+
+                if (trabajo.estado != EstadoTrabajo.ENVIADO.name) {
+                    _avisos.trySend(
+                        "Este trabajo ya fue resuelto"
+                    )
+                    return@addOnSuccessListener
+                }
+
+                verificarInscripcionParaAceptacion(
+                    trabajo = trabajo,
+                    organizadorUid = organizadorUid
+                )
+            }
+            .addOnFailureListener { error ->
+
+                _avisos.trySend(
+                    "No se pudo cargar el trabajo: ${error.message}"
+                )
+            }
+    }
+    private fun verificarInscripcionParaAceptacion(
+        trabajo: TrabajoFirebase,
+        organizadorUid: String
+    ) {
+
+        firestore
+            .collection("inscripciones")
+            .document(trabajo.autorUid)
+            .get()
+            .addOnSuccessListener { documento ->
+
+                val inscripcion =
+                    documento.toObject(
+                        InscripcionFirebase::class.java
+                    )
+
+                /*la aceptación académica ocurre independientemente del pago
+                 * Si todavía no está acreditado, queda pendiente explícitamente*/
+                if (
+                    inscripcion == null ||
+                    inscripcion.estado != EstadoInscripcion.PAGADA.name
+                ) {
+                    guardarAceptacionPendientePago(
+                        trabajo = trabajo,
+                        organizadorUid = organizadorUid
+                    )
+
+                } else {
+                    guardarAceptacionConPagoAcreditado(
+                        trabajo = trabajo,
+                        organizadorUid = organizadorUid
+                    )
+                }
+            }
+            .addOnFailureListener { error ->
+
+                _avisos.trySend(
+                    "No se pudo verificar la inscripción: ${error.message}"
+                )
+            }
+    }
+    private fun cargarSimposioParaAprobar(
+        trabajo: TrabajoFirebase,
+        fecha: LocalDate,
+        horaInicio: LocalTime,
+        organizadorUid: String
+    ) {
+        firestore
+            .collection("simposios")
+            .document(trabajo.simposioId)
+            .get()
+            .addOnSuccessListener { documento ->
+                val simposio = documento.toObject(
+                    SimposioFirebase::class.java
+                )
+                if (simposio == null) {
+                    _avisos.trySend(
+                        "No se encontró el simposio"
+                    )
+                    return@addOnSuccessListener
+                }
+                val fechaInicioSimposio =
+                    simposio.fechaInicio
+                        ?.toDate()
+                        ?.toInstant()
+                        ?.atZone(ZoneId.systemDefault())
+                        ?.toLocalDate()
+                val fechaFinSimposio =
+                    simposio.fechaFin
+                        ?.toDate()
+                        ?.toInstant()
+                        ?.atZone(ZoneId.systemDefault())
+                        ?.toLocalDate()
+                if (
+                    fechaInicioSimposio == null ||
+                    fechaFinSimposio == null
+                ) {
+                    _avisos.trySend(
+                        "El simposio no tiene fechas válidas"
+                    )
+                    return@addOnSuccessListener
+                }
+                if (
+                    fecha < fechaInicioSimposio || fecha > fechaFinSimposio
+                ) {
+                    _avisos.trySend(
+                        "La fecha debe estar entre " + "$fechaInicioSimposio y $fechaFinSimposio"
+                    )
+                    return@addOnSuccessListener
+                }
+                verificarHorarioDisponible(
+                    trabajo = trabajo,
+                    simposio = simposio,
+                    fecha = fecha,
+                    horaInicio = horaInicio,
+                    organizadorUid = organizadorUid
+                )
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo cargar el simposio: ${error.message}"
+                )
+            }
+    }
+    private fun verificarHorarioDisponible(
+        trabajo: TrabajoFirebase,
+        simposio: SimposioFirebase,
+        fecha: LocalDate,
+        horaInicio: LocalTime,
+        organizadorUid: String
+    ) {
+        val horaFin = horaInicio.plusMinutes(
+            CharlaFirebase.MINUTOS_PRESENTACION.toLong()
+        )
+        firestore
+            .collection("charlas")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val charlas = snapshot.documents.mapNotNull {
+                    it.toObject(CharlaFirebase::class.java)
+                }
+                val hayConflicto = charlas.any { charla ->
+                    val fechaCharla =
+                        charla.fecha
+                            ?.toDate()
+                            ?.toInstant()
+                            ?.atZone(ZoneId.systemDefault())
+                            ?.toLocalDate()
+                    if (fechaCharla != fecha) {
+                        false
+                    } else {
+                        val inicioExistente =
+                            runCatching {
+                                LocalTime.parse(charla.horaInicio)
+                            }.getOrNull()
+                        val finExistente =
+                            runCatching {
+                                LocalTime.parse(charla.horaFin)
+                            }.getOrNull()
+                        if (
+                            inicioExistente == null ||
+                            finExistente == null
+                        ) {
+                            false
+                        } else {
+                            val mismaAula =
+                                charla.aulaId == simposio.aulaId
+                            val seSuperponen =
+                                horaInicio < finExistente && horaFin > inicioExistente
+                            mismaAula && seSuperponen
+                        }
+                    }
+                }
+                if (hayConflicto) {
+                    _avisos.trySend(
+                        "Ya existe una actividad en esa aula y horario"
+                    )
+                    return@addOnSuccessListener
+                }
+                guardarAprobacion(
+                    trabajo = trabajo,
+                    simposio = simposio,
+                    fecha = fecha,
+                    horaInicio = horaInicio,
+                    horaFin = horaFin,
+                    organizadorUid = organizadorUid
+                )
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo verificar el horario: ${error.message}"
+                )
+            }
+    }
+    private fun guardarAceptacionPendientePago(
+        trabajo: TrabajoFirebase,
+        organizadorUid: String
+    ) {
+        val cambios = mapOf(
+            "estado" to EstadoTrabajo.ACEPTADO_PENDIENTE_PAGO.name,
+            "motivoRechazo" to null,
+            "fechaResolucion" to Timestamp.now(),
+            "resueltoPorUid" to organizadorUid
+        )
+        firestore
+            .collection("trabajos")
+            .document(trabajo.id)
+            .update(cambios)
+            .addOnSuccessListener {
+                _avisos.trySend(
+                    "Trabajo aceptado académicamente. Falta acreditar la inscripción del expositor."
+                )
+                _resueltas.trySend(Unit)
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend("No se pudo actualizar el trabajo: ${error.message}"
+                )
+            }
+    }
+    private fun guardarAceptacionConPagoAcreditado(
+        trabajo: TrabajoFirebase,
+        organizadorUid: String
+    ) {
+
+        val cambios = mapOf(
+            "estado" to EstadoTrabajo.APROBADO.name,
+            "motivoRechazo" to null,
+            "fechaResolucion" to Timestamp.now(),
+            "resueltoPorUid" to organizadorUid
+        )
+
+        firestore
+            .collection("trabajos")
+            .document(trabajo.id)
+            .update(cambios)
+            .addOnSuccessListener {
+
+                _avisos.trySend(
+                    "Trabajo aceptado. La inscripción ya está acreditada. " +
+                            "Ahora falta programar la presentación."
+                )
+                _resueltas.trySend(Unit)
+            }
+            .addOnFailureListener { error ->
+
+                _avisos.trySend(
+                    "No se pudo aceptar el trabajo: ${error.message}"
+                )
+            }
+    }
+    private fun guardarAprobacion(
+        trabajo: TrabajoFirebase,
+        simposio: SimposioFirebase,
+        fecha: LocalDate,
+        horaInicio: LocalTime,
+        horaFin: LocalTime,
+        organizadorUid: String
+    ) {
+        val charlaRef = firestore
+            .collection("charlas")
+            .document()
+        val trabajoRef = firestore
+            .collection("trabajos")
+            .document(trabajo.id)
+        val charla = CharlaFirebase(
+            id = charlaRef.id,
+            eventoId = "",
+            simposioId = simposio.id,
+            trabajoId = trabajo.id,
+            aulaId = simposio.aulaId,
+            tipo = TipoActividad.PRESENTACION.name,
+            titulo = trabajo.titulo,
+            fecha = fecha.toTimestamp(),
+            horaInicio = horaInicio.toString(),
+            horaFin = horaFin.toString()
+        )
+        val cambiosTrabajo = mapOf(
+            "estado" to EstadoTrabajo.APROBADO.name,
+            "motivoRechazo" to null,
+            "fechaResolucion" to Timestamp.now(),
+            "resueltoPorUid" to organizadorUid
+        )
+        val batch = firestore.batch()
+        // Crear la charla programada.
+        batch.set(
+            charlaRef,
+            charla
+        )
+        // Actualizar el mismo trabajo enviado por el expositor.
+        batch.update(
+            trabajoRef,
+            cambiosTrabajo
+        )
+        batch.commit()
+            .addOnSuccessListener {
+                _avisos.trySend(
+                    "Propuesta aprobada y charla programada"
+                )
+                _resueltas.trySend(Unit)
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo aprobar la propuesta: ${error.message}"
+                )
+            }
+    }
+    private fun LocalDate.toTimestamp(): Timestamp {
+        val instant = this
+            .atStartOfDay(
+                ZoneId.systemDefault()
+            )
+            .toInstant()
+
+        return Timestamp(
+            java.util.Date.from(instant)
+        )
+    }
+    override fun onCleared() {
+        super.onCleared()
+        listenerPropuestas?.remove()
     }
 }

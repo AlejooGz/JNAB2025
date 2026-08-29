@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/mint_green">
+    android:background="@color/mint_green"
+    android:fillViewport="true"
+    android:scrollbars="none">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -16,7 +18,7 @@
             android:layout_height="wrap_content"
             android:background="@color/dark_red"
             android:padding="14dp"
-            android:text="Mi inscripcion"
+            android:text="Mi inscripción"
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="22sp"
@@ -29,7 +31,9 @@
             android:id="@+id/cardEstado"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
             app:cardBackgroundColor="@color/cream"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
@@ -52,7 +56,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    tools:text="Jornadas Nacionales de Antropologia Biologica 2025" />
+                    tools:text="Jornadas Nacionales de Antropología Biológica 2025" />
 
                 <TextView
                     android:id="@+id/tvEstado"
@@ -64,7 +68,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/tvEvento"
-                    tools:text="Todavia no estas inscripto." />
+                    tools:text="Todavía no estás inscripto." />
 
                 <TextView
                     android:id="@+id/tvComprobante"
@@ -74,6 +78,7 @@
                     android:textColor="@color/dusty_rose"
                     android:textSize="14sp"
                     android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/tvEstado"
@@ -81,16 +86,16 @@
                     tools:visibility="visible" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
         </androidx.cardview.widget.CardView>
 
-        <!-- Bloque para inscribirse: solo visible si todavia no lo hizo -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardInscribirse"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
             app:cardBackgroundColor="@color/cream"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
@@ -107,7 +112,7 @@
                     android:id="@+id/tvTituloTipo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Elegi tu tipo de inscripcion"
+                    android:text="Elegí tu tipo de inscripción"
                     android:textColor="@color/dark_red"
                     android:textSize="16sp"
                     android:textStyle="bold"
@@ -119,7 +124,7 @@
                     android:id="@+id/rgTipo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="12dp"
                     android:orientation="vertical"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -128,36 +133,54 @@
                     <RadioButton
                         android:id="@+id/rbAsistente"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
+                        android:buttonTint="@color/dark_red"
                         android:checked="true"
-                        android:text="Asistente" />
-
-                    <RadioButton
-                        android:id="@+id/rbEstudiante"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Estudiante" />
+                        android:gravity="center_vertical"
+                        android:text="Asistente"
+                        android:textColor="@color/dark_red"
+                        android:textSize="15sp" />
 
                     <RadioButton
                         android:id="@+id/rbExpositor"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Expositor" />
+                        android:layout_height="48dp"
+                        android:buttonTint="@color/dark_red"
+                        android:gravity="center_vertical"
+                        android:text="Expositor"
+                        android:textColor="@color/dark_red"
+                        android:textSize="15sp" />
+
                 </RadioGroup>
+
+                <CheckBox
+                    android:id="@+id/cbEstudiante"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:buttonTint="@color/dark_red"
+                    android:gravity="center_vertical"
+                    android:text="Soy estudiante"
+                    android:textColor="@color/dark_red"
+                    android:textSize="15sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/rgTipo" />
 
                 <TextView
                     android:id="@+id/tvMonto"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="16dp"
+                    android:paddingVertical="8dp"
                     android:textAlignment="center"
                     android:textColor="@color/dark_red"
-                    android:textSize="16sp"
+                    android:textSize="17sp"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/rgTipo"
-                    tools:text="A pagar: $25000" />
+                    app:layout_constraintTop_toBottomOf="@id/cbEstudiante"
+                    tools:text="A pagar: $25.000" />
 
                 <Button
                     android:id="@+id/btnInscribirse"
@@ -167,6 +190,7 @@
                     android:backgroundTint="@color/dark_red"
                     android:text="Inscribirme"
                     android:textColor="@color/white"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/tvMonto" />
@@ -179,16 +203,20 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="24dp"
             android:backgroundTint="@color/green"
             android:text="Cargar comprobante de pago"
             android:textColor="@color/white"
             android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cardInscribirse"
+            app:layout_constraintVertical_bias="0"
             tools:visibility="visible" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </ScrollView>

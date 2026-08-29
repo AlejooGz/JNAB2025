@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.R
+import com.example.jnab2025.data.model.CategoriaInscripcion
 import com.example.jnab2025.data.model.EstadoComprobante
 import com.example.jnab2025.data.model.EstadoInscripcion
 import com.example.jnab2025.data.model.TipoInscripcion
@@ -20,107 +21,176 @@ import com.example.jnab2025.ui.viewmodels.InscripcionViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/**
- * Estado de mi inscripcion al evento. Antes esta pantalla era un formulario que
- * guardaba un JSON en SharedPreferences que despues nadie leia.
- */
 class InscripcionFragment : Fragment() {
-
     private var _binding: FragmentInscripcionBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: InscripcionViewModel by viewModels()
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentInscripcionBinding.inflate(inflater, container, false)
+
+        _binding = FragmentInscripcionBinding.inflate(
+            inflater,
+            container,
+            false
+        )
+
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.rgTipo.setOnCheckedChangeListener { _, _ -> pintarMonto() }
-
+        binding.rgTipo.setOnCheckedChangeListener { _, _ ->
+            pintarMonto()
+        }
+        binding.cbEstudiante.setOnCheckedChangeListener { _, _ ->
+            pintarMonto()
+        }
         binding.btnInscribirse.setOnClickListener {
-            viewModel.inscribirse(tipoElegido())
+            viewModel.inscribirse(
+                tipo = tipoElegido(),
+                categoria = categoriaElegida()
+            )
         }
-
         binding.btnComprobante.setOnClickListener {
-            findNavController().navigate(R.id.cargarComprobanteFragment)
+            findNavController().navigate(
+                R.id.cargarComprobanteFragment
+            )
         }
-
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
                 launch {
-                    viewModel.vista.collectLatest { pintar(it) }
+                    viewModel.vista.collectLatest { vista ->
+                        pintar(vista)
+                    }
                 }
+
                 launch {
-                    viewModel.avisos.collectLatest {
-                        Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                    viewModel.avisos.collectLatest { mensaje ->
+                        Toast.makeText(
+                            requireContext(),
+                            mensaje,
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
         }
     }
 
-    private fun pintar(vista: InscripcionViewModel.Vista) {
-        binding.tvEvento.text = vista.evento?.nombre.orEmpty()
+    private fun pintar(
+        vista: InscripcionViewModel.Vista
+    ) {
+        binding.tvEvento.text =
+            "Jornadas Nacionales de Antropología Biológica 2025"
         pintarMonto()
-
         val inscripcion = vista.inscripcion
         if (inscripcion == null) {
-            binding.tvEstado.text = "Todavia no estas inscripto a las jornadas."
+            binding.tvEstado.text =
+                "Todavía no estás inscripto a las jornadas."
+
             binding.cardInscribirse.visibility = View.VISIBLE
             binding.btnComprobante.visibility = View.GONE
             binding.tvComprobante.visibility = View.GONE
+
             return
         }
 
-        // Ya inscripto: se oculta el formulario y se muestra el estado real.
+        // Si ya existe inscripción no mostramos nuevamente el formulario.
         binding.cardInscribirse.visibility = View.GONE
-
-        val tipo = inscripcion.tipo.name.lowercase()
-        binding.tvEstado.text = when (inscripcion.estado) {
-            EstadoInscripcion.PAGADA ->
-                "Inscripcion de $tipo confirmada. No tenes nada pendiente."
-            EstadoInscripcion.PENDIENTE_PAGO ->
-                "Inscripcion de $tipo registrada. Falta acreditar el pago de $${inscripcion.monto.toInt()}."
-            EstadoInscripcion.ANULADA ->
-                "Tu inscripcion figura anulada. Contactate con la organizacion."
-        }
-
-        val comprobante = vista.comprobante
-        binding.tvComprobante.visibility = if (comprobante == null) View.GONE else View.VISIBLE
-        if (comprobante != null) {
-            binding.tvComprobante.text = when (comprobante.estado) {
-                EstadoComprobante.PENDIENTE ->
-                    "Comprobante ${comprobante.nombreArchivo} enviado, esperando verificacion."
-                EstadoComprobante.VERIFICADO ->
-                    "Comprobante ${comprobante.nombreArchivo} verificado por la organizacion."
-                EstadoComprobante.RECHAZADO ->
-                    "El comprobante ${comprobante.nombreArchivo} fue rechazado. Carga otro."
+        val tipo = inscripcion.tipo.lowercase()
+        val categoria = inscripcion.categoria.lowercase()
+        binding.tvEstado.text =
+            when (inscripcion.estado) {
+                EstadoInscripcion.PAGADA.name ->
+                    "Inscripción de $tipo · $categoria confirmada. " +
+                            "No tenés nada pendiente."
+                EstadoInscripcion.PENDIENTE_PAGO.name ->
+                    "Inscripción de $tipo · $categoria registrada. " +
+                            "Falta acreditar el pago de " +
+                            "$${inscripcion.monto.toInt()}."
+                EstadoInscripcion.ANULADA.name ->
+                    "Tu inscripción figura anulada. " +
+                            "Contactate con la organización."
+                else ->
+                    "Estado de inscripción desconocido."
             }
+        val comprobante = vista.comprobante
+        binding.tvComprobante.visibility =
+            if (comprobante == null) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+
+        if (comprobante != null) {
+            binding.tvComprobante.text =
+                when (comprobante.estado) {
+                    EstadoComprobante.PENDIENTE.name ->
+                        "Comprobante ${comprobante.nombreArchivo} " +
+                                "enviado, esperando verificación."
+
+                    EstadoComprobante.VERIFICADO.name ->
+                        "Comprobante ${comprobante.nombreArchivo} " +
+                                "verificado por la organización."
+
+                    EstadoComprobante.RECHAZADO.name ->
+                        "El comprobante ${comprobante.nombreArchivo} " +
+                                "fue rechazado. Cargá otro."
+                    else ->
+                        ""
+                }
         }
-
-        // Puede cargar (o reemplazar) el comprobante mientras no este acreditada.
+        //Puede subir o reemplazar el comprobante mientras la inscripción siga pendiente.
         binding.btnComprobante.visibility =
-            if (inscripcion.estado == EstadoInscripcion.PENDIENTE_PAGO) View.VISIBLE else View.GONE
+            if (
+                inscripcion.estado == EstadoInscripcion.PENDIENTE_PAGO.name
+            ) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         binding.btnComprobante.text =
-            if (comprobante == null) "Cargar comprobante de pago" else "Reemplazar comprobante"
+            if (comprobante == null) {
+                "Cargar comprobante de pago"
+            } else {
+                "Reemplazar comprobante"
+            }
     }
-
-    private fun tipoElegido() = when (binding.rgTipo.checkedRadioButtonId) {
-        R.id.rbEstudiante -> TipoInscripcion.ESTUDIANTE
-        R.id.rbExpositor -> TipoInscripcion.EXPOSITOR
-        else -> TipoInscripcion.ASISTENTE
+    private fun tipoElegido(): TipoInscripcion {
+        return when (
+            binding.rgTipo.checkedRadioButtonId
+        ) {
+            R.id.rbExpositor -> TipoInscripcion.EXPOSITOR
+            else ->
+                TipoInscripcion.ASISTENTE
+        }
     }
-
+    private fun categoriaElegida():
+            CategoriaInscripcion {
+        return if (
+            binding.cbEstudiante.isChecked
+        ) {
+            CategoriaInscripcion.ESTUDIANTE
+        } else {
+            CategoriaInscripcion.GENERAL
+        }
+    }
     private fun pintarMonto() {
-        val monto = viewModel.montoPara(tipoElegido())
-        binding.tvMonto.text = monto?.let { "A pagar: $${it.toInt()}" } ?: ""
+        val monto =
+            viewModel.montoPara(
+                categoriaElegida()
+            )
+        binding.tvMonto.text =
+            "A pagar: $${monto.toInt()}"
     }
 
     override fun onDestroyView() {

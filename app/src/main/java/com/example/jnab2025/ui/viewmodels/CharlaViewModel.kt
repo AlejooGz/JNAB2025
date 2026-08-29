@@ -1,144 +1,443 @@
 package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.*
-import com.example.jnab2025.data.CharlaFakeData
-import com.example.jnab2025.data.UserFakeData
-import com.example.jnab2025.data.db.AppDatabase
-import com.example.jnab2025.data.repository.CharlaRepository
-import com.example.jnab2025.models.Charla
-import com.example.jnab2025.models.EstadoPropuesta
-import com.example.jnab2025.models.User
-import kotlinx.coroutines.launch
+import androidx.lifecycle.AndroidViewModel
+import com.example.jnab2025.data.model.CharlaFirebase
+import com.example.jnab2025.data.model.EstadoTrabajo
+import com.example.jnab2025.data.model.SimposioFirebase
+import com.example.jnab2025.data.model.TipoActividad
+import com.example.jnab2025.data.model.TrabajoFirebase
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 
-class CharlaViewModel(application: Application) : AndroidViewModel(application) {
+class CharlaViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-    private val repository: CharlaRepository
-    private val _charlas = MutableLiveData<List<Charla>>()
-    val charlas: LiveData<List<Charla>> get() = _charlas
-
-    private val _mensaje = MutableLiveData<String>()
-    val mensaje: LiveData<String> get() = _mensaje
-
-    // Para el filtro de favoritos
-    private val _mostrandoSoloFavoritos = MutableLiveData(false)
-    val mostrandoSoloFavoritos: LiveData<Boolean> get() = _mostrandoSoloFavoritos
+    private val firestore = FirebaseFirestore.getInstance()
+    private val _charlas =
+        MutableStateFlow<List<CharlaFirebase>>(emptyList())
+    val charlas: StateFlow<List<CharlaFirebase>> = _charlas.asStateFlow()
+    private val _trabajo = MutableStateFlow<TrabajoFirebase?>(null)
+    val trabajo: StateFlow<TrabajoFirebase?> = _trabajo.asStateFlow()
+    private val _simposio = MutableStateFlow<SimposioFirebase?>(null)
+    val simposio: StateFlow<SimposioFirebase?> = _simposio.asStateFlow()
+    private val _avisos = Channel<String>(Channel.BUFFERED)
+    val avisos: Flow<String> = _avisos.receiveAsFlow()
+    private val _programadas = Channel<Unit>(Channel.BUFFERED)
+    val programadas: Flow<Unit> = _programadas.receiveAsFlow()
+    private var listenerCharlas: ListenerRegistration? = null
 
     init {
-        val dao = AppDatabase.getDatabase(application).charlaDao()
-        repository = CharlaRepository(dao)
-        cargarTodasLasCharlas()
+        escucharCharlas()
     }
 
-    fun cargarTodasLasCharlas() = viewModelScope.launch {
-        val lista = repository.obtenerTodas()
-        _charlas.value = if (_mostrandoSoloFavoritos.value == true) {
-            lista.filter { it.esFavorito }
-        } else {
-            lista
-        }
+    //escucha el cronograma Firebase completo.
+    private fun escucharCharlas() {
+        listenerCharlas?.remove()
+        listenerCharlas =
+            firestore
+                .collection("charlas")
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        _avisos.trySend(
+                            "No se pudo cargar el cronograma: ${error.message}"
+                        )
+                        return@addSnapshotListener
+                    }
+                    _charlas.value =
+                        snapshot
+                            ?.documents
+                            ?.mapNotNull { documento ->
+                                documento.toObject(
+                                    CharlaFirebase::class.java
+                                )
+                            }
+                            .orEmpty()
+                }
     }
 
-    fun cargarCharlasPendientesPorSimposio(simposioId: Int) = viewModelScope.launch {
-        val todas = repository.obtenerPorSimposio(simposioId)
-        val filtradas = todas.filter { it.estado == EstadoPropuesta.PENDIENTE }
-        _charlas.value = filtrarPorFavoritosSiCorresponde(filtradas)
+    //carga un trabajo aprobado y su simposio.
+    fun cargarTrabajo(
+        trabajoId: String
+    ) {
+        firestore
+            .collection("trabajos")
+            .document(trabajoId)
+            .get()
+            .addOnSuccessListener { documento ->
+                val trabajo =
+                    documento.toObject(
+                        TrabajoFirebase::class.java
+                    )
+
+                if (trabajo == null) {
+                    _avisos.trySend(
+                        "No se encontró el trabajo"
+                    )
+                    return@addOnSuccessListener
+                }
+                _trabajo.value = trabajo
+                cargarSimposio(
+                    trabajo.simposioId
+                )
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo cargar el trabajo: ${error.message}"
+                )
+            }
+    }
+    private fun cargarSimposio(
+        simposioId: String
+    ) {
+        firestore
+            .collection("simposios")
+            .document(simposioId)
+            .get()
+            .addOnSuccessListener { documento ->
+
+                val simposio =
+                    documento.toObject(
+                        SimposioFirebase::class.java
+                    )
+
+                if (simposio == null) {
+                    _avisos.trySend(
+                        "No se encontró el simposio"
+                    )
+                    return@addOnSuccessListener
+                }
+                _simposio.value = simposio
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo cargar el simposio: ${error.message}"
+                )
+            }
     }
 
-    fun cargarCharlasPorSimposio(simposioId: Int) = viewModelScope.launch {
-        val lista = repository.obtenerPorSimposio(simposioId)
-        _charlas.value = filtrarPorFavoritosSiCorresponde(lista)
+    /**Programa un trabajo que ya fue:
+     * 1.aceptado académicamente
+     * 2.tiene inscripción acreditada
+     * recién en este punto se convierte en CharlaFirebase.*/
+    fun programarPresentacion(
+        trabajoId: String,
+        fecha: LocalDate,
+        horaInicio: LocalTime
+    ) {
+
+        firestore
+            .collection("trabajos")
+            .document(trabajoId)
+            .get()
+            .addOnSuccessListener { documento ->
+                val trabajo =
+                    documento.toObject(
+                        TrabajoFirebase::class.java
+                    )
+
+                if (trabajo == null) {
+                    _avisos.trySend(
+                        "No se encontró el trabajo"
+                    )
+                    return@addOnSuccessListener
+                }
+
+                if (
+                    trabajo.estado !=
+                    EstadoTrabajo.APROBADO.name
+                ) {
+                    _avisos.trySend(
+                        "El trabajo todavía no está habilitado para programarse"
+                    )
+                    return@addOnSuccessListener
+                }
+
+                verificarSiYaEstaProgramado(
+                    trabajo = trabajo,
+                    fecha = fecha,
+                    horaInicio = horaInicio
+                )
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo cargar el trabajo: ${error.message}"
+                )
+            }
+    }
+    private fun verificarSiYaEstaProgramado(
+        trabajo: TrabajoFirebase,
+        fecha: LocalDate,
+        horaInicio: LocalTime
+    ) {
+        firestore
+            .collection("charlas")
+            .whereEqualTo(
+                "trabajoId",
+                trabajo.id
+            )
+            .get()
+            .addOnSuccessListener { snapshot ->
+
+                if (!snapshot.isEmpty) {
+                    _avisos.trySend(
+                        "Este trabajo ya tiene una presentación programada"
+                    )
+                    return@addOnSuccessListener
+                }
+
+                cargarSimposioParaProgramar(
+                    trabajo = trabajo,
+                    fecha = fecha,
+                    horaInicio = horaInicio
+                )
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo comprobar la programación: ${error.message}"
+                )
+            }
     }
 
-    fun cargarCharlasPorExpositor(expositorId: Int) = viewModelScope.launch {
-        val lista = repository.obtenerPorExpositor(expositorId)
-        _charlas.value = filtrarPorFavoritosSiCorresponde(lista)
+    private fun cargarSimposioParaProgramar(
+        trabajo: TrabajoFirebase,
+        fecha: LocalDate,
+        horaInicio: LocalTime
+    ) {
+        firestore
+            .collection("simposios")
+            .document(trabajo.simposioId)
+            .get()
+            .addOnSuccessListener { documento ->
+
+                val simposio =
+                    documento.toObject(
+                        SimposioFirebase::class.java
+                    )
+
+                if (simposio == null) {
+                    _avisos.trySend(
+                        "No se encontró el simposio"
+                    )
+                    return@addOnSuccessListener
+                }
+
+                val desde =
+                    simposio.fechaInicio
+                        ?.toDate()
+                        ?.toInstant()
+                        ?.atZone(
+                            ZoneId.systemDefault()
+                        )
+                        ?.toLocalDate()
+
+                val hasta =
+                    simposio.fechaFin
+                        ?.toDate()
+                        ?.toInstant()
+                        ?.atZone(
+                            ZoneId.systemDefault()
+                        )
+                        ?.toLocalDate()
+
+                if (
+                    desde == null ||
+                    hasta == null
+                ) {
+                    _avisos.trySend(
+                        "El simposio no tiene fechas válidas"
+                    )
+                    return@addOnSuccessListener
+                }
+                if (
+                    fecha < desde || fecha > hasta
+                ) {
+                    _avisos.trySend(
+                        "La fecha debe estar entre $desde y $hasta"
+                    )
+                    return@addOnSuccessListener
+                }
+                verificarConflicto(
+                    trabajo = trabajo,
+                    simposio = simposio,
+                    fecha = fecha,
+                    horaInicio = horaInicio
+                )
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo cargar el simposio: ${error.message}"
+                )
+            }
     }
 
-    fun cargarCharlasPorEstado(estado: EstadoPropuesta) = viewModelScope.launch {
-        val lista = repository.obtenerPorEstado(estado)
-        _charlas.value = filtrarPorFavoritosSiCorresponde(lista)
+    /**Hay conflicto cuando:
+     * - es el mismo día
+     * - es la misma aula
+     * - los horarios se superponen
+     * La misma hora en días diferentes es válida.*/
+    private fun verificarConflicto(
+        trabajo: TrabajoFirebase,
+        simposio: SimposioFirebase,
+        fecha: LocalDate,
+        horaInicio: LocalTime
+    ) {
+        val horaFin =
+            horaInicio.plusMinutes(
+                CharlaFirebase
+                    .MINUTOS_PRESENTACION
+                    .toLong()
+            )
+        firestore
+            .collection("charlas")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val charlas =
+                    snapshot.documents
+                        .mapNotNull { documento ->
+                            documento.toObject(
+                                CharlaFirebase::class.java
+                            )
+                        }
+
+                val hayConflicto =
+                    charlas.any { charla ->
+                        val fechaCharla =
+                            charla.fecha
+                                ?.toDate()
+                                ?.toInstant()
+                                ?.atZone(
+                                    ZoneId.systemDefault()
+                                )
+                                ?.toLocalDate()
+
+                        if (fechaCharla != fecha) {
+                            false
+                        } else {
+                            val inicioExistente =
+                                runCatching {
+                                    LocalTime.parse(
+                                        charla.horaInicio
+                                    )
+                                }.getOrNull()
+
+                            val finExistente =
+                                runCatching {
+                                    LocalTime.parse(
+                                        charla.horaFin
+                                    )
+                                }.getOrNull()
+
+                            if (
+                                inicioExistente == null ||
+                                finExistente == null
+                            ) {
+                                false
+                            } else {
+                                val mismaAula =
+                                    charla.aulaId ==
+                                            simposio.aulaId
+
+                                val seSuperponen =
+                                    horaInicio < finExistente &&
+                                            horaFin > inicioExistente
+                                mismaAula &&
+                                        seSuperponen
+                            }
+                        }
+                    }
+
+                if (hayConflicto) {
+                    _avisos.trySend(
+                        "Ya existe una actividad en esa aula y horario"
+                    )
+                    return@addOnSuccessListener
+                }
+
+                guardarPresentacion(
+                    trabajo = trabajo,
+                    simposio = simposio,
+                    fecha = fecha,
+                    horaInicio = horaInicio,
+                    horaFin = horaFin
+                )
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo verificar el horario: ${error.message}"
+                )
+            }
     }
 
-    private fun filtrarPorFavoritosSiCorresponde(lista: List<Charla>): List<Charla> {
-        return if (_mostrandoSoloFavoritos.value == true) {
-            lista.filter { it.esFavorito }
-        } else {
-            lista
-        }
+    private fun guardarPresentacion(
+        trabajo: TrabajoFirebase,
+        simposio: SimposioFirebase,
+        fecha: LocalDate,
+        horaInicio: LocalTime,
+        horaFin: LocalTime
+    ) {
+        val charlaRef =
+            firestore
+                .collection("charlas")
+                .document()
+
+        val charla =
+            CharlaFirebase(
+                id = charlaRef.id,
+                eventoId = "",
+                simposioId = simposio.id,
+                trabajoId = trabajo.id,
+                aulaId = simposio.aulaId,
+                tipo = TipoActividad.PRESENTACION
+                        .name,
+                titulo = trabajo.titulo,
+                fecha = fecha.toTimestamp(),
+                horaInicio = horaInicio.toString(),
+                horaFin = horaFin.toString()
+            )
+        charlaRef
+            .set(charla)
+            .addOnSuccessListener {
+                _avisos.trySend(
+                    "Presentación programada correctamente"
+                )
+                _programadas.trySend(Unit)
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo programar la presentación: ${error.message}"
+                )
+            }
     }
 
-    fun crearCharla(charla: Charla) = viewModelScope.launch {
-        repository.crearCharla(charla)
-        _mensaje.value = "Charla enviada correctamente"
-        cargarTodasLasCharlas()
-    }
+    private fun LocalDate.toTimestamp():
+            Timestamp {
 
-    fun insertarTodos(lista: List<Charla>) = viewModelScope.launch {
-        repository.insertarTodos(lista)
-    }
+        val instant =
+            atStartOfDay(
+                ZoneId.systemDefault()
+            ).toInstant()
 
-    fun editarCharla(charlaOriginal: Charla, nuevoTitulo: String, nuevaDescripcion: String?, nuevoNombreArchivo: String) = viewModelScope.launch {
-        val charlaEditada = charlaOriginal.copy(
-            titulo = nuevoTitulo,
-            descripcion = nuevaDescripcion,
-            nombreArchivo = nuevoNombreArchivo
+        return Timestamp(
+            java.util.Date.from(
+                instant
+            )
         )
-
-        repository.actualizarCharla(charlaEditada)
-        _mensaje.value = "Charla actualizada correctamente"
-        cargarTodasLasCharlas()
     }
 
-    fun eliminar(charla: Charla) = viewModelScope.launch {
-        repository.eliminar(charla)
-    }
-
-    fun eliminarTodos() = viewModelScope.launch {
-        repository.eliminarTodos()
-    }
-
-
-
-    fun aprobarCharla(charla: Charla, fecha: String, inicio: String, fin: String, sala: String) = viewModelScope.launch {
-        val aprobada = charla.copy(
-            estado = EstadoPropuesta.APROBADA,
-            fechaExposicion = fecha,
-            horaInicio = inicio,
-            horaFin = fin,
-            sala = sala
-        )
-        repository.actualizarCharla(aprobada)
-        _mensaje.value = "Charla aprobada"
-        cargarTodasLasCharlas()
-    }
-
-    fun rechazarCharla(charla: Charla) = viewModelScope.launch {
-        val rechazada = charla.copy(estado = EstadoPropuesta.RECHAZADA)
-        repository.actualizarCharla(rechazada)
-        _mensaje.value = "Charla rechazada"
-        cargarTodasLasCharlas()
-    }
-
-    fun marcarComoPagada(charla: Charla) = viewModelScope.launch {
-        val pagada = charla.copy(pagado = true)
-        repository.actualizarCharla(pagada)
-        _mensaje.value = "Charla pagada correctamente"
-        cargarTodasLasCharlas()
-    }
-
-    fun toggleFavorito(charla: Charla) = viewModelScope.launch {
-        val charlaActualizada = charla.copy(esFavorito = !charla.esFavorito)
-        repository.actualizarCharla(charlaActualizada)
-        cargarTodasLasCharlas()
-    }
-
-    fun toggleFiltroFavoritos() {
-        _mostrandoSoloFavoritos.value = !_mostrandoSoloFavoritos.value!!
-        cargarTodasLasCharlas()
-    }
-
-    fun limpiarMensaje() {
-        _mensaje.value = ""
+    override fun onCleared() {
+        super.onCleared()
+        listenerCharlas?.remove()
     }
 }

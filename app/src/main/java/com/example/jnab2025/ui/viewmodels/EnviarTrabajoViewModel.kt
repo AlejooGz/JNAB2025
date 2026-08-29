@@ -1,79 +1,223 @@
 package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.jnab2025.data.local.JnabDatabase
-import com.example.jnab2025.data.model.SimposioConAula
-import com.example.jnab2025.data.repository.TrabajoRepository
+import com.example.jnab2025.data.model.SimposioFirebase
+import com.example.jnab2025.data.model.TrabajoFirebase
 import com.example.jnab2025.utils.Sesion
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
-class EnviarTrabajoViewModel(application: Application) : AndroidViewModel(application) {
+class EnviarTrabajoViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
-    private val db = JnabDatabase.get(application)
-    private val repo = TrabajoRepository(db.trabajoDao(), db.simposioDao())
+    private val _simposios =
+        MutableStateFlow<List<SimposioFirebase>>(emptyList())
 
-    private val usuarioId = Sesion.usuarioId(application)
-    private val eventoId = Sesion.eventoId(application)
+    val simposios: StateFlow<List<SimposioFirebase>> =
+        _simposios.asStateFlow()
+
+    private var listenerSimposios: ListenerRegistration? = null
 
     sealed interface Envio {
         data object Ok : Envio
         data class Error(val mensaje: String) : Envio
     }
-
     private val _envios = Channel<Envio>(Channel.BUFFERED)
     val envios: Flow<Envio> = _envios.receiveAsFlow()
 
-    val simposios: StateFlow<List<SimposioConAula>> = repo.simposiosDisponibles(eventoId)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    init {
+        escucharSimposios()
+    }
 
+    private fun escucharSimposios() {
+        listenerSimposios?.remove()
+        listenerSimposios = firestore
+            .collection("simposios")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _envios.trySend(
+                        Envio.Error(
+                            "No se pudieron cargar los simposios: ${error.message}"
+                        )
+                    )
+                    return@addSnapshotListener
+                }
+                val lista = snapshot
+                    ?.documents
+                    ?.mapNotNull { documento ->
+                        documento.toObject(
+                            SimposioFirebase::class.java
+                        )
+                    }
+                    .orEmpty()
+                _simposios.value = lista
+            }
+    }
     fun enviar(
-        simposioId: Long,
+        simposioId: String,
         titulo: String,
         resumen: String,
-        archivoUri: String?,
+        archivoUri: Uri?,
         nombreArchivo: String?
-    ) = viewModelScope.launch {
-        val error = validar(simposioId, titulo, resumen, archivoUri)
-        if (error != null) {
-            _envios.send(Envio.Error(error))
-            return@launch
-        }
+    ) {
+        val uid = auth.currentUser?.uid
+        val error = validar(
+            uid = uid,
+            simposioId = simposioId,
+            titulo = titulo,
+            resumen = resumen,
+            archivoUri = archivoUri
+        )
 
-        runCatching {
-            repo.enviar(
-                simposioId = simposioId,
-                autorId = usuarioId,
-                titulo = titulo.trim(),
-                resumen = resumen.trim(),
-                archivoUri = archivoUri!!,
-                nombreArchivo = nombreArchivo ?: "trabajo.pdf"
+        if (error != null) {
+            _envios.trySend(
+                Envio.Error(error)
             )
-        }.onSuccess {
-            _envios.send(Envio.Ok)
-        }.onFailure {
-            _envios.send(Envio.Error("No se pudo guardar el trabajo: ${it.message}"))
+            return
         }
+        val uidSeguro = uid!!
+        val uriSeguro = archivoUri!!
+        val simposio = _simposios.value
+            .firstOrNull {
+                it.id == simposioId
+            }
+        if (simposio == null) {
+            _envios.trySend(
+                Envio.Error(
+                    "No se encontró el simposio seleccionado"
+                )
+            )
+            return
+        }
+        val trabajoRef = firestore
+            .collection("trabajos")
+            .document()
+        val trabajoId = trabajoRef.id
+        val nombreSeguro =
+            (nombreArchivo ?: "trabajo.pdf")
+                .replace("/", "_")
+        val archivoRef = storage
+            .reference
+            .child(
+                "trabajos/$uidSeguro/$trabajoId/$nombreSeguro"
+            )
+
+        // 1. subir el PDF a Firebase Storage
+        archivoRef
+            .putFile(uriSeguro)
+            .addOnSuccessListener {
+                // 2. obtener la URL del archivo
+                archivoRef.downloadUrl
+                    .addOnSuccessListener { downloadUri ->
+                        guardarTrabajoEnFirestore(
+                            trabajoRef = trabajoRef,
+                            trabajoId = trabajoId,
+                            uid = uidSeguro,
+                            simposio = simposio,
+                            titulo = titulo,
+                            resumen = resumen,
+                            nombreArchivo = nombreSeguro,
+                            archivoUrl = downloadUri.toString(),
+                            archivoRef = archivoRef
+                        )
+                    }
+                    .addOnFailureListener { error ->
+                        // el archivo llegó a Storage pero no pudo completar la operacin
+                        archivoRef.delete()
+                        _envios.trySend(
+                            Envio.Error(
+                                "El PDF se subió, pero no se pudo obtener su URL: ${error.message}"
+                            )
+                        )
+                    }
+            }
+            .addOnFailureListener { error ->
+                _envios.trySend(
+                    Envio.Error(
+                        "No se pudo subir el PDF: ${error.message}"
+                    )
+                )
+            }
+    }
+    private fun guardarTrabajoEnFirestore(
+        trabajoRef: com.google.firebase.firestore.DocumentReference,
+        trabajoId: String,
+        uid: String,
+        simposio: SimposioFirebase,
+        titulo: String,
+        resumen: String,
+        nombreArchivo: String,
+        archivoUrl: String,
+        archivoRef: com.google.firebase.storage.StorageReference
+    ) {
+        val context = getApplication<Application>()
+        val trabajo = TrabajoFirebase(
+            id = trabajoId,
+            simposioId = simposio.id,
+            simposioTitulo = simposio.titulo,
+            autorUid = uid,
+            autorNombre = Sesion.nombre(context),
+            autorEmail = Sesion.email(context) ?: "",
+            titulo = titulo.trim(),
+            resumen = resumen.trim(),
+            archivoUrl = archivoUrl,
+            nombreArchivo = nombreArchivo,
+            fechaEnvio = Timestamp.now(),
+            estado = "ENVIADO",
+            motivoRechazo = null,
+            fechaResolucion = null,
+            resueltoPorUid = null
+        )
+        // 3. guarda los metadatos del trabajo en Firestore
+        trabajoRef
+            .set(trabajo)
+            .addOnSuccessListener {
+                _envios.trySend(
+                    Envio.Ok
+                )
+            }
+            .addOnFailureListener { error ->
+                //si firestore falla, eliminamos el PDF para no dejar un archivo huérfano
+                archivoRef.delete()
+                _envios.trySend(
+                    Envio.Error(
+                        "El PDF se subió, pero no se pudo guardar el trabajo: ${error.message}"
+                    )
+                )
+            }
     }
 
     private fun validar(
-        simposioId: Long,
+        uid: String?,
+        simposioId: String,
         titulo: String,
         resumen: String,
-        archivoUri: String?
+        archivoUri: Uri?
     ): String? = when {
-        usuarioId == Sesion.SIN_SESION -> "Inicia sesion para enviar un trabajo"
-        simposioId <= 0L -> "No se pudo identificar el simposio"
-        titulo.isBlank() -> "Falta el titulo del trabajo"
+        uid == null -> "Iniciá sesión para enviar un trabajo"
+        simposioId.isBlank() -> "No se pudo identificar el simposio"
+        titulo.isBlank() -> "Falta el título del trabajo"
         resumen.isBlank() -> "Falta el resumen"
         archivoUri == null -> "Falta adjuntar el PDF"
         else -> null
+    }
+    override fun onCleared() {
+        super.onCleared()
+        listenerSimposios?.remove()
     }
 }

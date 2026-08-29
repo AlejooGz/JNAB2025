@@ -19,10 +19,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MisSimposiosFragment : Fragment() {
-
     private var _binding: FragmentMisSimposiosBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: MisSimposiosViewModel by viewModels()
     private lateinit var adapter: MisSimposiosAdapter
 
@@ -38,14 +36,37 @@ class MisSimposiosFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = MisSimposiosAdapter(
+
             onEditarClick = { simposio ->
-                val accion = MisSimposiosFragmentDirections
-                    .actionMisSimposiosFragmentToEditarSimposioFragment(simposio.id)
+
+                val accion =
+                    MisSimposiosFragmentDirections
+                        .actionMisSimposiosFragmentToEditarSimposioFragment(
+                            simposio.id
+                        )
+
                 findNavController().navigate(accion)
             },
+
             onVerPropuestasClick = { simposio ->
-                val accion = MisSimposiosFragmentDirections
-                    .actionMisSimposiosFragmentToPropuestasFragment(simposio.id)
+
+                val accion =
+                    MisSimposiosFragmentDirections
+                        .actionMisSimposiosFragmentToPropuestasFragment(
+                            simposio.id
+                        )
+
+                findNavController().navigate(accion)
+            },
+
+            onVerTrabajosClick = { simposio ->
+
+                val accion =
+                    MisSimposiosFragmentDirections
+                        .actionMisSimposiosFragmentToTrabajosSimposioFragment(
+                            simposio.id
+                        )
+
                 findNavController().navigate(accion)
             }
         )

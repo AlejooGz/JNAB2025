@@ -10,7 +10,6 @@ import com.example.jnab2025.databinding.FragmentPerfilBinding
 import com.example.jnab2025.utils.Sesion
 
 class PerfilFragment : Fragment() {
-
     private var _binding: FragmentPerfilBinding? = null
     private val binding get() = _binding!!
 

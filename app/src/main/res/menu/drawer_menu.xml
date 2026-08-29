@@ -33,6 +33,14 @@
             android:id="@+id/nav_ver_inscriptos"
             android:title="Inscriptos"
             android:icon="@drawable/outline_group_24" />
+        <item
+            android:id="@+id/nav_crear_novedad"
+            android:icon="@drawable/outline_breaking_news_24"
+            android:title="Crear novedad" />
+        <item
+            android:id="@+id/nav_gestionar_faq"
+            android:icon="@drawable/baseline_help_outline_24"
+            android:title="Gestionar preguntas frecuentes" />
     </group>
 
     <group

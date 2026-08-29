@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.jnab2025.databinding.FragmentCronogramaBinding
 import com.example.jnab2025.ui.adapters.CronogramaAdapter
@@ -60,8 +61,12 @@ class AgendaFragment : Fragment() {
     private fun configurarLista() {
         adapter = CronogramaAdapter(
             onAgendaClick = { viewModel.alternarAgenda(it) },
-            onItemClick = { item ->
-                Toast.makeText(requireContext(), item.titulo, Toast.LENGTH_SHORT).show()
+            onItemClick = { item -> val accion = AgendaFragmentDirections
+                        .actionAgendaFragmentToCharlaDetailFragment(
+                            item.charlaId
+                        )
+                findNavController()
+                    .navigate(accion)
             }
         )
         binding.rvCronograma.layoutManager = LinearLayoutManager(requireContext())

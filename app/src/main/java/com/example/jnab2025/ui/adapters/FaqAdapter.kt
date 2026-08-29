@@ -32,25 +32,20 @@ class FaqAdapter(private val faqList: List<FaqItem>) : RecyclerView.Adapter<FaqA
             questionText.text = item.question
 
             if (item.isHeader) {
-                // Estilo para los encabezados
                 questionText.textSize = 18f
                 questionText.setTypeface(null, Typeface.BOLD)
                 answerText.visibility = View.GONE
                 icon.visibility = View.GONE
             } else {
-                // Estilo normal para preguntas
                 questionText.textSize = 16f
                 questionText.setTypeface(null, Typeface.NORMAL)
-
                 answerText.text = item.answer.ifEmpty { "Respuesta pendiente." }
                 answerText.visibility = if (item.isExpanded) View.VISIBLE else View.GONE
-
                 icon.setImageResource(
                     if (item.isExpanded) R.drawable.baseline_expand_less_24
                     else R.drawable.baseline_expand_more_24
                 )
                 icon.visibility = View.VISIBLE
-
                 itemView.setOnClickListener {
                     item.isExpanded = !item.isExpanded
                     notifyItemChanged(adapterPosition)

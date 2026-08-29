@@ -1,87 +1,284 @@
 package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.jnab2025.data.local.JnabDatabase
-import com.example.jnab2025.data.model.ComprobantePago
-import com.example.jnab2025.data.model.Evento
-import com.example.jnab2025.data.model.Inscripcion
+import com.example.jnab2025.data.model.CategoriaInscripcion
+import com.example.jnab2025.data.model.ComprobanteFirebase
+import com.example.jnab2025.data.model.EstadoComprobante
+import com.example.jnab2025.data.model.EstadoInscripcion
+import com.example.jnab2025.data.model.InscripcionFirebase
 import com.example.jnab2025.data.model.TipoInscripcion
-import com.example.jnab2025.data.repository.InscripcionRepository
 import com.example.jnab2025.utils.Sesion
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
-class InscripcionViewModel(application: Application) : AndroidViewModel(application) {
+class InscripcionViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
-    private val repo = InscripcionRepository(JnabDatabase.get(application))
-
-    private val usuarioId = Sesion.usuarioId(application)
-    private val eventoId = Sesion.eventoId(application)
-
-    /** Todo lo que la pantalla necesita saber sobre mi inscripcion. */
+    companion object {
+        const val MONTO_GENERAL = 25000.0
+        const val MONTO_ESTUDIANTE = 12500.0
+    }
     data class Vista(
-        val evento: Evento? = null,
-        val inscripcion: Inscripcion? = null,
-        val comprobante: ComprobantePago? = null
+        val inscripcion: InscripcionFirebase? = null,
+        val comprobante: ComprobanteFirebase? = null
     )
-
+    private val _vista = MutableStateFlow(Vista())
+    val vista: StateFlow<Vista> = _vista.asStateFlow()
     private val _avisos = Channel<String>(Channel.BUFFERED)
     val avisos: Flow<String> = _avisos.receiveAsFlow()
+    private var listenerInscripcion: ListenerRegistration? = null
+    private var listenerComprobante: ListenerRegistration? = null
 
-    private val inscripcionFlow = repo.inscripcion(usuarioId, eventoId)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val comprobanteFlow = inscripcionFlow.flatMapLatest { inscripcion ->
-        if (inscripcion == null) flowOf(null) else repo.comprobante(inscripcion.id)
+    init {
+        escucharInscripcion()
     }
 
-    val vista: StateFlow<Vista> =
-        combine(repo.evento(eventoId), inscripcionFlow, comprobanteFlow) { evento, inscripcion, comprobante ->
-            Vista(evento, inscripcion, comprobante)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Vista())
+    fun montoPara(
+        categoria: CategoriaInscripcion
+    ): Double {
 
-    fun montoPara(tipo: TipoInscripcion): Double? =
-        vista.value.evento?.let { repo.montoPara(tipo, it) }
-
-    fun inscribirse(tipo: TipoInscripcion) = viewModelScope.launch {
-        if (usuarioId == Sesion.SIN_SESION) {
-            _avisos.send("Inicia sesion para inscribirte")
-            return@launch
+        return when (categoria) {
+            CategoriaInscripcion.ESTUDIANTE -> MONTO_ESTUDIANTE
+            CategoriaInscripcion.GENERAL -> MONTO_GENERAL
         }
-        val evento = vista.value.evento ?: repo.evento(eventoId).first()
-        if (evento == null) {
-            _avisos.send("No hay ningun evento cargado")
-            return@launch
-        }
-        runCatching { repo.inscribir(usuarioId, evento, tipo) }
-            .onSuccess { _avisos.send("Inscripcion registrada. Ahora carga el comprobante de pago") }
-            .onFailure { _avisos.send("No se pudo inscribir: ${it.message}") }
     }
 
-    fun cargarComprobante(archivoUri: String?, nombreArchivo: String?) = viewModelScope.launch {
-        val inscripcion = vista.value.inscripcion
-        when {
-            inscripcion == null -> _avisos.send("Primero inscribite al evento")
-            archivoUri == null -> _avisos.send("Elegi el archivo del comprobante")
-            else -> runCatching {
-                repo.cargarComprobante(inscripcion.id, archivoUri, nombreArchivo ?: "comprobante")
-            }.onSuccess {
-                _avisos.send("Comprobante enviado. La organizacion lo va a verificar")
-            }.onFailure {
-                _avisos.send("No se pudo guardar el comprobante: ${it.message}")
+    fun inscribirse(
+        tipo: TipoInscripcion,
+        categoria: CategoriaInscripcion
+    ) {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            _avisos.trySend(
+                "Iniciá sesión para inscribirte"
+            )
+            return
+        }
+        if (_vista.value.inscripcion != null) {
+            _avisos.trySend(
+                "Ya tenés una inscripción registrada"
+            )
+            return
+        }
+
+        //como hay una inscripción por usuario, usamos el UID como ID del documento
+        val inscripcionRef = firestore
+            .collection("inscripciones")
+            .document(uid)
+
+        val context =
+            getApplication<Application>()
+
+        val inscripcion =
+            InscripcionFirebase(
+                id = inscripcionRef.id,
+                usuarioUid = uid,
+                usuarioNombre = Sesion.nombre(context),
+                usuarioEmail = Sesion.email(context) ?: "",
+                tipo = tipo.name,
+                categoria = categoria.name,
+                estado = EstadoInscripcion
+                        .PENDIENTE_PAGO
+                        .name,
+                monto = montoPara(categoria),
+                fechaAlta = Timestamp.now()
+            )
+        inscripcionRef
+            .set(inscripcion)
+            .addOnSuccessListener {
+                _avisos.trySend(
+                    "Inscripción registrada. Ahora cargá el comprobante de pago"
+                )
             }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudo registrar la inscripción: ${error.message}"
+                )
+            }
+    }
+
+    private fun escucharInscripcion() {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            _vista.value = Vista()
+            return
         }
+        listenerInscripcion?.remove()
+        listenerInscripcion = firestore
+            .collection("inscripciones")
+            .document(uid)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _avisos.trySend(
+                        "No se pudo cargar la inscripción: ${error.message}"
+                    )
+                    return@addSnapshotListener
+                }
+                val inscripcion =
+                    snapshot?.toObject(
+                        InscripcionFirebase::class.java
+                    )
+                _vista.value =
+                    _vista.value.copy(
+                        inscripcion = inscripcion
+                    )
+                if (inscripcion != null) {
+                    escucharComprobante(
+                        inscripcion.id
+                    )
+                }
+            }
+    }
+    private fun escucharComprobante(
+        inscripcionId: String
+    ) {
+        listenerComprobante?.remove()
+        listenerComprobante = firestore
+            .collection("comprobantes")
+            .document(inscripcionId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _avisos.trySend(
+                        "No se pudo cargar el comprobante: ${error.message}"
+                    )
+                    return@addSnapshotListener
+                }
+                val comprobante =
+                    snapshot?.toObject(
+                        ComprobanteFirebase::class.java
+                    )
+                _vista.value =
+                    _vista.value.copy(
+                        comprobante = comprobante
+                    )
+            }
+    }
+    fun cargarComprobante(
+        archivoUri: Uri?,
+        nombreArchivo: String?
+    ) {
+        val uid = auth.currentUser?.uid
+
+        if (uid == null) { _avisos.trySend(
+                "Iniciá sesión para cargar el comprobante"
+            )
+            return
+        }
+
+        val inscripcion = _vista.value.inscripcion
+        if (inscripcion == null) {
+            _avisos.trySend(
+                "Primero inscribite al evento"
+            )
+            return
+        }
+        if (
+            inscripcion.estado ==
+            EstadoInscripcion.PAGADA.name
+        ) {
+            _avisos.trySend(
+                "Tu inscripción ya está acreditada"
+            )
+            return
+        }
+        if (archivoUri == null) { _avisos.trySend(
+                "Elegí el archivo del comprobante"
+            )
+            return
+        }
+        val nombreSeguro =
+            (nombreArchivo ?: "comprobante")
+                .replace("/", "_")
+
+        /* un usuario tiene un comprobante activo
+         * por inscripción.Si reemplaza el archivo, se sobrescribe.*/
+        val archivoRef = storage
+            .reference
+            .child(
+                "comprobantes/$uid/${inscripcion.id}/$nombreSeguro"
+            )
+        archivoRef
+            .putFile(archivoUri)
+            .addOnSuccessListener {
+                archivoRef.downloadUrl
+                    .addOnSuccessListener { downloadUri ->
+                        guardarComprobante(
+                            inscripcion = inscripcion,
+                            uid = uid,
+                            nombreArchivo = nombreSeguro,
+                            archivoUrl =
+                                downloadUri.toString()
+                        )
+                    }
+                    .addOnFailureListener { error -> _avisos.trySend(
+                            "El archivo se subió, pero no se pudo obtener su URL: ${error.message}"
+                        )
+                    }
+            }
+            .addOnFailureListener { error -> _avisos.trySend(
+                    "No se pudo subir el comprobante: ${error.message}"
+                )
+            }
+    }
+    private fun guardarComprobante(
+        inscripcion: InscripcionFirebase,
+        uid: String,
+        nombreArchivo: String,
+        archivoUrl: String
+    ) {
+        /*también usamos el ID de inscripción como ID de comprobante.
+         * esto facilitareemplazar uno rechazado*/
+        val comprobanteRef =
+            firestore
+                .collection("comprobantes")
+                .document(inscripcion.id)
+
+        val comprobante =
+            ComprobanteFirebase(
+                id = comprobanteRef.id,
+                inscripcionId = inscripcion.id,
+                usuarioUid = uid,
+                archivoUrl = archivoUrl,
+                nombreArchivo = nombreArchivo,
+                fechaCarga = Timestamp.now(),
+                estado = EstadoComprobante
+                        .PENDIENTE
+                        .name,
+                verificadoPorUid = null,
+                fechaVerificacion = null,
+                motivoRechazo = null
+            )
+        comprobanteRef
+            .set(comprobante)
+            .addOnSuccessListener {
+                _avisos.trySend(
+                    "Comprobante enviado. La organización lo va a verificar"
+                )
+            }
+            .addOnFailureListener { error -> _avisos.trySend(
+                    "El archivo se subió, pero no se pudo guardar el comprobante: ${error.message}"
+                )
+            }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        listenerInscripcion?.remove()
+        listenerComprobante?.remove()
     }
 }

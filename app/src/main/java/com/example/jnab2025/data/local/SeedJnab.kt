@@ -228,7 +228,7 @@ object SeedJnab {
             inscripcion(rafa, eventoId, TipoInscripcion.EXPOSITOR, EstadoInscripcion.PENDIENTE_PAGO)
         )
         inscripciones.insertar(
-            inscripcion(alejo, eventoId, TipoInscripcion.ESTUDIANTE, EstadoInscripcion.PAGADA)
+            inscripcion(alejo, eventoId, TipoInscripcion.ASISTENTE, EstadoInscripcion.PAGADA)
         )
         inscripciones.insertar(
             inscripcion(luciana, eventoId, TipoInscripcion.ASISTENTE, EstadoInscripcion.PENDIENTE_PAGO)
@@ -348,7 +348,7 @@ object SeedJnab {
         eventoId = eventoId,
         tipo = tipo,
         estado = estado,
-        monto = if (tipo == TipoInscripcion.ESTUDIANTE) 12500.0 else 25000.0,
+        monto = if (tipo == TipoInscripcion.ASISTENTE) 12500.0 else 25000.0,
         fechaAlta = Instant.parse("2025-04-22T16:00:00Z")
     )
 

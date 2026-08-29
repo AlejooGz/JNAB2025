@@ -25,7 +25,9 @@ import com.example.jnab2025.data.UserFakeData
 import com.example.jnab2025.data.CharlaFakeData
 import com.example.jnab2025.data.db.AppDatabase
 import com.example.jnab2025.data.local.JnabDatabase
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.example.jnab2025.data.firebase.FirebaseSeed
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -69,25 +71,27 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 when (destination.id) {
-                    R.id.loginFragment -> {
+                    R.id.loginFragment,
+                    R.id.registroFragment -> {
                         binding.toolbar.visibility = View.GONE
                         binding.navView.visibility = View.GONE
                         bottomNav.visibility = View.GONE
-                        binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                        binding.drawerLayout.setDrawerLockMode(
+                            DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+                        )
                     }
                     else -> {
                         binding.toolbar.visibility = View.VISIBLE
                         binding.navView.visibility = View.VISIBLE
                         bottomNav.visibility = View.VISIBLE
-                        binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-                        // Al salir del login la sesión recién existe: hay que
-                        // rearmar el menú sin reiniciar la Activity.
+                        binding.drawerLayout.setDrawerLockMode(
+                            DrawerLayout.LOCK_MODE_UNLOCKED
+                        )
                         refrescarSesionEnUi()
                     }
                 }
             }
         }
-
         // Código comentado que antes redirigía al login:
         /*
         if (isLoggedIn) {
@@ -107,8 +111,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      * foreign key. Ahora es secuencial y sólo corre si está vacía.
      */
     private fun prepararDatos() {
+
+        // Datos locales que todavía usa parte de la app
         lifecycleScope.launch {
             val vieja = AppDatabase.getDatabase(this@MainActivity)
+
             if (vieja.userDao().obtenerTodos().isEmpty()) {
                 vieja.userDao().insertarTodos(UserFakeData.getUsersDeEjemplo())
                 vieja.simposioDao().insertarTodos(SimposioFakeData.getSimposiosDeEjemplo())
@@ -118,8 +125,23 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             // La primera consulta crea jnab.db y dispara SeedJnab.
             JnabDatabase.get(this@MainActivity).eventoDao().actual()
         }
-    }
 
+        // Seed temporal de Firestore
+        FirebaseSeed.cargarAulasIniciales(
+            onSuccess = {
+                Log.d(
+                    "FirebaseSeed",
+                    "Aulas cargadas correctamente en Firestore"
+                )
+            },
+            onError = { mensaje ->
+                Log.e(
+                    "FirebaseSeed",
+                    "Error al cargar aulas: $mensaje"
+                )
+            }
+        )
+    }
     private fun refrescarSesionEnUi() {
         val headerView = binding.navView.getHeaderView(0)
         headerView.findViewById<TextView>(R.id.tvDrawerUsername).text = Sesion.nombre(this)
@@ -127,7 +149,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val navMenu = binding.navView.menu
         navMenu.setGroupVisible(R.id.group_expositor, Sesion.esExpositor(this))
         navMenu.setGroupVisible(R.id.group_admin, Sesion.esOrganizador(this))
-        navMenu.setGroupVisible(R.id.group_asistente, Sesion.esAsistente(this))
+        navMenu.setGroupVisible(
+            R.id.group_asistente,
+            Sesion.esAsistente(this) ||
+                    Sesion.esExpositor(this)
+        )
         navMenu.findItem(R.id.nav_simposios)?.isVisible = true
 
         Log.d("Sesion", "usuario=${Sesion.usuarioId(this)} roles=${Sesion.roles(this)}")
@@ -161,17 +187,25 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             R.id.nav_logout -> {
                 Sesion.cerrar(this)
-                // Las pantallas sin migrar todavía leen de acá.
+                FirebaseAuth.getInstance().signOut()
                 getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
                     .edit().clear().apply()
-
-                // Navegar al login usando la acción global
                 findNavController(R.id.nav_host_fragment).navigate(
                     R.id.loginFragment,
                     null,
                     NavOptions.Builder()
                         .setPopUpTo(R.id.nav_graph, true)
                         .build()
+                )
+            }
+            R.id.nav_crear_novedad -> {
+                findNavController(R.id.nav_host_fragment
+                ).navigate(R.id.crearNovedadFragment
+                )
+            }
+            R.id.nav_gestionar_faq -> {
+                findNavController(R.id.nav_host_fragment
+                ).navigate(R.id.gestionFaqFragment
                 )
             }
         }

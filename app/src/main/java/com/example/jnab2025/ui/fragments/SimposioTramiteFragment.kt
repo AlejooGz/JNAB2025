@@ -19,10 +19,8 @@ import kotlinx.coroutines.launch
 
 /** Primer paso del envio: elegir a que simposio va el trabajo. */
 class SimposioTramiteFragment : Fragment() {
-
     private var _binding: FragmentElegirSimposioBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: EnviarTrabajoViewModel by viewModels()
     private lateinit var adapter: SimposioPickerAdapter
 

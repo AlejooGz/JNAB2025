@@ -12,7 +12,6 @@ class SimposioTramiteAdapter(
     private val simposios: List<Simposio>,
     private val onItemClick: (Int) -> Unit
 ) : RecyclerView.Adapter<SimposioTramiteAdapter.SimposioViewHolder>() {
-
     inner class SimposioViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvDuracion: TextView = itemView.findViewById(R.id.tvDuracion)
         private val tvTituloSimposio: TextView = itemView.findViewById(R.id.tvTituloSimposio)

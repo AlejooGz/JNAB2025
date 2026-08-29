@@ -23,8 +23,6 @@ class FiltroBottomSheetFragment : BottomSheetDialogFragment() {
     private lateinit var btnQuitarFiltro: MaterialButton
     private lateinit var toggleGroupFiltros: MaterialButtonToggleGroup
 
-
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_filtro_bottom_sheet, container, false)
     }
@@ -33,15 +31,12 @@ class FiltroBottomSheetFragment : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         filtroViewModel = ViewModelProvider(requireActivity())[FiltroViewModel::class.java]
-
         btnHospedaje = view.findViewById(R.id.btnHospedaje)
         btnRestaurante = view.findViewById(R.id.btnRestaurante)
         btnAgencia = view.findViewById(R.id.btnAgencia)
         btnCerrar = view.findViewById(R.id.btnCerrar)
         btnQuitarFiltro = view.findViewById(R.id.btnQuitarFiltro)
-
         toggleGroupFiltros = view.findViewById(R.id.toggleGroupFiltros)
-
         btnHospedaje.setOnClickListener {
             filtroViewModel.toggleFiltro(Categoria.HOSPEDAJE)
         }

@@ -33,7 +33,7 @@
             android:layout_height="200dp"
             android:layout_marginBottom="50dp"
             android:background="@drawable/rounded_imagen_bg"
-            android:src="@drawable/jnab"
+            android:src="@drawable/jnab1"
             android:scaleType="centerCrop"
             android:contentDescription="Logo" />
 
@@ -78,6 +78,18 @@
             android:backgroundTint="@color/dark_red"
             android:textColor="@color/white"
             android:text="Iniciar sesión" />
+        <TextView
+            android:id="@+id/tvRegistrarse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="¿No tenés cuenta? Registrate"
+            android:textColor="@color/dark_red"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

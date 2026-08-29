@@ -10,6 +10,8 @@ class EditarSimposioFragment : SimposioFormFragment() {
 
     private val args: EditarSimposioFragmentArgs by navArgs()
 
-    override val simposioId get() = args.simposioId
-    override val encabezado = "Editar simposio"
+    override val simposioId: String get() = args.simposioId
+
+    override val encabezado: String
+        get() = "Editar simposio"
 }

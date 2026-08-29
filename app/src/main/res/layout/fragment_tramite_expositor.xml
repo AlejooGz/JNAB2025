@@ -49,9 +49,13 @@
                 android:hint="Título del trabajo"
                 android:inputType="text"
                 android:minHeight="48dp"
+                app:boxStrokeColor="@color/dark_red"
+                app:hintTextColor="@color/dark_red"
+                android:textColorHint="@color/dark_red"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                android:textColor="@color/dark_red"/>
 
             <EditText
                 android:id="@+id/etResumenTrabajo"
@@ -60,10 +64,14 @@
                 android:hint="Resumen"
                 android:gravity="top"
                 android:inputType="textMultiLine"
+                app:boxStrokeColor="@color/dark_red"
+                app:hintTextColor="@color/dark_red"
+                android:textColorHint="@color/dark_red"
                 app:layout_constraintTop_toBottomOf="@id/etTituloTrabajo"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="16dp"
+                android:textColor="@color/dark_red"/>
 
             <TextView
                 android:id="@+id/tvArchivoSeleccionado"

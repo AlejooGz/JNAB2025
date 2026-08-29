@@ -13,33 +13,30 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.example.jnab2025.data.model.Aula
+import com.example.jnab2025.data.model.AulaFirebase
 import com.example.jnab2025.databinding.FragmentSimposioFormBinding
 import com.example.jnab2025.ui.viewmodels.SimposioFormViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
+import com.google.firebase.Timestamp
+import java.time.ZoneId
 /**
  * Formulario compartido por crear y editar simposio. La unica diferencia es si
  * llega con un id existente o con 0.
  */
 abstract class SimposioFormFragment : Fragment() {
-
     private var _binding: FragmentSimposioFormBinding? = null
     protected val binding get() = _binding!!
 
     protected val viewModel: SimposioFormViewModel by viewModels()
-
-    /** 0 cuando se esta creando uno nuevo. */
-    protected abstract val simposioId: Long
+    protected abstract val simposioId: String?
     protected abstract val encabezado: String
 
-    private var aulaId: Long? = null
+    private var aulaId: String? = null
     private var desde: LocalDate? = null
     private var hasta: LocalDate? = null
-
     private val formato = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     override fun onCreateView(
@@ -54,9 +51,9 @@ abstract class SimposioFormFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.tvEncabezado.text = encabezado
-
-        if (simposioId != 0L) viewModel.cargar(simposioId)
-
+        simposioId?.let { id ->
+            viewModel.cargar(id)
+        }
         binding.btnAula.setOnClickListener { elegirAula() }
         binding.btnFechaInicio.setOnClickListener { elegirFecha(esInicio = true) }
         binding.btnFechaFin.setOnClickListener { elegirFecha(esInicio = false) }
@@ -82,8 +79,12 @@ abstract class SimposioFormFragment : Fragment() {
                         binding.etTema.setText(simposio.temaCentral)
                         binding.etDescripcion.setText(simposio.descripcion)
                         aulaId = simposio.aulaId
-                        desde = simposio.fechaInicio
-                        hasta = simposio.fechaFin
+                        desde = timestampALocalDate(
+                            simposio.fechaInicio
+                        )
+                        hasta = timestampALocalDate(
+                            simposio.fechaFin
+                        )
                         pintarFechas()
                         pintarAula()
                     }
@@ -149,11 +150,20 @@ abstract class SimposioFormFragment : Fragment() {
         }
     }
 
-    private fun describir(aula: Aula) =
+    private fun describir(aula: AulaFirebase) =
         if (aula.piso == 0) "${aula.nombre} - planta baja" else "${aula.nombre} - piso ${aula.piso}"
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+    private fun timestampALocalDate(
+        timestamp: com.google.firebase.Timestamp?
+    ): LocalDate? {
+        return timestamp
+            ?.toDate()
+            ?.toInstant()
+            ?.atZone(ZoneId.systemDefault())
+            ?.toLocalDate()
     }
 }
