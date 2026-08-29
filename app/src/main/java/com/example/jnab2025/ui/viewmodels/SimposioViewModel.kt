@@ -1,39 +1,51 @@
 package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.*
-import com.example.jnab2025.data.SimposioFakeData
-import com.example.jnab2025.data.db.AppDatabase
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.jnab2025.data.local.JnabDatabase
+import com.example.jnab2025.data.model.Simposio
 import com.example.jnab2025.data.repository.SimposioRepository
-import com.example.jnab2025.models.Simposio
+import com.example.jnab2025.utils.Sesion
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SimposioViewModel(application: Application) : AndroidViewModel(application) {
+class SimposioViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-    private val repository: SimposioRepository
-    val simposios: LiveData<List<Simposio>>
+    private val database = JnabDatabase.get(application)
 
-    init {
-        val dao = AppDatabase.getDatabase(application).simposioDao()
-        repository = SimposioRepository(dao)
-        simposios = repository.todosLosSimposios
+    private val repository =
+        SimposioRepository(database.simposioDao())
+
+    private val eventoId = Sesion.eventoId(application)
+
+    val simposios: StateFlow<List<Simposio>> =
+        repository.simposiosDelEvento(eventoId)
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                emptyList()
+            )
+
+    fun insertar(simposio: Simposio) {
+        viewModelScope.launch {
+            repository.insertar(simposio)
+        }
     }
 
-    fun insertar(simposio: Simposio) = viewModelScope.launch {
-        repository.insertar(simposio)
+    fun actualizar(simposio: Simposio) {
+        viewModelScope.launch {
+            repository.actualizar(simposio)
+        }
     }
 
-    fun insertarTodos(lista: List<Simposio>) = viewModelScope.launch {
-        repository.insertarTodos(lista)
+    fun eliminar(simposio: Simposio) {
+        viewModelScope.launch {
+            repository.eliminar(simposio)
+        }
     }
-
-    fun eliminar(simposio: Simposio) = viewModelScope.launch {
-        repository.eliminar(simposio)
-    }
-
-    fun eliminarTodos() = viewModelScope.launch {
-        repository.eliminarTodos()
-    }
-
-
 }

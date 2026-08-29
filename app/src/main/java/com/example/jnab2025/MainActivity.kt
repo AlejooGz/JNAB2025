@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val vieja = AppDatabase.getDatabase(this@MainActivity)
             if (vieja.userDao().obtenerTodos().isEmpty()) {
                 vieja.userDao().insertarTodos(UserFakeData.getUsersDeEjemplo())
-                vieja.simposioDao().insertarTodos(SimposioFakeData.getSimposiosDeEjemplo())
+                // vieja.simposioDao().insertarTodos(SimposioFakeData.getSimposiosDeEjemplo())
                 vieja.charlaDao().insertarTodos(CharlaFakeData.getCharlasDeEjemplo())
             }
 

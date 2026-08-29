@@ -5,10 +5,8 @@ import androidx.room.*
 
 import com.example.jnab2025.models.Charla
 import com.example.jnab2025.models.EstadoPropuesta
-import com.example.jnab2025.models.Simposio
 import com.example.jnab2025.models.User
 import com.example.jnab2025.models.AgendaCharlaEntity
-import com.example.jnab2025.data.dao.SimposioDao
 import com.example.jnab2025.data.dao.CharlaDao
 import com.example.jnab2025.data.dao.UserDao
 import com.example.jnab2025.data.dao.AgendaDao

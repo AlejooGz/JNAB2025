@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.jnab2025.R
-import com.example.jnab2025.models.Simposio
 
 class SimposioTramiteAdapter(
     private val simposios: List<Simposio>,
