@@ -137,7 +137,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         )
         navMenu.findItem(R.id.nav_simposios)?.isVisible = true
 
-        Log.d("Sesion", "usuario=${Sesion.usuarioId(this)} roles=${Sesion.roles(this)}")
+        Log.d("Sesion", "uid=${Sesion.firebaseUid(this)} roles=${Sesion.roles(this)}")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
