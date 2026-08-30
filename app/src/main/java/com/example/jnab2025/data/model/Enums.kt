@@ -4,15 +4,16 @@ package com.example.jnab2025.data.model
 enum class Rol { ASISTENTE, EXPOSITOR, ORGANIZADOR }
 
 /** Ciclo de vida de un trabajo enviado por un expositor. */
-enum class EstadoTrabajo { ENVIADO, EN_EVALUACION, APROBADO, RECHAZADO }
-
+enum class EstadoTrabajo { ENVIADO, EN_EVALUACION, ACEPTADO_PENDIENTE_PAGO, APROBADO, RECHAZADO }
 /**
  * Que clase de bloque es en el cronograma.
  * PRESENTACION es la unica que tiene un trabajo detras.
  */
 enum class TipoActividad { PRESENTACION, CONFERENCIA, COFFEE_BREAK, ACREDITACION, OTRO }
 
-enum class TipoInscripcion { ASISTENTE, EXPOSITOR, ESTUDIANTE }
+enum class TipoInscripcion { ASISTENTE, EXPOSITOR }
+
+enum class CategoriaInscripcion { GENERAL, ESTUDIANTE }
 
 enum class EstadoInscripcion { PENDIENTE_PAGO, PAGADA, ANULADA }
 

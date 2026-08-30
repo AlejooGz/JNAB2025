@@ -68,7 +68,10 @@ class CargarComprobanteFragment : Fragment() {
         }
 
         binding.btnEnviarComprobante.setOnClickListener {
-            viewModel.cargarComprobante(archivoUri?.toString(), nombreArchivo)
+            viewModel.cargarComprobante(
+                archivoUri,
+                nombreArchivo
+            )
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -79,7 +82,13 @@ class CargarComprobanteFragment : Fragment() {
                         binding.tvDetalle.text = if (inscripcion == null) {
                             "Primero tenes que inscribirte al evento."
                         } else {
-                            val tipo = inscripcion.tipo.name.lowercase()
+                            val tipo =
+                                inscripcion.tipo.lowercase()
+
+                            val categoria =
+                                inscripcion.categoria.lowercase()
+
+                            binding.tvDetalle.text = "Inscripción de $tipo · $categoria por $${inscripcion.monto.toInt()}"
                             "Inscripcion de $tipo por $${inscripcion.monto.toInt()}"
                         }
                         binding.btnEnviarComprobante.isEnabled = inscripcion != null

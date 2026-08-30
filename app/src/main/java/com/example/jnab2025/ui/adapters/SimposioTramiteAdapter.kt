@@ -6,12 +6,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.jnab2025.R
+import com.example.jnab2025.data.model.Simposio
 
 class SimposioTramiteAdapter(
     private val simposios: List<Simposio>,
     private val onItemClick: (Int) -> Unit
 ) : RecyclerView.Adapter<SimposioTramiteAdapter.SimposioViewHolder>() {
-
     inner class SimposioViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvDuracion: TextView = itemView.findViewById(R.id.tvDuracion)
         private val tvTituloSimposio: TextView = itemView.findViewById(R.id.tvTituloSimposio)
@@ -20,7 +20,7 @@ class SimposioTramiteAdapter(
             tvTituloSimposio.text = simposio.titulo
             tvDuracion.text = "${simposio.fechaInicio} - ${simposio.fechaFin}"
             itemView.setOnClickListener {
-                onItemClick(simposio.id)
+                onItemClick(simposio.id.toInt())
             }
         }
     }

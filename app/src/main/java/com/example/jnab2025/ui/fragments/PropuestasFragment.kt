@@ -21,10 +21,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class PropuestasFragment : Fragment() {
-
     private var _binding: FragmentPropuestasBinding? = null
     private val binding get() = _binding!!
-
     private val args: PropuestasFragmentArgs by navArgs()
     private val viewModel: PropuestasViewModel by viewModels()
     private lateinit var adapter: PropuestasAdapter
@@ -40,18 +38,16 @@ class PropuestasFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // El adapter se crea antes de observar: al reves, el observador podia
-        // dispararse con el adapter todavia sin inicializar.
         adapter = PropuestasAdapter(
-            onVerPdfClick = { propuesta -> abrirPdf(propuesta.archivoUri) },
+            onVerPdfClick = { propuesta -> abrirPdf(propuesta.archivoUrl) },
             onAceptarClick = { propuesta ->
                 val accion = PropuestasFragmentDirections
-                    .actionPropuestasFragmentToAceptarPropuestaFragment(propuesta.trabajoId)
+                    .actionPropuestasFragmentToAceptarPropuestaFragment(propuesta.id)
                 findNavController().navigate(accion)
             },
             onRechazarClick = { propuesta ->
                 val accion = PropuestasFragmentDirections
-                    .actionPropuestasFragmentToRechazarPropuestaFragment(propuesta.trabajoId)
+                    .actionPropuestasFragmentToRechazarPropuestaFragment(propuesta.id)
                 findNavController().navigate(accion)
             }
         )
@@ -75,17 +71,34 @@ class PropuestasFragment : Fragment() {
                         binding.rvPropuestas.visibility = if (vacia) View.GONE else View.VISIBLE
                     }
                 }
+                launch {
+                    viewModel.avisos.collectLatest { mensaje ->
+                        Toast.makeText(
+                            requireContext(),
+                            mensaje,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
             }
         }
     }
 
-    /** Abre el PDF que adjunto el expositor, para poder revisarlo antes de decidir. */
-    private fun abrirPdf(archivoUri: String?) {
-        Archivos.mensajeDe(Archivos.abrirPdf(requireContext(), archivoUri))?.let { mensaje ->
-            Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show()
+    //abre el PDF que adjunto el expositor, para poder revisarlo antes de decidir
+    private fun abrirPdf(archivoUrl: String?) {
+        Archivos.mensajeDe(
+            Archivos.abrirPdf(
+                requireContext(),
+                archivoUrl
+            )
+        )?.let { mensaje ->
+            Toast.makeText(
+                requireContext(),
+                mensaje,
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
         binding.rvPropuestas.adapter = null

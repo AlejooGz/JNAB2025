@@ -15,6 +15,8 @@ object Sesion {
 
     private const val PREFS = "JnabSesion"
     private const val K_USUARIO = "usuarioId"
+
+    private const val K_FIREBASE_UID = "firebaseUid"
     private const val K_EVENTO = "eventoId"
     private const val K_NOMBRE = "nombre"
     private const val K_EMAIL = "email"
@@ -35,6 +37,24 @@ object Sesion {
             .apply()
     }
 
+    fun iniciarFirebase(
+        context: Context,
+        uid: String,
+        nombre: String,
+        email: String,
+        roles: Set<Rol>
+    ) {
+        prefs(context).edit()
+            .putString(K_FIREBASE_UID, uid)
+            .putString(K_NOMBRE, nombre)
+            .putString(K_EMAIL, email)
+            .putStringSet(K_ROLES, roles.map { it.name }.toSet())
+            .apply()
+    }
+
+    fun firebaseUid(context: Context): String? =
+        prefs(context).getString(K_FIREBASE_UID, null)
+
     fun cerrar(context: Context) {
         prefs(context).edit().clear().apply()
     }
@@ -53,7 +73,10 @@ object Sesion {
             .mapNotNull { nombre -> runCatching { Rol.valueOf(nombre) }.getOrNull() }
             .toSet()
 
-    fun haySesion(context: Context): Boolean = usuarioId(context) != SIN_SESION
+    //fun haySesion(context: Context): Boolean = usuarioId(context) != SIN_SESION
+    fun haySesion(context: Context): Boolean =
+        firebaseUid(context) != null ||
+                usuarioId(context) != SIN_SESION
 
     fun tieneRol(context: Context, rol: Rol): Boolean = rol in roles(context)
 

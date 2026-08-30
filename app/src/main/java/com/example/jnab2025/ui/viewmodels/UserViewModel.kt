@@ -17,7 +17,6 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: UserRepository
     private val _usuarios = MutableLiveData<List<User>>()
     val usuarios: LiveData<List<User>> get() = _usuarios
-
     private val _mensaje = MutableLiveData<String>()
     val mensaje: LiveData<String> get() = _mensaje
 

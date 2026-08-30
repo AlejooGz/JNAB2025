@@ -10,11 +10,15 @@ import com.example.jnab2025.models.AgendaCharlaEntity
 import com.example.jnab2025.data.dao.CharlaDao
 import com.example.jnab2025.data.dao.UserDao
 import com.example.jnab2025.data.dao.AgendaDao
-
+import com.example.jnab2025.data.local.dao.SimposioDao
+import com.example.jnab2025.data.model.Aula
+import com.example.jnab2025.data.model.Evento
+import com.example.jnab2025.data.model.Simposio
+import com.example.jnab2025.data.model.Usuario
 
 
 @Database(
-    entities = [Simposio::class, Charla::class, User::class, AgendaCharlaEntity::class],
+    entities = [Simposio::class, Usuario::class, Aula::class, Charla::class, Evento::class, User::class, AgendaCharlaEntity::class],
     version = 3,
     exportSchema = false
 )

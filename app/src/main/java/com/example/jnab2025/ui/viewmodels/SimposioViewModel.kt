@@ -2,50 +2,51 @@ package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.jnab2025.data.local.JnabDatabase
-import com.example.jnab2025.data.model.Simposio
-import com.example.jnab2025.data.repository.SimposioRepository
-import com.example.jnab2025.utils.Sesion
-import kotlinx.coroutines.flow.SharingStarted
+import com.example.jnab2025.data.model.SimposioFirebase
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.asStateFlow
 
 class SimposioViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-
-    private val database = JnabDatabase.get(application)
-
-    private val repository =
-        SimposioRepository(database.simposioDao())
-
-    private val eventoId = Sesion.eventoId(application)
-
-    val simposios: StateFlow<List<Simposio>> =
-        repository.simposiosDelEvento(eventoId)
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                emptyList()
-            )
-
-    fun insertar(simposio: Simposio) {
-        viewModelScope.launch {
-            repository.insertar(simposio)
-        }
+    private val firestore = FirebaseFirestore.getInstance()
+    private val _simposios = MutableStateFlow<List<SimposioFirebase>>(emptyList())
+    val simposios: StateFlow<List<SimposioFirebase>> = _simposios.asStateFlow()
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+    private var listenerSimposios: ListenerRegistration? = null
+    init {
+        escucharSimposios()
+    }
+    private fun escucharSimposios() {
+        listenerSimposios?.remove()
+        listenerSimposios = firestore
+            .collection("simposios")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _error.value = "No se pudieron cargar los simposios: ${error.message}"
+                    _simposios.value = emptyList()
+                    return@addSnapshotListener
+                }
+                val lista = snapshot
+                    ?.documents
+                    ?.mapNotNull { documento -> documento.toObject(
+                            SimposioFirebase::class.java
+                        )
+                    }
+                    ?.sortedBy { simposio -> simposio.fechaInicio
+                    }
+                    .orEmpty()
+                _simposios.value = lista
+                _error.value = null
+            }
     }
 
-    fun actualizar(simposio: Simposio) {
-        viewModelScope.launch {
-            repository.actualizar(simposio)
-        }
-    }
-
-    fun eliminar(simposio: Simposio) {
-        viewModelScope.launch {
-            repository.eliminar(simposio)
-        }
+    override fun onCleared() {
+        super.onCleared()
+        listenerSimposios?.remove()
     }
 }

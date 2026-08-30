@@ -8,54 +8,84 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.jnab2025.R
-import com.example.jnab2025.data.model.SimposioConAula
-import java.time.format.DateTimeFormatter
+import com.example.jnab2025.data.model.SimposioFirebase
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class SimposioPickerAdapter(
-    private val onClick: (SimposioConAula) -> Unit
-) : ListAdapter<SimposioConAula, SimposioPickerAdapter.ItemViewHolder>(Diff()) {
+    private val onClick: (SimposioFirebase) -> Unit
+) : ListAdapter<SimposioFirebase, SimposioPickerAdapter.ItemViewHolder>(Diff()) {
 
-    private val formato = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    private val formato =
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_simposio_picker, parent, false)
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): ItemViewHolder {
+        val view = LayoutInflater
+            .from(parent.context)
+            .inflate(
+                R.layout.item_simposio_picker,
+                parent,
+                false
+            )
         return ItemViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: ItemViewHolder,
+        position: Int
+    ) {
         holder.bind(getItem(position))
     }
 
-    inner class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ItemViewHolder(
+        itemView: View
+    ) : RecyclerView.ViewHolder(itemView) {
+
         private val titulo: TextView = itemView.findViewById(R.id.tvTitulo)
         private val tema: TextView = itemView.findViewById(R.id.tvTema)
         private val fechas: TextView = itemView.findViewById(R.id.tvFechas)
         private val aula: TextView = itemView.findViewById(R.id.tvAula)
 
-        fun bind(simposio: SimposioConAula) {
+        fun bind(simposio: SimposioFirebase) {
             titulo.text = simposio.titulo
             tema.text = simposio.temaCentral
-
-            val desde = simposio.fechaInicio.format(formato)
-            val hasta = simposio.fechaFin.format(formato)
-            fechas.text = if (desde == hasta) desde else "$desde al $hasta"
-
-            aula.text = if (simposio.piso == 0) {
-                "${simposio.aula} - planta baja"
-            } else {
-                "${simposio.aula} - piso ${simposio.piso}"
+            val desde = simposio.fechaInicio?.toDate()
+            val hasta = simposio.fechaFin?.toDate()
+            fechas.text = when {
+                desde == null || hasta == null ->
+                    "Fecha no disponible"
+                formato.format(desde) ==
+                        formato.format(hasta) ->
+                    formato.format(desde)
+                else ->
+                    "${formato.format(desde)} al ${formato.format(hasta)}"
             }
-
-            itemView.setOnClickListener { onClick(simposio) }
+            aula.text = simposio.aulaNombre
+            itemView.setOnClickListener {
+                onClick(simposio)
+            }
         }
     }
-
-    private class Diff : DiffUtil.ItemCallback<SimposioConAula>() {
-        override fun areItemsTheSame(oldItem: SimposioConAula, newItem: SimposioConAula) =
+    private class Diff :
+        DiffUtil.ItemCallback<SimposioFirebase>() {
+        override fun areItemsTheSame(
+            oldItem: SimposioFirebase,
+            newItem: SimposioFirebase
+        ): Boolean =
             oldItem.id == newItem.id
-
-        override fun areContentsTheSame(oldItem: SimposioConAula, newItem: SimposioConAula) =
-            oldItem == newItem
+        override fun areContentsTheSame(
+            oldItem: SimposioFirebase,
+            newItem: SimposioFirebase
+        ): Boolean =
+            oldItem.id == newItem.id &&
+                    oldItem.titulo == newItem.titulo &&
+                    oldItem.temaCentral == newItem.temaCentral &&
+                    oldItem.fechaInicio == newItem.fechaInicio &&
+                    oldItem.fechaFin == newItem.fechaFin &&
+                    oldItem.aulaId == newItem.aulaId &&
+                    oldItem.aulaNombre == newItem.aulaNombre
     }
 }

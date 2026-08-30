@@ -7,8 +7,8 @@ import androidx.room.PrimaryKey
 import java.time.Instant
 
 /**
- * La inscripcion es de la persona al evento, no del trabajo. Un expositor con
- * dos trabajos paga una sola vez.
+ * La inscripcion es de la persona al evento, no del trabajo.
+ * Un expositor con dos trabajos paga una sola vez.
  */
 @Entity(
     tableName = "inscripcion",
@@ -32,16 +32,28 @@ import java.time.Instant
     ]
 )
 data class Inscripcion(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+
     val usuarioId: Long,
     val eventoId: Long,
+
+    // Cómo participa en las jornadas.
     val tipo: TipoInscripcion,
+
+    // Define la tarifa, independientemente de si es asistente o expositor.
+    val categoria: CategoriaInscripcion = CategoriaInscripcion.GENERAL,
+
     val estado: EstadoInscripcion = EstadoInscripcion.PENDIENTE_PAGO,
+
     val monto: Double,
     val fechaAlta: Instant
 )
 
-/** El comprobante que sube la persona y que despues verifica la organizacion. */
+/**
+ * El comprobante pertenece a la inscripción al evento,
+ * no a un trabajo particular.
+ */
 @Entity(
     tableName = "comprobante_pago",
     foreignKeys = [
@@ -64,11 +76,17 @@ data class Inscripcion(
     ]
 )
 data class ComprobantePago(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+
     val inscripcionId: Long,
+
     val archivoUri: String,
     val nombreArchivo: String,
+
     val fechaCarga: Instant,
+
     val estado: EstadoComprobante = EstadoComprobante.PENDIENTE,
+
     val verificadoPorId: Long? = null
 )

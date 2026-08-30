@@ -1,13 +1,15 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     // Kotlin serialization plugin for type safe routes and navigation arguments
-    kotlin("plugin.serialization") version "2.0.21"
+    alias(libs.plugins.kotlin.serialization)  // ← Usa la versión del libs.versions.toml
     id("androidx.navigation.safeargs.kotlin")
-    id("org.jetbrains.kotlin.kapt") // ← Esto habilita KAPT
+    id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
+    id("com.google.gms.google-services")
 }
-
 android {
     namespace = "com.example.jnab2025"
     compileSdk = 35
@@ -33,15 +35,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         // El esquema nuevo usa LocalDate / LocalTime / Instant, que entraron en
         // la API 26. Como el minSdk es 24, hace falta desugaring.
         isCoreLibraryDesugaringEnabled = true
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+    
     buildFeatures {
         viewBinding = true
     }
@@ -100,9 +100,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Room
-    implementation ("androidx.room:room-runtime:2.6.1")
-    kapt ("androidx.room:room-compiler:2.6.1")
-    implementation ("androidx.room:room-ktx:2.6.1")
+    implementation ("androidx.room:room-runtime:2.7.1")
+    kapt ("androidx.room:room-compiler:2.7.1")
+    implementation ("androidx.room:room-ktx:2.7.1")
 
     // ViewModel y LiveData
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
@@ -115,4 +115,20 @@ dependencies {
 
     // java.time en minSdk 24
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    //Servicios de google
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
+
+    //lib para cargar la url de las imagenes
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
