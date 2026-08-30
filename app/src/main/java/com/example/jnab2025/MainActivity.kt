@@ -12,7 +12,6 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
@@ -20,13 +19,7 @@ import com.example.jnab2025.databinding.ActivityMainBinding
 import com.example.jnab2025.utils.Sesion
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
-import com.example.jnab2025.data.SimposioFakeData
-import com.example.jnab2025.data.UserFakeData
-import com.example.jnab2025.data.CharlaFakeData
-import com.example.jnab2025.data.db.AppDatabase
-import com.example.jnab2025.data.local.JnabDatabase
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 import com.example.jnab2025.data.firebase.FirebaseSeed
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -103,28 +96,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     /**
-     * Siembra la base vieja una sola vez (las pantallas sin migrar todavía la
-     * usan) y fuerza la creación de la base nueva para que corra su seed.
+     * Carga los datos iniciales que la app necesita para arrancar.
      *
-     * Antes esto borraba y reinsertaba todo en cada arranque, con seis corrutinas
-     * sin orden garantizado: se perdían los datos del usuario y podía fallar por
-     * foreign key. Ahora es secuencial y sólo corre si está vacía.
+     * Ya no abre ninguna base local. Desde la migración a Firestore ninguna
+     * pantalla lee de Room, así que abrir jnab.db solo servía para que la app
+     * reventara al arrancar: la entidad Inscripcion gano el campo categoria y
+     * la version de JnabDatabase quedo en 1, con lo cual Room encontraba un
+     * hash de esquema distinto al esperado. fallbackToDestructiveMigration no
+     * cubre ese caso, porque solo actua cuando cambia el numero de version.
      */
     private fun prepararDatos() {
-
-        // Datos locales que todavía usa parte de la app
-        lifecycleScope.launch {
-            val vieja = AppDatabase.getDatabase(this@MainActivity)
-
-            if (vieja.userDao().obtenerTodos().isEmpty()) {
-                vieja.userDao().insertarTodos(UserFakeData.getUsersDeEjemplo())
-                vieja.simposioDao().insertarTodos(SimposioFakeData.getSimposiosDeEjemplo())
-                vieja.charlaDao().insertarTodos(CharlaFakeData.getCharlasDeEjemplo())
-            }
-
-            // La primera consulta crea jnab.db y dispara SeedJnab.
-            JnabDatabase.get(this@MainActivity).eventoDao().actual()
-        }
 
         // Seed temporal de Firestore
         FirebaseSeed.cargarAulasIniciales(
