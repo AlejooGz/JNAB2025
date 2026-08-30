@@ -1,6 +1,7 @@
 package com.example.jnab2025.ui.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.R
+import com.example.jnab2025.data.firebase.FirebaseSeed
 import com.example.jnab2025.data.model.Rol
 import com.example.jnab2025.data.model.UsuarioFirebase
 import com.example.jnab2025.databinding.FragmentLoginBinding
@@ -137,6 +139,7 @@ class LoginFragment : Fragment() {
                     email = usuario.email,
                     roles = setOf(rol)
                 )
+                sembrarAulasSiHaceFalta()
                 avisar(
                     "Bienvenido, ${usuario.nombreCompleto}"
                 )
@@ -152,6 +155,23 @@ class LoginFragment : Fragment() {
                 )
             }
     }
+    /**
+     * Crea las aulas iniciales la primera vez que alguien entra. Va aca y no en
+     * MainActivity porque necesita sesion iniciada: escribir en Firestore sin
+     * usuario autenticado falla si las reglas piden auth.
+     */
+    private fun sembrarAulasSiHaceFalta() {
+        FirebaseSeed.cargarAulasSiFaltan(
+            onListo = { sembro ->
+                if (sembro) Log.d("FirebaseSeed", "Aulas iniciales creadas")
+                else Log.d("FirebaseSeed", "Las aulas ya estaban cargadas")
+            },
+            onError = { mensaje ->
+                Log.e("FirebaseSeed", "No se pudieron cargar las aulas: $mensaje")
+            }
+        )
+    }
+
     private fun avisar(mensaje: String) {
         Toast.makeText(
             requireContext(),

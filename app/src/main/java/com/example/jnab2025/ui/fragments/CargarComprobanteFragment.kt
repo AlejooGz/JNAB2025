@@ -80,16 +80,13 @@ class CargarComprobanteFragment : Fragment() {
                     viewModel.vista.collectLatest { vista ->
                         val inscripcion = vista.inscripcion
                         binding.tvDetalle.text = if (inscripcion == null) {
-                            "Primero tenes que inscribirte al evento."
+                            "Primero tenés que inscribirte al evento."
                         } else {
-                            val tipo =
-                                inscripcion.tipo.lowercase()
+                            val tipo = inscripcion.tipo.lowercase()
+                            val categoria = inscripcion.categoria.lowercase()
 
-                            val categoria =
-                                inscripcion.categoria.lowercase()
-
-                            binding.tvDetalle.text = "Inscripción de $tipo · $categoria por $${inscripcion.monto.toInt()}"
-                            "Inscripcion de $tipo por $${inscripcion.monto.toInt()}"
+                            "Inscripción de $tipo · $categoria " +
+                                "por $${inscripcion.monto.toInt()}"
                         }
                         binding.btnEnviarComprobante.isEnabled = inscripcion != null
                     }

@@ -2,6 +2,7 @@ package com.example.jnab2025.utils
 
 import android.content.Context
 import com.example.jnab2025.data.model.Rol
+import com.google.firebase.auth.FirebaseAuth
 
 /**
  * Sesion del usuario logueado. Guarda lo minimo que la UI necesita sin volver a
@@ -54,7 +55,26 @@ object Sesion {
             .mapNotNull { nombre -> runCatching { Rol.valueOf(nombre) }.getOrNull() }
             .toSet()
 
-    fun haySesion(context: Context): Boolean = firebaseUid(context) != null
+    /**
+     * Hay sesion solo si la copia local coincide con la de FirebaseAuth, que es
+     * la fuente de verdad.
+     *
+     * Si el token se cayo (cuenta borrada, contrasenia cambiada desde otro
+     * lado) las preferencias quedaban diciendo que habia sesion: el login te
+     * mandaba directo a la app y todas las pantallas aparecian vacias, porque
+     * los ViewModels leen auth.currentUser. Ante esa desincronizacion se limpia
+     * la copia local y se vuelve al login.
+     */
+    fun haySesion(context: Context): Boolean {
+        val guardado = firebaseUid(context) ?: return false
+        val actual = FirebaseAuth.getInstance().currentUser?.uid
+
+        if (guardado != actual) {
+            cerrar(context)
+            return false
+        }
+        return true
+    }
 
     fun tieneRol(context: Context, rol: Rol): Boolean = rol in roles(context)
 

@@ -333,8 +333,12 @@ class PropuestasViewModel(
         val horaFin = horaInicio.plusMinutes(
             CharlaFirebase.MINUTOS_PRESENTACION.toLong()
         )
+        // Se filtra por aula en el servidor: solo pueden chocar las charlas de
+        // la misma sala. Traer la coleccion entera hacia que cada aprobacion
+        // costara una lectura por charla del congreso.
         firestore
             .collection("charlas")
+            .whereEqualTo("aulaId", simposio.aulaId)
             .get()
             .addOnSuccessListener { snapshot ->
                 val charlas = snapshot.documents.mapNotNull {

@@ -20,7 +20,6 @@ import com.example.jnab2025.utils.Sesion
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
-import com.example.jnab2025.data.firebase.FirebaseSeed
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -32,8 +31,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        prepararDatos()
 
         // Configurar Toolbar
         setSupportActionBar(binding.toolbar)
@@ -95,34 +92,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         */
     }
 
-    /**
-     * Carga los datos iniciales que la app necesita para arrancar.
-     *
-     * Ya no abre ninguna base local. Desde la migración a Firestore ninguna
-     * pantalla lee de Room, así que abrir jnab.db solo servía para que la app
-     * reventara al arrancar: la entidad Inscripcion gano el campo categoria y
-     * la version de JnabDatabase quedo en 1, con lo cual Room encontraba un
-     * hash de esquema distinto al esperado. fallbackToDestructiveMigration no
-     * cubre ese caso, porque solo actua cuando cambia el numero de version.
-     */
-    private fun prepararDatos() {
-
-        // Seed temporal de Firestore
-        FirebaseSeed.cargarAulasIniciales(
-            onSuccess = {
-                Log.d(
-                    "FirebaseSeed",
-                    "Aulas cargadas correctamente en Firestore"
-                )
-            },
-            onError = { mensaje ->
-                Log.e(
-                    "FirebaseSeed",
-                    "Error al cargar aulas: $mensaje"
-                )
-            }
-        )
-    }
+    // El seed de aulas ya no corre aca: se dispara desde LoginFragment, cuando
+    // hay sesion. Hacerlo en onCreate lo ejecutaba sin usuario autenticado, y
+    // ademas pisaba las aulas en cada arranque.
     private fun refrescarSesionEnUi() {
         val headerView = binding.navView.getHeaderView(0)
         headerView.findViewById<TextView>(R.id.tvDrawerUsername).text = Sesion.nombre(this)
