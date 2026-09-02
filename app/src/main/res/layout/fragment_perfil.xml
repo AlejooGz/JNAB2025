@@ -1,40 +1,256 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:background="@drawable/fondop"
+    android:fillViewport="true"
+    android:scrollbars="none"
+    tools:context=".ui.fragments.PerfilFragment">
 
-    <EditText
-        android:id="@+id/etUsername"
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre de usuario"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:paddingBottom="24dp">
 
-    <EditText
-        android:id="@+id/etRol"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Rol"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@+id/etUsername"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <!-- Encabezado -->
+        <TextView
+            android:id="@+id/tvEncabezado"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@color/dark_red"
+            android:padding="14dp"
+            android:text="Mi perfil"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/btnGuardar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Guardar cambios"
-        android:layout_marginTop="24dp"
-        android:backgroundTint="@color/dark_red"
-        android:textColor="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/etRol"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <!-- Avatar con las iniciales del usuario -->
+        <TextView
+            android:id="@+id/tvIniciales"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_avatar_perfil"
+            android:gravity="center"
+            android:textColor="@color/cream"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvEncabezado"
+            tools:text="LM" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Nombre principal -->
+        <TextView
+            android:id="@+id/tvNombrePrincipal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="24dp"
+            android:gravity="center"
+            android:textColor="@color/dark_red"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvIniciales"
+            tools:text="Luciana Martínez" />
+
+        <!-- Datos de la cuenta -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardDatosCuenta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@color/cream"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvNombrePrincipal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Datos de la cuenta"
+                    android:textColor="@color/dark_red"
+                    android:textSize="19sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="#DDD5C8" />
+
+                <!-- Nombre completo -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nombre completo"
+                    android:textColor="@color/dark_red"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvNombreCompleto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    tools:text="Luciana Martínez" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="14dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="#DDD5C8" />
+
+                <!-- Correo electrónico -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Correo electrónico"
+                    android:textColor="@color/dark_red"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    tools:text="luciana@email.com" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="14dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="#DDD5C8" />
+
+                <!-- Rol -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Rol"
+                    android:textColor="@color/dark_red"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvRol"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:background="@drawable/bg_rol_perfil"
+                    android:paddingStart="16dp"
+                    android:paddingTop="7dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="7dp"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="Expositor" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Estado de la inscripción -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardEstadoInscripcion"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@color/cream"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="4dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cardDatosCuenta">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Estado de inscripción"
+                    android:textColor="@color/dark_red"
+                    android:textSize="19sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="#DDD5C8" />
+
+                <TextView
+                    android:id="@+id/tvTituloInscripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/dark_red"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:text="Inscripción confirmada" />
+
+                <TextView
+                    android:id="@+id/tvDetalleInscripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    tools:text="Comprobante aprobado por la organización." />
+
+                <TextView
+                    android:id="@+id/tvEstadoInscripcion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_estado_neutro"
+                    android:paddingStart="14dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="6dp"
+                    android:text="CARGANDO"
+                    android:textColor="@color/dark_red"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
