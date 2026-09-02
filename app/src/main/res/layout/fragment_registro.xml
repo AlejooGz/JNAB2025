@@ -127,7 +127,7 @@
             android:contentDescription="@null"
             android:importantForAccessibility="no"
             android:scaleType="fitCenter"
-            android:src="@drawable/jnab3" />
+            android:src="@drawable/jnab4" />
 
     </LinearLayout>
 </ScrollView>
