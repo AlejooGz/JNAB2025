@@ -1,7 +1,5 @@
 package com.example.jnab2025.ui.fragments
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,8 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.jnab2025.data.model.CharlaFirebase
 import com.example.jnab2025.databinding.FragmentProgramarPresentacionBinding
+import com.example.jnab2025.ui.adapters.SlotHorarioAdapter
 import com.example.jnab2025.ui.viewmodels.CharlaViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -24,252 +24,172 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/**
+ * Programa una presentacion dentro del simposio.
+ *
+ * Ya no se elige el dia: el simposio dura un dia y la charla va si o si en ese.
+ * Y la hora se elige de una lista de bloques de 30 minutos, con los ocupados
+ * a la vista pero no seleccionables, en lugar de un reloj libre donde se podia
+ * poner cualquier horario y recien despues enterarse de que estaba tomado.
+ */
 class ProgramarPresentacionFragment : Fragment() {
+
     private var _binding: FragmentProgramarPresentacionBinding? = null
     private val binding get() = _binding!!
+
     private val args: ProgramarPresentacionFragmentArgs by navArgs()
     private val viewModel: CharlaViewModel by viewModels()
-    private var fechaSeleccionada: LocalDate? = null
+
+    private lateinit var adapter: SlotHorarioAdapter
+
+    private var fechaDelSimposio: LocalDate? = null
     private var horaSeleccionada: LocalTime? = null
-    private val formatoFecha =
-        DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+    private val formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding =
-            FragmentProgramarPresentacionBinding.inflate(
-                inflater,
-                container,
-                false
-            )
+        _binding = FragmentProgramarPresentacionBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.cargarTrabajo(
-            args.trabajoId
-        )
+        viewModel.cargarTrabajo(args.trabajoId)
 
-        binding.btnFecha.setOnClickListener {
-            elegirFecha()
+        adapter = SlotHorarioAdapter { slot ->
+            horaSeleccionada = slot.inicio
+            adapter.seleccionar(slot.inicio)
+            pintarSeleccion()
         }
+        binding.rvSlots.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvSlots.adapter = adapter
 
-        binding.btnHora.setOnClickListener {
-            elegirHora()
-        }
+        binding.btnProgramar.setOnClickListener { programar() }
+        binding.btnCancelar.setOnClickListener { findNavController().popBackStack() }
 
-        binding.btnProgramar.setOnClickListener {
-            val fecha = fechaSeleccionada
-            val hora = horaSeleccionada
-            if (fecha == null || hora == null) {
-                avisar(
-                    "Elegí el día y la hora de la presentación")
-                return@setOnClickListener
-            }
-
-            viewModel.programarPresentacion(
-                trabajoId = args.trabajoId,
-                fecha = fecha,
-                horaInicio = hora
-            )
-        }
-        binding.btnCancelar.setOnClickListener {
-            findNavController()
-                .popBackStack()
-        }
         observarDatos()
     }
 
+    private fun programar() {
+        val fecha = fechaDelSimposio
+        val hora = horaSeleccionada
+
+        if (fecha == null) {
+            avisar("Todavía no se pudo leer la fecha del simposio")
+            return
+        }
+        if (hora == null) {
+            avisar("Elegí un horario de la lista")
+            return
+        }
+
+        viewModel.programarPresentacion(
+            trabajoId = args.trabajoId,
+            fecha = fecha,
+            horaInicio = hora
+        )
+    }
+
     private fun observarDatos() {
-
         viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
                 launch {
                     viewModel.trabajo.collectLatest { trabajo ->
                         binding.tvTituloTrabajo.text = trabajo?.titulo.orEmpty()
-                        binding.tvExpositor.text =
-                            trabajo
-                                ?.autorNombre
-                                ?.let {
-                                    "Expositor: $it"
-                                }
-                                .orEmpty()
+                        binding.tvExpositor.text = trabajo
+                            ?.autorNombre
+                            ?.let { "Expositor: $it" }
+                            .orEmpty()
                     }
                 }
+
                 launch {
                     viewModel.simposio.collectLatest { simposio ->
-                        simposio
-                            ?: return@collectLatest
-                        val desde =
-                            simposio.fechaInicio
-                                ?.toDate()
-                                ?.toInstant()
-                                ?.atZone(
-                                    ZoneId.systemDefault()
-                                )
-                                ?.toLocalDate()
+                        simposio ?: return@collectLatest
 
-                        val hasta =
-                            simposio.fechaFin
-                                ?.toDate()
-                                ?.toInstant()
-                                ?.atZone(
-                                    ZoneId.systemDefault()
-                                )
-                                ?.toLocalDate()
+                        val fecha = simposio.fechaInicio
+                            ?.toDate()
+                            ?.toInstant()
+                            ?.atZone(ZoneId.systemDefault())
+                            ?.toLocalDate()
 
-                        binding.tvSimposio.text =
-                            buildString {
-                                append(
-                                    simposio.titulo
-                                )
-                                append(
-                                    "\nAula: ${simposio.aulaNombre}"
-                                )
+                        binding.tvSimposio.text = buildString {
+                            append(simposio.titulo)
+                            append("\nAula: ${simposio.aulaNombre}")
+                            fecha?.let { append("\nDía: ${it.format(formatoFecha)}") }
+                        }
+                    }
+                }
 
-                                if (
-                                    desde != null &&
-                                    hasta != null
-                                ) {
+                launch {
+                    viewModel.fechaDelSimposio.collectLatest { fecha ->
+                        fechaDelSimposio = fecha
+                        pintarSeleccion()
+                    }
+                }
 
-                                    if (desde == hasta) {
+                launch {
+                    viewModel.slots.collectLatest { slots ->
+                        adapter.submitList(slots)
 
-                                        append(
-                                            "\nFecha: ${
-                                                desde.format(
-                                                    formatoFecha
-                                                )
-                                            }"
-                                        )
+                        val sinLibres = slots.none { it.libre }
+                        binding.tvSinSlots.visibility =
+                            if (slots.isEmpty() || sinLibres) View.VISIBLE else View.GONE
+                        binding.tvSinSlots.text = when {
+                            slots.isEmpty() -> "No hay horarios para mostrar"
+                            else -> "No queda ningún horario libre en esta aula"
+                        }
 
-                                    } else {
-
-                                        append(
-                                            "\nDel ${
-                                                desde.format(
-                                                    formatoFecha
-                                                )
-                                            } al ${
-                                                hasta.format(
-                                                    formatoFecha
-                                                )
-                                            }"
-                                        )
-                                    }
-                                }
-                            }
-                        if (
-                            fechaSeleccionada == null &&
-                            desde != null
-                        ) {
-                            fechaSeleccionada =
-                                desde
+                        // Si el horario elegido se ocupo mientras tanto, se suelta.
+                        val elegido = horaSeleccionada
+                        if (elegido != null && slots.none { it.inicio == elegido && it.libre }) {
+                            horaSeleccionada = null
+                            adapter.seleccionar(null)
                             pintarSeleccion()
                         }
                     }
                 }
+
                 launch {
-                    viewModel.avisos.collectLatest {
-                            mensaje ->
-                        avisar(mensaje)
-                    }
+                    viewModel.avisos.collectLatest { avisar(it) }
                 }
+
                 launch {
-                    viewModel.programadas.collectLatest {
-                        findNavController()
-                            .popBackStack()
-                    }
+                    viewModel.programadas.collectLatest { findNavController().popBackStack() }
                 }
             }
         }
     }
 
-    private fun elegirFecha() {
-
-        val base = fechaSeleccionada
-                ?: LocalDate.now()
-        DatePickerDialog(
-            requireContext(),
-            { _, anio, mes, dia ->
-                fechaSeleccionada =
-                    LocalDate.of(
-                        anio,
-                        mes + 1,
-                        dia
-                    )
-                pintarSeleccion()
-            },
-            base.year,
-            base.monthValue - 1,
-            base.dayOfMonth
-        ).show()
-    }
-    private fun elegirHora() {
-        val base =
-            horaSeleccionada
-                ?: LocalTime.of(
-                    14,
-                    0
-                )
-        TimePickerDialog(
-            requireContext(),
-            { _, hora, minuto ->
-                horaSeleccionada =
-                    LocalTime.of(
-                        hora,
-                        minuto
-                    )
-                pintarSeleccion()
-            },
-            base.hour,
-            base.minute,
-            true
-        ).show()
-    }
-
     private fun pintarSeleccion() {
-        val fecha = fechaSeleccionada
+        val fecha = fechaDelSimposio
         val inicio = horaSeleccionada
-        binding.tvSeleccion.text =
-            when {
-                fecha == null ->
-                    "Todavía no elegiste el día"
-                inicio == null ->
-                    "${fecha.format(formatoFecha)} — falta elegir la hora"
-                else -> {
-                    val fin =
-                        inicio.plusMinutes(
-                            CharlaFirebase
-                                .MINUTOS_PRESENTACION
-                                .toLong()
-                        )
-                    "${fecha.format(formatoFecha)} · $inicio a $fin"
-                }
+
+        binding.tvSeleccion.text = when {
+            fecha == null -> "Cargando el día del simposio…"
+            inicio == null -> "${fecha.format(formatoFecha)} — elegí un horario"
+            else -> {
+                val fin = inicio.plusMinutes(
+                    CharlaFirebase.MINUTOS_PRESENTACION.toLong()
+                )
+                "${fecha.format(formatoFecha)} · $inicio a $fin"
             }
+        }
     }
-    private fun avisar(
-        mensaje: String
-    ) {
-        Toast.makeText(
-            requireContext(),
-            mensaje,
-            Toast.LENGTH_LONG
-        ).show()
+
+    private fun avisar(mensaje: String) {
+        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.rvSlots.adapter = null
         _binding = null
     }
 }

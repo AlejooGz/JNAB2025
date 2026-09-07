@@ -35,8 +35,8 @@ abstract class SimposioFormFragment : Fragment() {
     protected abstract val encabezado: String
 
     private var aulaId: String? = null
-    private var desde: LocalDate? = null
-    private var hasta: LocalDate? = null
+    /** El simposio dura un solo dia. */
+    private var fecha: LocalDate? = null
     private val formato = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     override fun onCreateView(
@@ -55,8 +55,7 @@ abstract class SimposioFormFragment : Fragment() {
             viewModel.cargar(id)
         }
         binding.btnAula.setOnClickListener { elegirAula() }
-        binding.btnFechaInicio.setOnClickListener { elegirFecha(esInicio = true) }
-        binding.btnFechaFin.setOnClickListener { elegirFecha(esInicio = false) }
+        binding.btnFecha.setOnClickListener { elegirFecha() }
 
         binding.btnGuardar.setOnClickListener {
             viewModel.guardar(
@@ -65,8 +64,7 @@ abstract class SimposioFormFragment : Fragment() {
                 tema = binding.etTema.text.toString(),
                 descripcion = binding.etDescripcion.text.toString(),
                 aulaId = aulaId,
-                desde = desde,
-                hasta = hasta
+                fecha = fecha
             )
         }
 
@@ -79,13 +77,11 @@ abstract class SimposioFormFragment : Fragment() {
                         binding.etTema.setText(simposio.temaCentral)
                         binding.etDescripcion.setText(simposio.descripcion)
                         aulaId = simposio.aulaId
-                        desde = timestampALocalDate(
+                        // El simposio es de un dia: fechaInicio es ese dia.
+                        fecha = timestampALocalDate(
                             simposio.fechaInicio
                         )
-                        hasta = timestampALocalDate(
-                            simposio.fechaFin
-                        )
-                        pintarFechas()
+                        pintarFecha()
                         pintarAula()
                     }
                 }
@@ -120,14 +116,13 @@ abstract class SimposioFormFragment : Fragment() {
             .show()
     }
 
-    private fun elegirFecha(esInicio: Boolean) {
-        val base = (if (esInicio) desde else hasta) ?: LocalDate.now()
+    private fun elegirFecha() {
+        val base = fecha ?: LocalDate.now()
         DatePickerDialog(
             requireContext(),
             { _, anio, mes, dia ->
-                val elegida = LocalDate.of(anio, mes + 1, dia)
-                if (esInicio) desde = elegida else hasta = elegida
-                pintarFechas()
+                fecha = LocalDate.of(anio, mes + 1, dia)
+                pintarFecha()
             },
             base.year, base.monthValue - 1, base.dayOfMonth
         ).show()
@@ -139,15 +134,11 @@ abstract class SimposioFormFragment : Fragment() {
         binding.tvAula.text = aula?.let { describir(it) } ?: "Sin aula asignada"
     }
 
-    private fun pintarFechas() {
-        val d = desde
-        val h = hasta
-        binding.tvFechas.text = when {
-            d == null && h == null -> "Sin fechas elegidas"
-            d != null && h == null -> "Desde ${d.format(formato)}"
-            d == null && h != null -> "Hasta ${h.format(formato)}"
-            else -> "${d!!.format(formato)} al ${h!!.format(formato)}"
-        }
+    private fun pintarFecha() {
+        val elegida = fecha
+        binding.tvFechas.text = elegida
+            ?.let { "Día del simposio: ${it.format(formato)}" }
+            ?: "Sin fecha elegida"
     }
 
     private fun describir(aula: AulaFirebase) =

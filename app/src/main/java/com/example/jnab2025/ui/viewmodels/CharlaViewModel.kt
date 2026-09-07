@@ -2,6 +2,7 @@ package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.jnab2025.data.model.CharlaFirebase
 import com.example.jnab2025.data.model.EstadoTrabajo
 import com.example.jnab2025.data.model.SimposioFirebase
@@ -13,9 +14,13 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -37,6 +42,75 @@ class CharlaViewModel(
     private val _programadas = Channel<Unit>(Channel.BUFFERED)
     val programadas: Flow<Unit> = _programadas.receiveAsFlow()
     private var listenerCharlas: ListenerRegistration? = null
+
+    companion object {
+        /** Franja del dia en la que se pueden ubicar presentaciones. */
+        val HORA_APERTURA: LocalTime = LocalTime.of(8, 0)
+        val HORA_CIERRE: LocalTime = LocalTime.of(20, 0)
+    }
+
+    /** Un bloque de 30 minutos del dia del simposio. */
+    data class Slot(
+        val inicio: LocalTime,
+        val fin: LocalTime,
+        /** Titulo de la actividad que lo ocupa, o null si esta libre. */
+        val ocupadoPor: String? = null
+    ) {
+        val libre: Boolean get() = ocupadoPor == null
+    }
+
+    /** El dia del simposio: las charlas no se programan en otro. */
+    val fechaDelSimposio: StateFlow<LocalDate?> =
+        _simposio
+            .map { it?.fechaInicio?.toLocalDate() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
+     * Los bloques del dia con su estado. Se recalcula solo cuando cambia el
+     * cronograma, asi que si otro organizador programa algo mientras esta
+     * pantalla esta abierta, el slot se marca ocupado al instante.
+     */
+    val slots: StateFlow<List<Slot>> =
+        combine(_simposio, _charlas, _trabajo) { simposio, charlas, trabajo ->
+            calcularSlots(simposio, charlas, trabajo)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private fun calcularSlots(
+        simposio: SimposioFirebase?,
+        charlas: List<CharlaFirebase>,
+        trabajo: TrabajoFirebase?
+    ): List<Slot> {
+
+        simposio ?: return emptyList()
+        val fecha = simposio.fechaInicio?.toLocalDate() ?: return emptyList()
+
+        // Solo puede chocar lo que ocupa la misma aula ese dia. La charla del
+        // propio trabajo no cuenta: si se esta reprogramando, su horario actual
+        // tiene que seguir disponible.
+        val ocupadas = charlas.filter { charla ->
+            charla.aulaId == simposio.aulaId &&
+                charla.fecha?.toLocalDate() == fecha &&
+                (trabajo == null || charla.trabajoId != trabajo.id)
+        }
+
+        val duracion = CharlaFirebase.MINUTOS_PRESENTACION.toLong()
+        val slots = mutableListOf<Slot>()
+        var inicio = HORA_APERTURA
+
+        while (!inicio.plusMinutes(duracion).isAfter(HORA_CIERRE)) {
+            val fin = inicio.plusMinutes(duracion)
+
+            val choque = ocupadas.firstOrNull { charla ->
+                val desde = runCatching { LocalTime.parse(charla.horaInicio) }.getOrNull()
+                val hasta = runCatching { LocalTime.parse(charla.horaFin) }.getOrNull()
+                desde != null && hasta != null && inicio < hasta && desde < fin
+            }
+
+            slots += Slot(inicio, fin, choque?.titulo)
+            inicio = fin
+        }
+        return slots
+    }
 
     init {
         escucharCharlas()
@@ -420,6 +494,12 @@ class CharlaViewModel(
                 )
             }
     }
+
+    private fun Timestamp.toLocalDate(): LocalDate =
+        toDate()
+            .toInstant()
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
 
     private fun LocalDate.toTimestamp():
             Timestamp {
