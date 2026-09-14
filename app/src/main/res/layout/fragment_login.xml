@@ -8,7 +8,6 @@
     android:background="@color/mint_green"
     tools:context=".ui.fragments.LoginFragment">
 
-    <!-- Contenedor redondeado con imagen, título y formulario -->
     <LinearLayout
         android:id="@+id/loginContainer"
         android:layout_width="0dp"
@@ -37,19 +36,6 @@
             android:scaleType="centerCrop"
             android:contentDescription="Logo" />
 
-        <!-- Título debajo del logo
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="JNAB 2025"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="@color/dark_red"
-            android:layout_marginBottom="24dp" />
-        -->
-
-        <!-- Campos de texto -->
         <EditText
             android:id="@+id/etUsername"
             android:layout_width="match_parent"
@@ -70,14 +56,62 @@
             android:textColor="@color/dark_red"
             android:layout_marginBottom="24dp" />
 
-        <!-- Botón -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/dark_red"
+            android:minHeight="48dp"
+            android:text="Iniciar sesión"
+            android:textAllCaps="false"
             android:textColor="@color/white"
-            android:text="Iniciar sesión" />
+            android:textSize="16sp"
+            app:backgroundTint="@color/dark_red"
+            app:cornerRadius="24dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="@color/dark_red" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:text="o"
+                android:textColor="@color/dark_red"
+                android:textSize="14sp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="@color/dark_red" />
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoogle"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:minHeight="48dp"
+            android:text="Continuar con Google"
+            android:textAllCaps="false"
+            android:textColor="@color/dark_red"
+            android:textSize="16sp"
+            app:backgroundTint="@color/white"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/dark_red"
+            app:strokeWidth="1dp" />
         <TextView
             android:id="@+id/tvRegistrarse"
             android:layout_width="wrap_content"
@@ -91,5 +125,4 @@
             android:textStyle="bold" />
 
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

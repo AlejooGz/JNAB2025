@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/cream">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="@color/cream">
+
+        <EditText
+            android:id="@+id/etNombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+        <Spinner
+            android:id="@+id/spCategoria"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/dark_red" />
+
+        <EditText
+            android:id="@+id/etDescuento"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Descuento"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+        <EditText
+            android:id="@+id/etDireccion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Dirección"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+        <EditText
+            android:id="@+id/etTelefono"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Teléfono"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Correo electrónico"
+            android:inputType="textEmailAddress"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+        <EditText
+            android:id="@+id/etWeb"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Sitio web"
+            android:inputType="textUri"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+        <EditText
+            android:id="@+id/etLatitud"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Latitud"
+            android:inputType="numberDecimal|numberSigned"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+        <EditText
+            android:id="@+id/etLongitud"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Longitud"
+            android:inputType="numberDecimal|numberSigned"
+            android:textColor="@color/dark_red"
+            android:textColorHint="@color/dark_red" />
+
+    </LinearLayout>
+
+</ScrollView>

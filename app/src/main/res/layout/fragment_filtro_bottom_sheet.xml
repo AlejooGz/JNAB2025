@@ -38,7 +38,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Hospedajes"
-            android:textColor="@color/dark_red" />
+            android:textColor="@color/dark_red"
+            app:backgroundTint="@color/filtro_button_background"
+            app:strokeColor="@color/filtro_button_stroke"
+            app:strokeWidth="2dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRestaurante"
@@ -46,7 +49,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Restaurantes"
-            android:textColor="@color/dark_red" />
+            android:textColor="@color/dark_red"
+            app:backgroundTint="@color/filtro_button_background"
+            app:strokeColor="@color/filtro_button_stroke"
+            app:strokeWidth="2dp"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAgencia"
@@ -54,7 +60,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Agencias"
-            android:textColor="@color/dark_red" />
+            android:textColor="@color/dark_red"
+            app:backgroundTint="@color/filtro_button_background"
+            app:strokeColor="@color/filtro_button_stroke"
+            app:strokeWidth="2dp"/>
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -67,5 +76,6 @@
         android:textColor="@color/dark_red"
         android:backgroundTint="@android:color/transparent"
         app:strokeWidth="0dp"
-        android:layout_marginTop="12dp"/>
+        android:layout_marginTop="12dp"
+        />
 </LinearLayout>

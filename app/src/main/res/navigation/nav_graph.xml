@@ -263,5 +263,10 @@
             app:argType="string" />
 
     </fragment>
+    <fragment
+        android:id="@+id/gestionLugaresFragment"
+        android:name="com.example.jnab2025.ui.fragments.GestionLugaresFragment"
+        android:label="Gestionar lugares"
+        tools:layout="@layout/fragment_gestion_lugares" />
 </navigation>
 
