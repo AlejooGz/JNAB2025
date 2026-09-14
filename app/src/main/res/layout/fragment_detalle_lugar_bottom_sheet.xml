@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/cream"
+    android:fillViewport="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvNombreLugar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hotel Piren"
+            android:textColor="@color/dark_red"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvCategoriaLugar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Hospedaje"
+            android:textColor="@color/dark_red"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvDescuentoLugar"
+            android:layout_width="355dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_ticket_descuento"
+            android:gravity="center"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="10dp"
+            android:text="15 % de descuento"
+            android:textColor="@color/dark_red"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/contenedorDireccion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Dirección"
+                android:textColor="@color/dark_red"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDireccionLugar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/dark_red"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/contenedorTelefono"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Teléfono"
+                android:textColor="@color/dark_red"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTelefonoLugar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/dark_red"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/contenedorEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Correo electrónico"
+                android:textColor="@color/dark_red"
+                android:textColorLink="@color/dusty_rose"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvEmailLugar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:autoLink="email"
+                android:textColor="@color/dark_red"
+                android:textColorLink="@color/dusty_rose"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/contenedorWeb"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sitio web"
+                android:textColor="@color/dark_red"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvWebLugar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:autoLink="web"
+                android:textColor="@color/dark_red"
+                android:textColorLink="@color/dusty_rose"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCerrar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@color/dark_red"
+            android:textColor="@color/white"
+            android:text="Cerrar" />
+    </LinearLayout>
+</ScrollView>

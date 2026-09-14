@@ -20,6 +20,9 @@ import com.example.jnab2025.utils.Sesion
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.example.jnab2025.data.firebase.FirebaseSeed
+import androidx.lifecycle.ViewModelProvider
+import com.example.jnab2025.ui.viewmodels.FiltroViewModel
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -92,9 +95,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         */
     }
 
-    // El seed de aulas ya no corre aca: se dispara desde LoginFragment, cuando
-    // hay sesion. Hacerlo en onCreate lo ejecutaba sin usuario autenticado, y
-    // ademas pisaba las aulas en cada arranque.
     private fun refrescarSesionEnUi() {
         val headerView = binding.navView.getHeaderView(0)
         headerView.findViewById<TextView>(R.id.tvDrawerUsername).text = Sesion.nombre(this)
@@ -139,27 +139,40 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
             }
             R.id.nav_logout -> {
+                // limpia los filtros del mapa antes de cerrar la sesión
+                val filtroViewModel = ViewModelProvider(this)[FiltroViewModel::class.java]
+                filtroViewModel.limpiarFiltros()
+                // limpia la sesión local
                 Sesion.cerrar(this)
+                // cierra sesión en Firebase Authentication
                 FirebaseAuth.getInstance().signOut()
-                getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+                // limpia preferencias locales de la app
+                getSharedPreferences(
+                    "AppPreferences",
+                    Context.MODE_PRIVATE
+                )
                     .edit().clear().apply()
-                findNavController(R.id.nav_host_fragment).navigate(
+                //vuelve al login eliminando el historial de navegación
+                findNavController(R.id.nav_host_fragment
+                ).navigate(
                     R.id.loginFragment,
                     null,
                     NavOptions.Builder()
-                        .setPopUpTo(R.id.nav_graph, true)
+                        .setPopUpTo(
+                            R.id.nav_graph,
+                            true
+                        )
                         .build()
                 )
             }
             R.id.nav_crear_novedad -> {
-                findNavController(R.id.nav_host_fragment
-                ).navigate(R.id.crearNovedadFragment
-                )
+                findNavController(R.id.nav_host_fragment).navigate(R.id.crearNovedadFragment)
             }
             R.id.nav_gestionar_faq -> {
-                findNavController(R.id.nav_host_fragment
-                ).navigate(R.id.gestionFaqFragment
-                )
+                findNavController(R.id.nav_host_fragment).navigate(R.id.gestionFaqFragment)
+            }
+            R.id.nav_gestionar_lugares -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.gestionLugaresFragment)
             }
         }
 
