@@ -1,7 +1,10 @@
 package com.example.jnab2025
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.TextView
@@ -9,12 +12,20 @@ import android.widget.Toast
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.lifecycle.ViewModelProvider
+import com.example.jnab2025.notificaciones.NotificacionesWorker
+import com.example.jnab2025.notificaciones.Notificaciones
+import com.example.jnab2025.notificaciones.ProgramadorRecordatorios
+import com.example.jnab2025.notificaciones.RegistroNotificaciones
+import com.example.jnab2025.ui.viewmodels.NotificacionesViewModel
 import com.example.jnab2025.databinding.ActivityMainBinding
 import com.example.jnab2025.utils.Sesion
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -27,6 +38,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var binding: ActivityMainBinding
     private lateinit var toggle: ActionBarDrawerToggle
 
+    private lateinit var notificacionesViewModel: NotificacionesViewModel
+
+    /** Ultimo usuario para el que ya se hizo la puesta al dia de avisos. */
+    private var uidSincronizado: String? = null
+
+    private val pedirPermisoNotificaciones =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { /* Si lo rechaza, la app sigue andando: simplemente no avisa. */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -34,6 +55,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(binding.root)
 
         prepararDatos()
+        prepararNotificaciones()
 
         // Configurar Toolbar
         setSupportActionBar(binding.toolbar)
@@ -81,6 +103,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                             DrawerLayout.LOCK_MODE_UNLOCKED
                         )
                         refrescarSesionEnUi()
+                        sincronizarNotificacionesConSesion()
                     }
                 }
             }
@@ -123,6 +146,50 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
         )
     }
+    /**
+     * Deja lista la infraestructura de avisos: canales, permiso en Android 13+,
+     * el listener en vivo y el worker que cubre a la app cerrada.
+     */
+    private fun prepararNotificaciones() {
+        Notificaciones.crearCanales(this)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val concedido =
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+
+            if (!concedido) {
+                pedirPermisoNotificaciones.launch(
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            }
+        }
+
+        notificacionesViewModel =
+            ViewModelProvider(this)[NotificacionesViewModel::class.java]
+
+        NotificacionesWorker.programarPeriodico(this)
+    }
+
+    /**
+     * Engancha los avisos al usuario actual. Se llama en cada cambio de
+     * destino porque el login ocurre dentro de un fragment: recien ahi se sabe
+     * que hay sesion y con que UID.
+     */
+    private fun sincronizarNotificacionesConSesion() {
+        notificacionesViewModel.escuchar()
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        if (uid == uidSincronizado) return
+        uidSincronizado = uid
+
+        // Puesta al dia al entrar: avisos que hayan quedado pendientes y
+        // alarmas de charla que se hayan perdido (reinicio, cierre forzado).
+        NotificacionesWorker.ejecutarAhora(this)
+    }
+
     private fun refrescarSesionEnUi() {
         val headerView = binding.navView.getHeaderView(0)
         headerView.findViewById<TextView>(R.id.tvDrawerUsername).text = Sesion.nombre(this)
@@ -167,6 +234,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
             }
             R.id.nav_logout -> {
+                // Los avisos y las alarmas son del usuario que se va: si no se
+                // limpian, el proximo que entre en este telefono hereda sus
+                // recordatorios de charla.
+                ProgramadorRecordatorios.cancelarTodos(this)
+                RegistroNotificaciones.limpiar(this)
+                NotificacionesWorker.cancelar(this)
+                uidSincronizado = null
+
                 Sesion.cerrar(this)
                 FirebaseAuth.getInstance().signOut()
                 getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
