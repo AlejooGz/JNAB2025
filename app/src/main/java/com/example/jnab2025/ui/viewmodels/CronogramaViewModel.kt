@@ -8,6 +8,7 @@ import com.example.jnab2025.data.model.ItemAgendaFirebase
 import com.example.jnab2025.data.model.SimposioFirebase
 import com.example.jnab2025.data.model.TipoActividad
 import com.example.jnab2025.data.model.TrabajoFirebase
+import com.example.jnab2025.notificaciones.ProgramadorRecordatorios
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -35,6 +37,8 @@ class CronogramaViewModel(
     private var trabajosFirebase: List<TrabajoFirebase> = emptyList()
     private var simposiosFirebase: List<SimposioFirebase> = emptyList()
     private var agendaIds: Set<String> = emptySet()
+    /** Ultimo conjunto de recordatorios programado, para no reprogramar de gusto. */
+    private var firmaRecordatorios: String? = null
     private val _dia = MutableStateFlow<LocalDate?>(null)
     val dia: StateFlow<LocalDate?> = _dia.asStateFlow()
     private val _dias = MutableStateFlow<List<LocalDate>>(emptyList())
@@ -249,7 +253,50 @@ class CronogramaViewModel(
         ) {
             _dia.value = diasDisponibles.firstOrNull()
         }
+        programarRecordatorios(lista)
         aplicarFiltro(lista)
+    }
+
+    /**
+     * Mantiene las alarmas de recordatorio alineadas con la agenda del usuario.
+     *
+     * Se engancha aca porque reconstruir() ya corre ante cualquier cambio que
+     * importe: que el usuario marque o desmarque una charla, o que el
+     * organizador le mueva el horario.
+     */
+    private fun programarRecordatorios(
+        lista: List<ItemAgendaFirebase>
+    ) {
+        /* Si todavia no llegaron las charlas no hay nada que decidir, y
+         * reprogramar con la lista vacia borraria alarmas que siguen siendo
+         * validas mientras los listeners estan cargando. */
+        if (charlasFirebase.isEmpty()) return
+
+        val mias = lista.filter { it.enMiAgenda }
+
+        /* reconstruir() se dispara con cada snapshot de los cuatro listeners;
+         * sin esta firma estariamos rehaciendo las mismas alarmas de mas. */
+        val firma =
+            mias.joinToString("|") {
+                "${it.charlaId}@${it.fecha}T${it.horaInicio}"
+            }
+        if (firma == firmaRecordatorios) return
+        firmaRecordatorios = firma
+
+        ProgramadorRecordatorios.reprogramar(
+            getApplication(),
+            mias.map { item ->
+                ProgramadorRecordatorios.Programable(
+                    charlaId = item.charlaId,
+                    titulo = item.titulo,
+                    inicio = LocalDateTime.of(
+                        item.fecha,
+                        item.horaInicio
+                    ),
+                    lugar = item.aula
+                )
+            }
+        )
     }
     private fun aplicarFiltro(
         lista: List<ItemAgendaFirebase>
