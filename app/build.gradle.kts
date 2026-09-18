@@ -6,7 +6,6 @@ plugins {
     // Kotlin serialization plugin for type safe routes and navigation arguments
     alias(libs.plugins.kotlin.serialization)  // ← Usa la versión del libs.versions.toml
     id("androidx.navigation.safeargs.kotlin")
-    id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
     id("com.google.gms.google-services")
 }
@@ -37,8 +36,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        // El esquema nuevo usa LocalDate / LocalTime / Instant, que entraron en
-        // la API 26. Como el minSdk es 24, hace falta desugaring.
+        // El codigo usa LocalDate / LocalTime, que entraron en la API 26.
+        // Como el minSdk es 24, hace falta desugaring.
         isCoreLibraryDesugaringEnabled = true
     }
     
@@ -99,11 +98,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // Room
-    implementation ("androidx.room:room-runtime:2.7.1")
-    kapt ("androidx.room:room-compiler:2.7.1")
-    implementation ("androidx.room:room-ktx:2.7.1")
-
     // ViewModel y LiveData
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
@@ -122,6 +116,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
+    // Inicio de sesión con Google mediante Credential Manager
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     //lib para cargar la url de las imagenes
     implementation("com.github.bumptech.glide:glide:4.16.0")

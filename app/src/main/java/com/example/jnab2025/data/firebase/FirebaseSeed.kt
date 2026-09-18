@@ -7,51 +7,71 @@ object FirebaseSeed {
 
     private val firestore = FirebaseFirestore.getInstance()
 
-    fun cargarAulasIniciales(
-        onSuccess: () -> Unit,
+    private val aulasIniciales = listOf(
+        AulaFirebase(
+            id = "auditorio_orensanz",
+            nombre = "Auditorio Orensanz",
+            edificio = "CENPAT",
+            piso = 0,
+            capacidad = 0,
+            referencia = null
+        ),
+        AulaFirebase(
+            id = "sala_peninsula",
+            nombre = "Sala Península",
+            edificio = "CENPAT",
+            piso = 0,
+            capacidad = 0,
+            referencia = null
+        )
+    )
+
+    /**
+     * Crea las aulas iniciales solo si la coleccion esta vacia.
+     *
+     * Antes esto escribia con batch.set en cada arranque, asi que cualquier
+     * cambio que la organizacion le hiciera a un aula (capacidad, referencia)
+     * se revertia al volver a abrir la app. Ahora primero comprueba si ya hay
+     * algo cargado y, si lo hay, no toca nada.
+     *
+     * Tiene que llamarse con sesion iniciada: si las reglas de Firestore piden
+     * usuario autenticado para escribir, hacerlo antes del login falla siempre.
+     *
+     * @param onListo recibe true si sembro, false si ya habia aulas.
+     */
+    fun cargarAulasSiFaltan(
+        onListo: (Boolean) -> Unit,
         onError: (String) -> Unit
     ) {
+        firestore
+            .collection("aulas")
+            .limit(1)
+            .get()
+            .addOnSuccessListener { existentes ->
 
-        val aulas = listOf(
-            AulaFirebase(
-                id = "auditorio_orensanz",
-                nombre = "Auditorio Orensanz",
-                edificio = "CENPAT",
-                piso = 0,
-                capacidad = 0,
-                referencia = null
-            ),
+                if (!existentes.isEmpty) {
+                    onListo(false)
+                    return@addOnSuccessListener
+                }
 
-            AulaFirebase(
-                id = "sala_peninsula",
-                nombre = "Sala Península",
-                edificio = "CENPAT",
-                piso = 0,
-                capacidad = 0,
-                referencia = null
-            )
-        )
+                val batch = firestore.batch()
 
-        val batch = firestore.batch()
+                aulasIniciales.forEach { aula ->
+                    val aulaRef = firestore
+                        .collection("aulas")
+                        .document(aula.id)
 
-        aulas.forEach { aula ->
+                    batch.set(aulaRef, aula)
+                }
 
-            val aulaRef = firestore
-                .collection("aulas")
-                .document(aula.id)
-
-            batch.set(aulaRef, aula)
-        }
-
-        batch.commit()
-            .addOnSuccessListener {
-                onSuccess()
+                batch.commit()
+                    .addOnSuccessListener { onListo(true) }
+                    .addOnFailureListener { error ->
+                        onError(error.message ?: "No se pudieron cargar las aulas")
+                    }
             }
             .addOnFailureListener { error ->
-                onError(
-                    error.message
-                        ?: "No se pudieron cargar las aulas"
-                )
+                onError(error.message ?: "No se pudo consultar las aulas")
             }
     }
 }

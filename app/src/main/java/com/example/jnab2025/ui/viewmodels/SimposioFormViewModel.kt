@@ -57,15 +57,23 @@ class SimposioFormViewModel(
                 )
             }
     }
+    /**
+     * El simposio dura un solo dia, asi que recibe una sola fecha. Igual se
+     * siguen guardando fechaInicio y fechaFin con el mismo valor, para no
+     * romper los documentos que ya estan en Firestore ni la validacion de
+     * choque de aulas, que compara rangos.
+     */
     fun guardar(
         simposioId: String?,
         titulo: String,
         tema: String,
         descripcion: String,
         aulaId: String?,
-        desde: LocalDate?,
-        hasta: LocalDate?
+        fecha: LocalDate?
     ) {
+        val desde = fecha
+        val hasta = fecha
+
         when {
             titulo.isBlank() -> {
                 _avisos.trySend("Falta el título")
@@ -84,13 +92,7 @@ class SimposioFormViewModel(
                 return
             }
             desde == null || hasta == null -> {
-                _avisos.trySend("Elegí las fechas")
-                return
-            }
-            hasta < desde -> {
-                _avisos.trySend(
-                    "La fecha de fin es anterior a la de inicio"
-                )
+                _avisos.trySend("Elegí el día del simposio")
                 return
             }
         }

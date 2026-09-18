@@ -32,6 +32,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.example.jnab2025.data.firebase.FirebaseSeed
+import com.example.jnab2025.ui.viewmodels.FiltroViewModel
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -54,7 +55,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        prepararDatos()
         prepararNotificaciones()
 
         // Configurar Toolbar
@@ -119,34 +119,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     /**
-     * Carga los datos iniciales que la app necesita para arrancar.
-     *
-     * Ya no abre ninguna base local. Desde la migración a Firestore ninguna
-     * pantalla lee de Room, así que abrir jnab.db solo servía para que la app
-     * reventara al arrancar: la entidad Inscripcion gano el campo categoria y
-     * la version de JnabDatabase quedo en 1, con lo cual Room encontraba un
-     * hash de esquema distinto al esperado. fallbackToDestructiveMigration no
-     * cubre ese caso, porque solo actua cuando cambia el numero de version.
-     */
-    private fun prepararDatos() {
-
-        // Seed temporal de Firestore
-        FirebaseSeed.cargarAulasIniciales(
-            onSuccess = {
-                Log.d(
-                    "FirebaseSeed",
-                    "Aulas cargadas correctamente en Firestore"
-                )
-            },
-            onError = { mensaje ->
-                Log.e(
-                    "FirebaseSeed",
-                    "Error al cargar aulas: $mensaje"
-                )
-            }
-        )
-    }
-    /**
      * Deja lista la infraestructura de avisos: canales, permiso en Android 13+,
      * el listener en vivo y el worker que cubre a la app cerrada.
      */
@@ -204,7 +176,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         )
         navMenu.findItem(R.id.nav_simposios)?.isVisible = true
 
-        Log.d("Sesion", "usuario=${Sesion.usuarioId(this)} roles=${Sesion.roles(this)}")
+        Log.d("Sesion", "uid=${Sesion.firebaseUid(this)} roles=${Sesion.roles(this)}")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -242,27 +214,40 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 NotificacionesWorker.cancelar(this)
                 uidSincronizado = null
 
+                // limpia los filtros del mapa antes de cerrar la sesión
+                val filtroViewModel = ViewModelProvider(this)[FiltroViewModel::class.java]
+                filtroViewModel.limpiarFiltros()
+                // limpia la sesión local
                 Sesion.cerrar(this)
+                // cierra sesión en Firebase Authentication
                 FirebaseAuth.getInstance().signOut()
-                getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+                // limpia preferencias locales de la app
+                getSharedPreferences(
+                    "AppPreferences",
+                    Context.MODE_PRIVATE
+                )
                     .edit().clear().apply()
-                findNavController(R.id.nav_host_fragment).navigate(
+                //vuelve al login eliminando el historial de navegación
+                findNavController(R.id.nav_host_fragment
+                ).navigate(
                     R.id.loginFragment,
                     null,
                     NavOptions.Builder()
-                        .setPopUpTo(R.id.nav_graph, true)
+                        .setPopUpTo(
+                            R.id.nav_graph,
+                            true
+                        )
                         .build()
                 )
             }
             R.id.nav_crear_novedad -> {
-                findNavController(R.id.nav_host_fragment
-                ).navigate(R.id.crearNovedadFragment
-                )
+                findNavController(R.id.nav_host_fragment).navigate(R.id.crearNovedadFragment)
             }
             R.id.nav_gestionar_faq -> {
-                findNavController(R.id.nav_host_fragment
-                ).navigate(R.id.gestionFaqFragment
-                )
+                findNavController(R.id.nav_host_fragment).navigate(R.id.gestionFaqFragment)
+            }
+            R.id.nav_gestionar_lugares -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.gestionLugaresFragment)
             }
         }
 
