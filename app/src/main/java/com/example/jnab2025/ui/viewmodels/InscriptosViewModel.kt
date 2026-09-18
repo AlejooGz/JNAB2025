@@ -8,6 +8,8 @@ import com.example.jnab2025.data.model.EstadoInscripcion
 import com.example.jnab2025.data.model.EstadoTrabajo
 import com.example.jnab2025.data.model.InscripcionFirebase
 import com.example.jnab2025.data.model.InscriptoSeguimientoFirebase
+import com.example.jnab2025.data.model.NotificacionFirebase
+import com.example.jnab2025.data.model.TipoNotificacion
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -155,6 +157,20 @@ class InscriptosViewModel(
                 .document(
                     seguimiento.inscripcion.id
                 )
+        /* El inscripto no participa de esta escritura, asi que dejamos el aviso
+         * en Firestore: su dispositivo lo levanta con el listener si tiene la
+         * app abierta, o con el worker periodico si la tiene cerrada.
+         * Solo se crea si el comprobante no estaba ya verificado, para que
+         * volver a tocar "verificar" no genere un aviso repetido. */
+        val avisarAlInscripto =
+            comprobante.estado != EstadoComprobante.VERIFICADO.name &&
+                    seguimiento.inscripcion.usuarioUid.isNotBlank()
+
+        val notificacionRef =
+            firestore
+                .collection("notificaciones")
+                .document()
+
         firestore.runBatch { batch ->
             batch.update(
                 comprobanteRef,
@@ -173,6 +189,23 @@ class InscriptosViewModel(
                 "estado",
                 EstadoInscripcion.PAGADA.name
             )
+            if (avisarAlInscripto) {
+                batch.set(
+                    notificacionRef,
+                    NotificacionFirebase(
+                        id = notificacionRef.id,
+                        destinatarioUid =
+                            seguimiento.inscripcion.usuarioUid,
+                        tipo = TipoNotificacion.PAGO_APROBADO.name,
+                        titulo = "Pago aprobado",
+                        mensaje =
+                            "Verificamos tu comprobante: tu inscripcion a las " +
+                                    "Jornadas quedo confirmada.",
+                        referenciaId = seguimiento.inscripcion.id,
+                        creadaEn = Timestamp.now()
+                    )
+                )
+            }
         }.addOnSuccessListener {
             /*si el pago ya quedó acreditado, habilitamos cualquier trabajo
              aceptado académicamente de este usuario. */
