@@ -24,3 +24,9 @@ enum class TipoFecha { CIERRE_ENVIO, CIERRE_PAGO, INICIO_EVENTO, OTRO }
 enum class CategoriaLugar { HOSPEDAJE, RESTAURANTE, AGENCIA }
 
 enum class PublicoFaq { ASISTENTE, EXPOSITOR }
+
+/**
+ * Que origino una notificacion. RECORDATORIO_CHARLA no se guarda en Firestore:
+ * lo programa cada dispositivo con AlarmManager a partir de su propia agenda.
+ */
+enum class TipoNotificacion { PAGO_APROBADO, RECORDATORIO_CHARLA }

@@ -125,6 +125,11 @@ dependencies {
 
     //lib para cargar la url de las imagenes
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // Notificaciones: WorkManager corre el chequeo periodico de notificaciones
+    // pendientes cuando la app esta en segundo plano, y reprograma los
+    // recordatorios de charlas despues de un reinicio del telefono.
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 }
 
 kotlin {
