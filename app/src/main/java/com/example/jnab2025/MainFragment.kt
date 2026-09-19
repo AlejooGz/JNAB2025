@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.example.jnab2025.databinding.FragmentMainBinding
+import com.example.jnab2025.ui.fragments.HomeAsistenteFragment
+import com.example.jnab2025.ui.fragments.HomeExpositorFragment
 import com.example.jnab2025.ui.fragments.HomeOrganizadorFragment
 import com.example.jnab2025.utils.Sesion
 
@@ -58,16 +60,14 @@ class MainFragment : Fragment() {
                     .commit()
             }
 
+            // Los homes de expositor y asistente estan hechos en Compose; para
+            // MainFragment son Fragments comunes, se muestran igual.
             Sesion.esExpositor(requireContext()) -> {
-                mostrarHomePendiente(
-                    "Home del expositor"
-                )
+                mostrarHome(HomeExpositorFragment())
             }
 
             Sesion.esAsistente(requireContext()) -> {
-                mostrarHomePendiente(
-                    "Home del asistente"
-                )
+                mostrarHome(HomeAsistenteFragment())
             }
 
             else -> {
@@ -76,6 +76,19 @@ class MainFragment : Fragment() {
                 )
             }
         }
+    }
+
+    private fun mostrarHome(home: Fragment) {
+        binding.tvHomePendiente.visibility =
+            View.GONE
+
+        childFragmentManager
+            .beginTransaction()
+            .replace(
+                R.id.homeContainer,
+                home
+            )
+            .commit()
     }
 
     private fun mostrarHomePendiente(

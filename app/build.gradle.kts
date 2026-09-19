@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // compilador de Jetpack Compose (homes de asistente y expositor)
+    alias(libs.plugins.kotlin.compose)
     // Kotlin serialization plugin for type safe routes and navigation arguments
     alias(libs.plugins.kotlin.serialization)  // ← Usa la versión del libs.versions.toml
     id("androidx.navigation.safeargs.kotlin")
@@ -43,6 +45,9 @@ android {
     
     buildFeatures {
         viewBinding = true
+        // Conviven las dos: las pantallas existentes siguen en XML y los homes
+        // de asistente y expositor estan hechos en Compose.
+        compose = true
     }
 }
 
@@ -128,6 +133,16 @@ dependencies {
     // pendientes cuando la app esta en segundo plano, y reprograma los
     // recordatorios de charlas despues de un reinicio del telefono.
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+
+    // Jetpack Compose: el BOM pone las versiones, por eso las libs de Compose van sin version
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    // collectAsStateWithLifecycle: leer los StateFlow de los ViewModels desde Compose
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    // Habilita la vista previa (@Preview) en Android Studio; solo en debug
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
 kotlin {
