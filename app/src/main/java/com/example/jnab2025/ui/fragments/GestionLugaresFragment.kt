@@ -23,6 +23,7 @@ import com.example.jnab2025.databinding.DialogLugarBinding
 import com.example.jnab2025.databinding.FragmentGestionLugaresBinding
 import com.example.jnab2025.ui.adapters.GestionLugaresAdapter
 import com.example.jnab2025.ui.viewmodels.LugaresViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.launch
 
 class GestionLugaresFragment : Fragment() {
@@ -57,6 +58,7 @@ class GestionLugaresFragment : Fragment() {
         binding.btnNuevoLugar.setOnClickListener { mostrarFormulario() }
         observarLugares()
         observarAvisos()
+        observarEnvio()
 
         //se ejecutó una sola vez
         /*viewModel.cargarLugaresIniciales { ok, mensaje ->
@@ -96,6 +98,20 @@ class GestionLugaresFragment : Fragment() {
                                     it,
                                     Toast.LENGTH_SHORT
                                 ).show()
+                            }
+                    }
+            }
+    }
+    private fun observarEnvio() {
+        viewLifecycleOwner.lifecycleScope
+            .launch {
+                viewLifecycleOwner
+                    .repeatOnLifecycle(
+                        Lifecycle.State.STARTED
+                    ) {
+                        viewModel.enviando
+                            .collect {
+                                mostrarCargando(it, "Guardando…")
                             }
                     }
             }
@@ -308,6 +324,7 @@ class GestionLugaresFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

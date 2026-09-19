@@ -17,6 +17,7 @@ import com.example.jnab2025.data.model.CharlaFirebase
 import com.example.jnab2025.databinding.FragmentProgramarPresentacionBinding
 import com.example.jnab2025.ui.adapters.SlotHorarioAdapter
 import com.example.jnab2025.ui.viewmodels.CharlaViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -157,6 +158,10 @@ class ProgramarPresentacionFragment : Fragment() {
                 }
 
                 launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it, "Programando…") }
+                }
+
+                launch {
                     viewModel.avisos.collectLatest { avisar(it) }
                 }
 
@@ -189,6 +194,7 @@ class ProgramarPresentacionFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         binding.rvSlots.adapter = null
         _binding = null
     }

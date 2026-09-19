@@ -15,6 +15,7 @@ import androidx.navigation.fragment.navArgs
 import com.example.jnab2025.databinding.FragmentAceptarPropuestaBinding
 import com.example.jnab2025.ui.viewmodels.PropuestasViewModel
 import com.example.jnab2025.utils.Archivos
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -164,6 +165,10 @@ class AceptarPropuestaFragment : Fragment() {
                 }
 
                 launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it) }
+                }
+
+                launch {
                     viewModel.avisos.collectLatest { mensaje ->
                         avisar(mensaje)
                     }
@@ -192,6 +197,7 @@ class AceptarPropuestaFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

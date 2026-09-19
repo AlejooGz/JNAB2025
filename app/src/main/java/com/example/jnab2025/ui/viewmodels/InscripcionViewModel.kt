@@ -41,6 +41,9 @@ class InscripcionViewModel(
     val vista: StateFlow<Vista> = _vista.asStateFlow()
     private val _avisos = Channel<String>(Channel.BUFFERED)
     val avisos: Flow<String> = _avisos.receiveAsFlow()
+    // true mientras se guarda la inscripción o se sube el comprobante
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
     private var listenerInscripcion: ListenerRegistration? = null
     private var listenerComprobante: ListenerRegistration? = null
 
@@ -98,18 +101,25 @@ class InscripcionViewModel(
                 monto = montoPara(categoria),
                 fechaAlta = Timestamp.now()
             )
+        _enviando.value = true
         inscripcionRef
             .set(inscripcion)
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Inscripción registrada. Ahora cargá el comprobante de pago"
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo registrar la inscripción: ${error.message}"
                 )
             }
+    }
+
+    // cierra un envío: apaga la ruedita y avisa el resultado
+    private fun terminar(mensaje: String) {
+        _enviando.value = false
+        _avisos.trySend(mensaje)
     }
 
     private fun escucharInscripcion() {
@@ -212,6 +222,7 @@ class InscripcionViewModel(
             .child(
                 "comprobantes/$uid/${inscripcion.id}/$nombreSeguro"
             )
+        _enviando.value = true
         archivoRef
             .putFile(archivoUri)
             .addOnSuccessListener {
@@ -225,12 +236,12 @@ class InscripcionViewModel(
                                 downloadUri.toString()
                         )
                     }
-                    .addOnFailureListener { error -> _avisos.trySend(
+                    .addOnFailureListener { error -> terminar(
                             "El archivo se subió, pero no se pudo obtener su URL: ${error.message}"
                         )
                     }
             }
-            .addOnFailureListener { error -> _avisos.trySend(
+            .addOnFailureListener { error -> terminar(
                     "No se pudo subir el comprobante: ${error.message}"
                 )
             }
@@ -266,11 +277,11 @@ class InscripcionViewModel(
         comprobanteRef
             .set(comprobante)
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Comprobante enviado. La organización lo va a verificar"
                 )
             }
-            .addOnFailureListener { error -> _avisos.trySend(
+            .addOnFailureListener { error -> terminar(
                     "El archivo se subió, pero no se pudo guardar el comprobante: ${error.message}"
                 )
             }

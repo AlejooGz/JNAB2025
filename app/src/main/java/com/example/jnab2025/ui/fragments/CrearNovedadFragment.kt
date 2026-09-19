@@ -17,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.databinding.FragmentCrearNovedadBinding
 import com.example.jnab2025.ui.viewmodels.NovedadesViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -83,14 +84,10 @@ class CrearNovedadFragment : Fragment() {
                         launch { viewModel
                                 .publicando
                                 .collectLatest { publicando ->
-                                    binding
-                                        .progressPublicar
-                                        .visibility =
-                                        if (publicando) {
-                                            View.VISIBLE
-                                        } else {
-                                            View.GONE
-                                        }
+                                    mostrarCargando(
+                                        publicando,
+                                        "Publicando…"
+                                    )
                                     binding
                                         .btnPublicar
                                         .isEnabled =
@@ -158,6 +155,7 @@ class CrearNovedadFragment : Fragment() {
         } ?: "Imagen seleccionada"
     }
     override fun onDestroyView() { super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

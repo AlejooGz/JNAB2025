@@ -24,6 +24,9 @@ class LugaresViewModel : ViewModel() {
     val lugares: StateFlow<List<LugarFirebase>> = _lugares.asStateFlow()
     private val _avisos = Channel<String>(Channel.BUFFERED)
     val avisos = _avisos.receiveAsFlow()
+    // true mientras se guarda el formulario de crear/editar lugar
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
 
     init {
         escucharLugares()
@@ -76,19 +79,26 @@ class LugaresViewModel : ViewModel() {
                 id = referencia.id,
                 activo = true
             )
+        _enviando.value = true
         referencia
             .set(nuevoLugar)
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Lugar creado correctamente"
                 )
             }
             .addOnFailureListener { exception ->
-                _avisos.trySend(
+                terminar(
                     exception.message
                         ?: "No se pudo crear el lugar"
                 )
             }
+    }
+
+    // cierra el guardado del formulario: apaga la ruedita y avisa el resultado
+    private fun terminar(mensaje: String) {
+        _enviando.value = false
+        _avisos.trySend(mensaje)
     }
 
     fun editarLugar(lugar: LugarFirebase
@@ -99,6 +109,7 @@ class LugaresViewModel : ViewModel() {
             )
             return
         }
+        _enviando.value = true
         firestore
             .collection("lugares")
             .document(lugar.id)
@@ -107,12 +118,12 @@ class LugaresViewModel : ViewModel() {
                 SetOptions.merge()
             )
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Lugar actualizado correctamente"
                 )
             }
             .addOnFailureListener { exception ->
-                _avisos.trySend(
+                terminar(
                     exception.message
                         ?: "No se pudo actualizar el lugar"
                 )

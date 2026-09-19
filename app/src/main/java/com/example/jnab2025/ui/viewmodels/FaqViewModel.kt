@@ -22,6 +22,9 @@ class FaqViewModel (
     val faqs: StateFlow<List<FaqFirebase>> = _faqs.asStateFlow()
     private val _avisos = Channel<String>(Channel.BUFFERED)
     val avisos: Flow<String> = _avisos.receiveAsFlow()
+    // true mientras se guarda el formulario de crear/editar pregunta
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
     private var listener: ListenerRegistration? = null
 
     init {
@@ -97,15 +100,22 @@ class FaqViewModel (
                 orden = orden,
                 publicada = true
             )
+        _enviando.value = true
         ref.set(faq)
             .addOnSuccessListener {
-                _avisos.trySend("Pregunta publicada"
+                terminar("Pregunta publicada"
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend("No se pudo publicar: ${error.message}"
+                terminar("No se pudo publicar: ${error.message}"
                 )
             }
+    }
+
+    // cierra el guardado del formulario: apaga la ruedita y avisa el resultado
+    private fun terminar(mensaje: String) {
+        _enviando.value = false
+        _avisos.trySend(mensaje)
     }
     fun editar(
         faq: FaqFirebase,
@@ -123,6 +133,7 @@ class FaqViewModel (
             return
         }
 
+        _enviando.value = true
         firestore
             .collection("faqs")
             .document(faq.id)
@@ -135,11 +146,11 @@ class FaqViewModel (
                 )
             )
             .addOnSuccessListener {
-                _avisos.trySend("Pregunta actualizada"
+                terminar("Pregunta actualizada"
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend("No se pudo actualizar: ${error.message}"
+                terminar("No se pudo actualizar: ${error.message}"
                 )
             }
     }

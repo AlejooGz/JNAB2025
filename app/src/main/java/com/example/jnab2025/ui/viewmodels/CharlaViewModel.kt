@@ -41,6 +41,9 @@ class CharlaViewModel(
     val avisos: Flow<String> = _avisos.receiveAsFlow()
     private val _programadas = Channel<Unit>(Channel.BUFFERED)
     val programadas: Flow<Unit> = _programadas.receiveAsFlow()
+    // true desde que se piden las validaciones hasta que la charla queda guardada o falla
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
     private var listenerCharlas: ListenerRegistration? = null
 
     companion object {
@@ -211,6 +214,7 @@ class CharlaViewModel(
         horaInicio: LocalTime
     ) {
 
+        _enviando.value = true
         firestore
             .collection("trabajos")
             .document(trabajoId)
@@ -222,7 +226,7 @@ class CharlaViewModel(
                     )
 
                 if (trabajo == null) {
-                    _avisos.trySend(
+                    terminar(
                         "No se encontró el trabajo"
                     )
                     return@addOnSuccessListener
@@ -232,7 +236,7 @@ class CharlaViewModel(
                     trabajo.estado !=
                     EstadoTrabajo.APROBADO.name
                 ) {
-                    _avisos.trySend(
+                    terminar(
                         "El trabajo todavía no está habilitado para programarse"
                     )
                     return@addOnSuccessListener
@@ -245,10 +249,16 @@ class CharlaViewModel(
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo cargar el trabajo: ${error.message}"
                 )
             }
+    }
+
+    // cierra la programación: apaga la ruedita y avisa el resultado
+    private fun terminar(mensaje: String) {
+        _enviando.value = false
+        _avisos.trySend(mensaje)
     }
     private fun verificarSiYaEstaProgramado(
         trabajo: TrabajoFirebase,
@@ -265,7 +275,7 @@ class CharlaViewModel(
             .addOnSuccessListener { snapshot ->
 
                 if (!snapshot.isEmpty) {
-                    _avisos.trySend(
+                    terminar(
                         "Este trabajo ya tiene una presentación programada"
                     )
                     return@addOnSuccessListener
@@ -278,7 +288,7 @@ class CharlaViewModel(
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo comprobar la programación: ${error.message}"
                 )
             }
@@ -301,7 +311,7 @@ class CharlaViewModel(
                     )
 
                 if (simposio == null) {
-                    _avisos.trySend(
+                    terminar(
                         "No se encontró el simposio"
                     )
                     return@addOnSuccessListener
@@ -329,7 +339,7 @@ class CharlaViewModel(
                     desde == null ||
                     hasta == null
                 ) {
-                    _avisos.trySend(
+                    terminar(
                         "El simposio no tiene fechas válidas"
                     )
                     return@addOnSuccessListener
@@ -337,7 +347,7 @@ class CharlaViewModel(
                 if (
                     fecha < desde || fecha > hasta
                 ) {
-                    _avisos.trySend(
+                    terminar(
                         "La fecha debe estar entre $desde y $hasta"
                     )
                     return@addOnSuccessListener
@@ -350,7 +360,7 @@ class CharlaViewModel(
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo cargar el simposio: ${error.message}"
                 )
             }
@@ -433,7 +443,7 @@ class CharlaViewModel(
                     }
 
                 if (hayConflicto) {
-                    _avisos.trySend(
+                    terminar(
                         "Ya existe una actividad en esa aula y horario"
                     )
                     return@addOnSuccessListener
@@ -448,7 +458,7 @@ class CharlaViewModel(
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo verificar el horario: ${error.message}"
                 )
             }
@@ -483,13 +493,13 @@ class CharlaViewModel(
         charlaRef
             .set(charla)
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Presentación programada correctamente"
                 )
                 _programadas.trySend(Unit)
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo programar la presentación: ${error.message}"
                 )
             }

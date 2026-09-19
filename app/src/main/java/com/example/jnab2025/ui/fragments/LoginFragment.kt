@@ -21,6 +21,7 @@ import com.example.jnab2025.data.model.Rol
 import com.example.jnab2025.data.model.UsuarioFirebase
 import com.example.jnab2025.databinding.FragmentLoginBinding
 import com.example.jnab2025.utils.Sesion
+import com.example.jnab2025.utils.mostrarCargando
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -197,6 +198,13 @@ class LoginFragment : Fragment() {
         idToken: String
     ) {
 
+        // recién acá empieza la espera contra Firebase; antes el usuario
+        // estaba eligiendo la cuenta en el selector de Google
+        mostrarCargando(
+            true,
+            "Ingresando…"
+        )
+
         val credencialFirebase =
             GoogleAuthProvider.getCredential(
                 idToken,
@@ -299,6 +307,9 @@ class LoginFragment : Fragment() {
     private fun pedirRolParaUsuarioGoogle(
         usuarioFirebase: FirebaseUser
     ) {
+
+        // el usuario tiene que elegir el rol: no hay nada cargando
+        mostrarCargando(false)
 
         val opciones =
             arrayOf(
@@ -470,6 +481,11 @@ class LoginFragment : Fragment() {
                     rol
             )
 
+        mostrarCargando(
+            true,
+            "Creando tu perfil…"
+        )
+
         firestore
             .collection("users")
             .document(
@@ -530,6 +546,11 @@ class LoginFragment : Fragment() {
         }
 
         deshabilitarBotones()
+
+        mostrarCargando(
+            true,
+            "Ingresando…"
+        )
 
         auth.signInWithEmailAndPassword(
             email,
@@ -699,6 +720,9 @@ class LoginFragment : Fragment() {
 
     private fun habilitarBotones() {
 
+        // todos los caminos de error pasan por acá: se apaga la ruedita
+        mostrarCargando(false)
+
         if (_binding == null) {
             return
         }
@@ -727,6 +751,9 @@ class LoginFragment : Fragment() {
     override fun onDestroyView() {
 
         super.onDestroyView()
+
+        // al entrar bien se navega con la ruedita prendida; se apaga acá
+        mostrarCargando(false)
 
         _binding = null
     }

@@ -19,6 +19,7 @@ import androidx.navigation.fragment.navArgs
 import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentTramiteExpositorBinding
 import com.example.jnab2025.ui.viewmodels.EnviarTrabajoViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -71,6 +72,9 @@ class TramiteExpositorFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it) }
+                }
                 viewModel.envios.collectLatest { envio ->
                     when (envio) {
                         EnviarTrabajoViewModel.Envio.Ok -> {
@@ -99,6 +103,7 @@ class TramiteExpositorFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

@@ -17,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.databinding.FragmentCargarComprobanteBinding
 import com.example.jnab2025.ui.viewmodels.InscripcionViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -92,6 +93,9 @@ class CargarComprobanteFragment : Fragment() {
                     }
                 }
                 launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it) }
+                }
+                launch {
                     viewModel.avisos.collectLatest { aviso ->
                         Toast.makeText(requireContext(), aviso, Toast.LENGTH_LONG).show()
                         if (aviso.startsWith("Comprobante enviado")) {
@@ -113,6 +117,7 @@ class CargarComprobanteFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

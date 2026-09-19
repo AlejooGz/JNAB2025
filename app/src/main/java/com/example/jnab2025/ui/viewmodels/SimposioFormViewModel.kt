@@ -31,6 +31,9 @@ class SimposioFormViewModel(
     val avisos: Flow<String> = _avisos.receiveAsFlow()
     private val _guardados = Channel<Unit>(Channel.BUFFERED)
     val guardados: Flow<Unit> = _guardados.receiveAsFlow()
+    // true desde que se valida el aula hasta que el simposio queda guardado o falla
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
 
     init {
         cargarAulas()
@@ -113,6 +116,7 @@ class SimposioFormViewModel(
             )
             return
         }
+        _enviando.value = true
         if (simposioId == null) {
             verificarConflictoYGuardar(
                 organizadorUid = organizadorUid,
@@ -190,7 +194,7 @@ class SimposioFormViewModel(
                     }
 
                 if (conflicto) {
-                    _avisos.trySend(
+                    terminar(
                         "Esa aula ya está ocupada por otro simposio en esas fechas"
                     )
                     return@addOnSuccessListener
@@ -206,7 +210,7 @@ class SimposioFormViewModel(
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudieron verificar los horarios: ${error.message}"
                 )
             }
@@ -246,7 +250,7 @@ class SimposioFormViewModel(
         ref.set(simposio)
             .addOnSuccessListener {
 
-                _avisos.trySend(
+                terminar(
                     "Simposio creado"
                 )
 
@@ -254,10 +258,16 @@ class SimposioFormViewModel(
             }
             .addOnFailureListener { error ->
 
-                _avisos.trySend(
+                terminar(
                     "No se pudo guardar: ${error.message}"
                 )
             }
+    }
+
+    // cierra el guardado: apaga la ruedita y avisa el resultado
+    private fun terminar(mensaje: String) {
+        _enviando.value = false
+        _avisos.trySend(mensaje)
     }
 
     private fun LocalDate.toTimestamp(): Timestamp {
@@ -357,7 +367,7 @@ class SimposioFormViewModel(
                     }
 
                 if (conflicto) {
-                    _avisos.trySend(
+                    terminar(
                         "Esa aula ya está ocupada por otro simposio en esas fechas"
                     )
                     return@addOnSuccessListener
@@ -374,7 +384,7 @@ class SimposioFormViewModel(
                 )
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudieron verificar los horarios: ${error.message}"
                 )
             }
@@ -409,13 +419,13 @@ class SimposioFormViewModel(
             .document(simposioId)
             .set(simposio)
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Simposio actualizado"
                 )
                 _guardados.trySend(Unit)
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo actualizar: ${error.message}"
                 )
             }

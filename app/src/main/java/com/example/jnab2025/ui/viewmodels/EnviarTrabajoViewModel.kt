@@ -40,6 +40,10 @@ class EnviarTrabajoViewModel(
     private val _envios = Channel<Envio>(Channel.BUFFERED)
     val envios: Flow<Envio> = _envios.receiveAsFlow()
 
+    // true desde que arranca la subida del PDF hasta que termina bien o mal
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
+
     init {
         escucharSimposios()
     }
@@ -117,6 +121,8 @@ class EnviarTrabajoViewModel(
                 "trabajos/$uidSeguro/$trabajoId/$nombreSeguro"
             )
 
+        _enviando.value = true
+
         // 1. subir el PDF a Firebase Storage
         archivoRef
             .putFile(uriSeguro)
@@ -139,7 +145,7 @@ class EnviarTrabajoViewModel(
                     .addOnFailureListener { error ->
                         // el archivo llegó a Storage pero no pudo completar la operacin
                         archivoRef.delete()
-                        _envios.trySend(
+                        terminar(
                             Envio.Error(
                                 "El PDF se subió, pero no se pudo obtener su URL: ${error.message}"
                             )
@@ -147,7 +153,7 @@ class EnviarTrabajoViewModel(
                     }
             }
             .addOnFailureListener { error ->
-                _envios.trySend(
+                terminar(
                     Envio.Error(
                         "No se pudo subir el PDF: ${error.message}"
                     )
@@ -187,19 +193,25 @@ class EnviarTrabajoViewModel(
         trabajoRef
             .set(trabajo)
             .addOnSuccessListener {
-                _envios.trySend(
+                terminar(
                     Envio.Ok
                 )
             }
             .addOnFailureListener { error ->
                 //si firestore falla, eliminamos el PDF para no dejar un archivo huérfano
                 archivoRef.delete()
-                _envios.trySend(
+                terminar(
                     Envio.Error(
                         "El PDF se subió, pero no se pudo guardar el trabajo: ${error.message}"
                     )
                 )
             }
+    }
+
+    // cierra el envío: apaga la ruedita y avisa el resultado
+    private fun terminar(envio: Envio) {
+        _enviando.value = false
+        _envios.trySend(envio)
     }
 
     private fun validar(

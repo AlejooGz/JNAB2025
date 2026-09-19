@@ -16,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.data.model.AulaFirebase
 import com.example.jnab2025.databinding.FragmentSimposioFormBinding
 import com.example.jnab2025.ui.viewmodels.SimposioFormViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -89,6 +90,9 @@ abstract class SimposioFormFragment : Fragment() {
                     viewModel.aulas.collectLatest { pintarAula() }
                 }
                 launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it, "Guardando…") }
+                }
+                launch {
                     viewModel.avisos.collectLatest {
                         Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
                     }
@@ -146,6 +150,7 @@ abstract class SimposioFormFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
     private fun timestampALocalDate(

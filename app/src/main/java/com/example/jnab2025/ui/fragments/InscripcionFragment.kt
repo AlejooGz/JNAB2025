@@ -18,6 +18,7 @@ import com.example.jnab2025.data.model.EstadoInscripcion
 import com.example.jnab2025.data.model.TipoInscripcion
 import com.example.jnab2025.databinding.FragmentInscripcionBinding
 import com.example.jnab2025.ui.viewmodels.InscripcionViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -71,6 +72,10 @@ class InscripcionFragment : Fragment() {
                     viewModel.vista.collectLatest { vista ->
                         pintar(vista)
                     }
+                }
+
+                launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it) }
                 }
 
                 launch {
@@ -195,6 +200,7 @@ class InscripcionFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

@@ -162,6 +162,34 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         NotificacionesWorker.ejecutarAhora(this)
     }
 
+    /**
+     * Muestra u oculta la capa de "cargando" que tapa toda la pantalla mientras
+     * un fragment espera la respuesta de Firebase. Tambien traba el drawer para
+     * que no se pueda navegar a mitad de un envio.
+     */
+    fun mostrarCargando(visible: Boolean, mensaje: String = "Enviando…") {
+        val capa = binding.capaCargando
+        if (visible) {
+            binding.tvCargando.text = mensaje
+            capa.visibility = View.VISIBLE
+            binding.drawerLayout.setDrawerLockMode(
+                DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+            )
+        } else if (capa.visibility == View.VISIBLE) {
+            capa.visibility = View.GONE
+            // No se restaura un modo guardado: el envio pudo terminar navegando
+            // (login -> main), asi que se decide segun donde se esta ahora.
+            val destino =
+                findNavController(R.id.nav_host_fragment).currentDestination?.id
+            val sinDrawer =
+                destino == R.id.loginFragment || destino == R.id.registroFragment
+            binding.drawerLayout.setDrawerLockMode(
+                if (sinDrawer) DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+                else DrawerLayout.LOCK_MODE_UNLOCKED
+            )
+        }
+    }
+
     private fun refrescarSesionEnUi() {
         val headerView = binding.navView.getHeaderView(0)
         headerView.findViewById<TextView>(R.id.tvDrawerUsername).text = Sesion.nombre(this)

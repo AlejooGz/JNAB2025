@@ -19,6 +19,7 @@ import android.widget.LinearLayout
 import com.example.jnab2025.databinding.FragmentGestionFaqBinding
 import com.example.jnab2025.ui.adapters.GestionFaqAdapter
 import com.example.jnab2025.ui.viewmodels.FaqViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.launch
 
 class GestionFaqFragment : Fragment() {
@@ -52,6 +53,7 @@ class GestionFaqFragment : Fragment() {
         }
         observarFaqs()
         observarAvisos()
+        observarEnvio()
     }
 
     private fun configurarRecycler() {
@@ -91,6 +93,17 @@ class GestionFaqFragment : Fragment() {
                         mensaje,
                         Toast.LENGTH_LONG
                     ).show()
+                }
+            }
+        }
+    }
+    private fun observarEnvio() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.enviando.collect {
+                    mostrarCargando(it, "Guardando…")
                 }
             }
         }
@@ -213,6 +226,7 @@ class GestionFaqFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

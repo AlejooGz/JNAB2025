@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentRegistroBinding
 import com.example.jnab2025.data.model.UsuarioFirebase
+import com.example.jnab2025.utils.mostrarCargando
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -111,12 +112,15 @@ class RegistroFragment : Fragment() {
             return
         }
 
+        mostrarCargando(true, "Creando cuenta…")
+
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { resultado ->
 
                 val uid = resultado.user?.uid
 
                 if (uid == null) {
+                    mostrarCargando(false)
                     mostrarMensaje("No se pudo obtener el identificador del usuario")
                     return@addOnSuccessListener
                 }
@@ -133,6 +137,8 @@ class RegistroFragment : Fragment() {
                     .set(usuario)
                     .addOnSuccessListener {
 
+                        mostrarCargando(false)
+
                         mostrarMensaje(
                             "Usuario registrado correctamente"
                         )
@@ -143,12 +149,16 @@ class RegistroFragment : Fragment() {
                     }
                     .addOnFailureListener { error ->
 
+                        mostrarCargando(false)
+
                         mostrarMensaje(
                             "Error al guardar el perfil: ${error.message}"
                         )
                     }
             }
             .addOnFailureListener { error ->
+
+                mostrarCargando(false)
 
                 mostrarMensaje(
                     "Error al registrar usuario: ${error.message}"
@@ -165,6 +175,7 @@ class RegistroFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

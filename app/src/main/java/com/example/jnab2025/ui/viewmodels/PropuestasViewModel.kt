@@ -41,6 +41,9 @@ class PropuestasViewModel(
     val avisos: Flow<String> = _avisos.receiveAsFlow()
     private val _resueltas = Channel<Unit>(Channel.BUFFERED)
     val resueltas: Flow<Unit> = _resueltas.receiveAsFlow()
+    // true mientras se aprueba o rechaza una propuesta
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
     fun cargarSimposio(simposioId: String) {
 
         firestore
@@ -154,21 +157,28 @@ class PropuestasViewModel(
             "fechaResolucion" to Timestamp.now(),
             "resueltoPorUid" to organizadorUid
         )
+        _enviando.value = true
         firestore
             .collection("trabajos")
             .document(trabajoId)
             .update(cambios)
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Propuesta rechazada"
                 )
                 _resueltas.trySend(Unit)
             }
             .addOnFailureListener { error ->
-                _avisos.trySend(
+                terminar(
                     "No se pudo rechazar: ${error.message}"
                 )
             }
+    }
+
+    // cierra una resolución: apaga la ruedita y avisa el resultado
+    private fun terminar(mensaje: String) {
+        _enviando.value = false
+        _avisos.trySend(mensaje)
     }
     fun aprobar(
         trabajoId: String
@@ -182,6 +192,7 @@ class PropuestasViewModel(
             )
             return
         }
+        _enviando.value = true
         firestore
             .collection("trabajos")
             .document(trabajoId)
@@ -194,14 +205,14 @@ class PropuestasViewModel(
                     )
 
                 if (trabajo == null) {
-                    _avisos.trySend(
+                    terminar(
                         "No se encontró el trabajo"
                     )
                     return@addOnSuccessListener
                 }
 
                 if (trabajo.estado != EstadoTrabajo.ENVIADO.name) {
-                    _avisos.trySend(
+                    terminar(
                         "Este trabajo ya fue resuelto"
                     )
                     return@addOnSuccessListener
@@ -214,7 +225,7 @@ class PropuestasViewModel(
             }
             .addOnFailureListener { error ->
 
-                _avisos.trySend(
+                terminar(
                     "No se pudo cargar el trabajo: ${error.message}"
                 )
             }
@@ -255,7 +266,7 @@ class PropuestasViewModel(
             }
             .addOnFailureListener { error ->
 
-                _avisos.trySend(
+                terminar(
                     "No se pudo verificar la inscripción: ${error.message}"
                 )
             }
@@ -412,13 +423,13 @@ class PropuestasViewModel(
             .document(trabajo.id)
             .update(cambios)
             .addOnSuccessListener {
-                _avisos.trySend(
+                terminar(
                     "Trabajo aceptado académicamente. Falta acreditar la inscripción del expositor."
                 )
                 _resueltas.trySend(Unit)
             }
             .addOnFailureListener { error ->
-                _avisos.trySend("No se pudo actualizar el trabajo: ${error.message}"
+                terminar("No se pudo actualizar el trabajo: ${error.message}"
                 )
             }
     }
@@ -440,7 +451,7 @@ class PropuestasViewModel(
             .update(cambios)
             .addOnSuccessListener {
 
-                _avisos.trySend(
+                terminar(
                     "Trabajo aceptado. La inscripción ya está acreditada. " +
                             "Ahora falta programar la presentación."
                 )
@@ -448,7 +459,7 @@ class PropuestasViewModel(
             }
             .addOnFailureListener { error ->
 
-                _avisos.trySend(
+                terminar(
                     "No se pudo aceptar el trabajo: ${error.message}"
                 )
             }
