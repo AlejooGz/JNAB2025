@@ -49,5 +49,36 @@
             android:textColor="@color/dusty_rose"
             android:textStyle="italic"/>
 
+        <!-- Acciones exclusivas del organizador -->
+        <LinearLayout
+            android:id="@+id/layoutAccionesNovedad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="12dp">
+
+            <Button
+                android:id="@+id/btnEditarNovedad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Editar"
+                android:textAllCaps="false"
+                android:textColor="@color/cream"
+                android:backgroundTint="@color/dark_red"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btnEliminarNovedad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eliminar"
+                android:textAllCaps="false"
+                android:textColor="@color/cream"
+                android:backgroundTint="@color/dusty_rose"/>
+
+        </LinearLayout>
+
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>

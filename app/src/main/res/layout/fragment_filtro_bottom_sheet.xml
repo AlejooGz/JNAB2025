@@ -1,4 +1,7 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -22,6 +25,7 @@
         android:text="Filtrar por:"
         android:textColor="@color/dark_red"
         android:textSize="18sp"
+        android:textStyle="bold"
         android:layout_marginBottom="12dp" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup
@@ -29,6 +33,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         app:singleSelection="false"
         app:selectionRequired="false">
 
@@ -38,10 +44,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Hospedajes"
-            android:textColor="@color/dark_red"
-            app:backgroundTint="@color/filtro_button_background"
-            app:strokeColor="@color/filtro_button_stroke"
-            app:strokeWidth="2dp" />
+            android:textAllCaps="false"
+            android:textColor="@color/filtro_boton_texto"
+            app:backgroundTint="@color/filtro_boton_fondo"
+            app:strokeColor="@color/dark_red"
+            app:strokeWidth="1dp"
+            app:cornerRadius="20dp"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRestaurante"
@@ -49,10 +57,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Restaurantes"
-            android:textColor="@color/dark_red"
-            app:backgroundTint="@color/filtro_button_background"
-            app:strokeColor="@color/filtro_button_stroke"
-            app:strokeWidth="2dp"/>
+            android:textAllCaps="false"
+            android:textColor="@color/filtro_boton_texto"
+            app:backgroundTint="@color/filtro_boton_fondo"
+            app:strokeColor="@color/dark_red"
+            app:strokeWidth="1dp"
+            app:cornerRadius="20dp"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAgencia"
@@ -60,22 +70,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Agencias"
-            android:textColor="@color/dark_red"
-            app:backgroundTint="@color/filtro_button_background"
-            app:strokeColor="@color/filtro_button_stroke"
-            app:strokeWidth="2dp"/>
+            android:textAllCaps="false"
+            android:textColor="@color/filtro_boton_texto"
+            app:backgroundTint="@color/filtro_boton_fondo"
+            app:strokeColor="@color/dark_red"
+            app:strokeWidth="1dp"
+            app:cornerRadius="20dp"/>
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnQuitarFiltro"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Quitar filtros"
-        android:textColor="@color/dark_red"
-        android:backgroundTint="@android:color/transparent"
-        app:strokeWidth="0dp"
         android:layout_marginTop="12dp"
-        />
+        android:text="Quitar filtros"
+        android:textAllCaps="false"
+        android:textColor="@color/dark_red"
+        app:backgroundTint="@color/light_pink"
+        app:strokeColor="@color/dark_red"
+        app:strokeWidth="1dp"
+        app:cornerRadius="20dp" />
+
 </LinearLayout>

@@ -14,210 +14,357 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-class NovedadesViewModel( application: Application
-) : AndroidViewModel(application) {
-
+class NovedadesViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private var listenerNovedades: ListenerRegistration? = null
-    private val _novedades = MutableStateFlow<List<NovedadFirebase>>(
-            emptyList()
-    )
+    private var listenerNovedades: com.google.firebase.firestore.ListenerRegistration? = null
+    private val _novedades = MutableStateFlow<List<NovedadFirebase>>(emptyList())
     val novedades: StateFlow<List<NovedadFirebase>> = _novedades.asStateFlow()
     private val _publicando = MutableStateFlow(false)
     val publicando: StateFlow<Boolean> = _publicando.asStateFlow()
-
-    sealed interface Evento {
-        data object Publicada : Evento
-
-        data class Error( val mensaje: String
-        ) : Evento
-    }
-    private val _eventos = Channel<Evento>(Channel.BUFFERED)
-    val eventos: Flow<Evento> = _eventos.receiveAsFlow()
+    private val _eventos =
+        MutableStateFlow<Evento?>(null)
+    val eventos: StateFlow<Evento?> = _eventos.asStateFlow()
 
     init {
         escucharNovedades()
     }
+    sealed class Evento {
+        data object Publicada : Evento()
+        data object Actualizada : Evento()
+        data object Eliminada : Evento()
+        data class Error(
+            val mensaje: String
+        ) : Evento()
+    }
     private fun escucharNovedades() {
+
         listenerNovedades?.remove()
-        listenerNovedades =
-            firestore
-                .collection("novedades")
-                .whereEqualTo(
-                    "publicada",
-                    true
-                )
-                .addSnapshotListener { snapshot, error ->
-                    if (error != null) {
-                        _eventos.trySend(
-                            Evento.Error(
-                                "No se pudieron cargar las novedades: ${error.message}"
-                            )
-                        )
-                        return@addSnapshotListener
-                    }
-                    val lista = snapshot
-                            ?.documents
-                            ?.mapNotNull { documento ->
-                                documento
-                                    .toObject(
-                                        NovedadFirebase::class.java
-                                    )
-                                    ?.copy(
-                                        id = documento.id
-                                    )
-                            }
-                            ?.sortedByDescending {
-                                it.fechaPublicacion
-                            }
-                            .orEmpty()
-                    _novedades.value =
-                        lista
+
+        listenerNovedades = firestore
+            .collection("novedades")
+            .whereEqualTo("publicada", true)
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null) {
+                    _eventos.value = Evento.Error(
+                        error.message ?: "Error al cargar las novedades"
+                    )
+                    return@addSnapshotListener
                 }
+
+                val lista = snapshot
+                    ?.documents
+                    ?.mapNotNull { documento ->
+
+                        documento
+                            .toObject(NovedadFirebase::class.java)
+                            ?.copy(
+                                id = documento.id
+                            )
+                    }
+                    ?.sortedByDescending {
+                        it.fechaPublicacion
+                    }
+                    .orEmpty()
+
+                _novedades.value = lista
+            }
+    }
+    fun obtenerNovedad(
+        novedadId: String,
+        onResultado: (NovedadFirebase?) -> Unit
+    ) {
+
+        if (novedadId.isBlank()) {
+            onResultado(null)
+            return
+        }
+
+        firestore
+            .collection("novedades")
+            .document(novedadId)
+            .get()
+            .addOnSuccessListener { documento ->
+
+                if (documento.exists()) {
+
+                    val novedad =
+                        documento
+                            .toObject(NovedadFirebase::class.java)
+                            ?.copy(
+                                id = documento.id
+                            )
+
+                    onResultado(novedad)
+
+                } else {
+
+                    onResultado(null)
+                }
+            }
+            .addOnFailureListener {
+
+                _eventos.value = Evento.Error(
+                    it.message ?: "No se pudo cargar la novedad"
+                )
+
+                onResultado(null)
+            }
     }
     fun publicar(
         titulo: String,
         descripcion: String,
         imagenUri: Uri?
     ) {
-        val uid = auth.currentUser?.uid
 
-        if (uid == null) {
-            _eventos.trySend(
-                Evento.Error(
-                    "Tenés que iniciar sesión para publicar"
-                )
-            )
-            return
-        }
         val tituloLimpio = titulo.trim()
         val descripcionLimpia = descripcion.trim()
+
+        if (auth.currentUser == null) {
+
+            _eventos.value = Evento.Error(
+                "No hay un usuario autenticado"
+            )
+
+            return
+        }
+
         if (tituloLimpio.isBlank()) {
-            _eventos.trySend(
-                Evento.Error(
-                    "Ingresá un título"
-                )
+
+            _eventos.value = Evento.Error(
+                "Ingresá un título para la novedad"
             )
+
             return
         }
+
         if (descripcionLimpia.isBlank()) {
-            _eventos.trySend(
-                Evento.Error(
-                    "Ingresá una descripción"
-                )
+
+            _eventos.value = Evento.Error(
+                "Ingresá una descripción para la novedad"
             )
+
             return
         }
-        _publicando.value = true
-        val novedadRef =
-            firestore
-                .collection("novedades")
-                .document()
-        val novedadId = novedadRef.id
-        if (imagenUri == null) {
-            guardarEnFirestore(
-                novedadId = novedadId,
-                titulo = tituloLimpio,
-                descripcion = descripcionLimpia,
-                imagenUrl = null
-            )
-            return
+
+        viewModelScope.launch {
+
+            _publicando.value = true
+
+            try {
+
+                val usuarioUid = auth.currentUser!!.uid
+
+                val referenciaNovedad =
+                    firestore
+                        .collection("novedades")
+                        .document()
+
+                val novedadId = referenciaNovedad.id
+                var imagenUrl: String? = null
+
+                if (imagenUri != null) {
+
+                    val referenciaImagen =
+                        storage
+                            .reference
+                            .child(
+                                "novedades/$novedadId/imagen"
+                            )
+
+                    referenciaImagen
+                        .putFile(imagenUri)
+                        .await()
+
+                    imagenUrl =
+                        referenciaImagen
+                            .downloadUrl
+                            .await()
+                            .toString()
+                }
+
+                val novedad = NovedadFirebase(
+                    id = novedadId,
+                    titulo = tituloLimpio,
+                    descripcion = descripcionLimpia,
+                    imagenUrl = imagenUrl,
+                    fechaPublicacion = Timestamp.now(),
+                    autorUid = usuarioUid,
+                    publicada = true
+                )
+
+                referenciaNovedad
+                    .set(novedad)
+                    .await()
+
+                _eventos.value = Evento.Publicada
+
+            } catch (e: Exception) {
+
+                _eventos.value = Evento.Error(
+                    e.message ?: "No se pudo publicar la novedad"
+                )
+
+            } finally {
+
+                _publicando.value = false
+            }
         }
-        val imagenRef =
-            storage
-                .reference
-                .child(
-                    "novedades/$novedadId/imagen"
-                )
-        imagenRef
-            .putFile(imagenUri)
-            .addOnSuccessListener {
-                imagenRef
-                    .downloadUrl
-                    .addOnSuccessListener { downloadUri ->
-                        guardarEnFirestore(
-                            novedadId = novedadId,
-                            titulo = tituloLimpio,
-                            descripcion = descripcionLimpia,
-                            imagenUrl =
-                                downloadUri.toString()
-                        )
-                    }
-                    .addOnFailureListener { error ->
-                        imagenRef.delete()
-                        terminarConError(
-                            "La imagen se subió, pero no se pudo obtener su URL: ${error.message}"
-                        )
-                    }
-            }
-            .addOnFailureListener { error ->
-                terminarConError(
-                    "No se pudo subir la imagen: ${error.message}"
-                )
-            }
     }
-    private fun guardarEnFirestore(
+
+    fun actualizar(
         novedadId: String,
         titulo: String,
         descripcion: String,
-        imagenUrl: String?
+        imagenUri: Uri?,
+        imagenActualUrl: String?
     ) {
-        val uid = auth.currentUser?.uid
-                ?: run {
-                    terminarConError(
-                        "La sesión ya no está disponible"
-                    )
-                    return
-                }
-        val novedad =
-            NovedadFirebase(
-                id = novedadId,
-                titulo = titulo,
-                descripcion = descripcion,
-                imagenUrl = imagenUrl,
-                fechaPublicacion =
-                    Timestamp.now(),
-                autorUid = uid,
-                publicada = true
+
+        val tituloLimpio = titulo.trim()
+        val descripcionLimpia = descripcion.trim()
+
+        if (auth.currentUser == null) {
+            _eventos.value = Evento.Error(
+                "No hay un usuario autenticado"
             )
-        firestore
-            .collection("novedades")
-            .document(novedadId)
-            .set(novedad)
-            .addOnSuccessListener {
-                _publicando.value =
-                    false
-                _eventos.trySend(
-                    Evento.Publicada
-                )
-            }
-            .addOnFailureListener { error ->
-                //si había imagen, evitamos dejarla huérfana en Storage
-                if (imagenUrl != null) {
-                    storage
-                        .reference
-                        .child(
-                            "novedades/$novedadId/imagen"
-                        )
-                        .delete()
+            return
+        }
+
+        if (novedadId.isBlank()) {
+            _eventos.value = Evento.Error(
+                "No se encontró la novedad a editar"
+            )
+            return
+        }
+
+        if (tituloLimpio.isBlank()) {
+            _eventos.value = Evento.Error(
+                "Ingresá un título para la novedad"
+            )
+            return
+        }
+
+        if (descripcionLimpia.isBlank()) {
+            _eventos.value = Evento.Error(
+                "Ingresá una descripción para la novedad"
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _publicando.value = true
+            try {
+                val referenciaNovedad =
+                    firestore
+                        .collection("novedades")
+                        .document(novedadId)
+
+                var imagenUrlFinal = imagenActualUrl
+
+                if (imagenUri != null) {
+                    val referenciaImagen =
+                        storage
+                            .reference
+                            .child(
+                                "novedades/$novedadId/imagen"
+                            )
+
+                    // se reutiliza la misma ubicación y la imagen anterior se reemplaza
+                    referenciaImagen
+                        .putFile(imagenUri)
+                        .await()
+
+                    imagenUrlFinal =
+                        referenciaImagen
+                            .downloadUrl
+                            .await()
+                            .toString()
                 }
-                terminarConError(
-                    "No se pudo publicar la novedad: ${error.message}"
+                val cambios = hashMapOf<String, Any?>(
+                    "titulo" to tituloLimpio,
+                    "descripcion" to descripcionLimpia,
+                    "imagenUrl" to imagenUrlFinal
                 )
+
+                referenciaNovedad
+                    .update(cambios)
+                    .await()
+
+                _eventos.value = Evento.Actualizada
+
+            } catch (e: Exception) {
+                _eventos.value = Evento.Error(
+                    e.message ?: "No se pudo actualizar la novedad"
+                )
+
+            } finally {
+                _publicando.value = false
             }
+        }
     }
-    private fun terminarConError(mensaje: String
-    ) {
-        _publicando.value = false
-        _eventos.trySend(
-            Evento.Error(mensaje)
-        )
+    fun eliminar(novedad: NovedadFirebase) {
+
+        if (auth.currentUser == null) {
+            _eventos.value = Evento.Error(
+                "No hay un usuario autenticado"
+            )
+
+            return
+        }
+
+        if (novedad.id.isBlank()) {
+            _eventos.value = Evento.Error(
+                "No se encontró el identificador de la novedad"
+            )
+
+            return
+        }
+
+        viewModelScope.launch {
+            _publicando.value = true
+
+            try {
+                if (!novedad.imagenUrl.isNullOrBlank()) {
+                    val referenciaImagen =
+                        storage
+                            .reference
+                            .child(
+                                "novedades/${novedad.id}/imagen"
+                            )
+
+                    referenciaImagen
+                        .delete()
+                        .await()
+                }
+                firestore
+                    .collection("novedades")
+                    .document(novedad.id)
+                    .delete()
+                    .await()
+
+                _eventos.value = Evento.Eliminada
+
+            } catch (e: Exception) {
+                _eventos.value = Evento.Error(
+                    e.message ?: "No se pudo eliminar la novedad"
+                )
+
+            } finally {
+                _publicando.value = false
+            }
+        }
     }
+
     override fun onCleared() {
         super.onCleared()
         listenerNovedades?.remove()
+        listenerNovedades = null
     }
 }

@@ -35,22 +35,28 @@ class NovedadesFragment : Fragment() {
         )
         return binding.root
     }
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
         super.onViewCreated(view, savedInstanceState)
-
         configurarRecyclerView()
         observarNovedades()
     }
+
     private fun configurarRecyclerView() {
-        adapter = NovedadesAdapter()
+        adapter = NovedadesAdapter(
+            esOrganizador = false,
+            onEditar = {},
+            onEliminar = {}
+        )
         binding.recyclerViewNovedades.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@NovedadesFragment.adapter
         }
     }
+
     private fun observarNovedades() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
@@ -63,9 +69,7 @@ class NovedadesFragment : Fragment() {
                 }
                 launch {
                     viewModel.eventos.collectLatest { evento ->
-                        if (
-                            evento is NovedadesViewModel.Evento.Error
-                        ) {
+                        if (evento is NovedadesViewModel.Evento.Error) {
                             Toast.makeText(
                                 requireContext(),
                                 evento.mensaje,
@@ -77,6 +81,7 @@ class NovedadesFragment : Fragment() {
             }
         }
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         binding.recyclerViewNovedades.adapter = null
