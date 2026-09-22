@@ -26,6 +26,14 @@ object Notificaciones {
 
     const val CANAL_PAGOS = "jnab_pagos"
     const val CANAL_RECORDATORIOS = "jnab_recordatorios"
+    const val CANAL_LUGARES = "jnab_lugares"
+
+    /**
+     * Extras del intent que abre la app al tocar el aviso. MainActivity los lee
+     * para llevar a la pantalla del aviso (hoy, el mapa en un lugar puntual).
+     */
+    const val EXTRA_TIPO = "notificacion_tipo"
+    const val EXTRA_REFERENCIA_ID = "notificacion_referencia_id"
 
     /** Base para los ids de recordatorio, para no pisar los avisos de pago. */
     private const val BASE_ID_RECORDATORIO = 100_000
@@ -56,6 +64,17 @@ object Notificaciones {
             ).apply {
                 description =
                     "Te avisa 30 minutos antes de cada charla de tu agenda"
+            }
+        )
+
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CANAL_LUGARES,
+                "Novedades del mapa",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description =
+                    "Avisa cuando se agrega un lugar con descuento al mapa"
             }
         )
     }
@@ -92,17 +111,24 @@ object Notificaciones {
         id: Int,
         canal: String,
         titulo: String,
-        mensaje: String
+        mensaje: String,
+        tipo: String? = null,
+        referenciaId: String? = null
     ) {
         if (!puedeNotificar(context)) return
 
         crearCanales(context)
 
         // Al tocar el aviso se abre la app reusando la instancia que ya exista.
+        // SINGLE_TOP hace que esa instancia reciba el intent en onNewIntent en
+        // vez de recrearse, asi no se pierde la pantalla en la que estaba.
         val intent =
             Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                if (tipo != null) putExtra(EXTRA_TIPO, tipo)
+                if (referenciaId != null) putExtra(EXTRA_REFERENCIA_ID, referenciaId)
             }
 
         val pendiente =

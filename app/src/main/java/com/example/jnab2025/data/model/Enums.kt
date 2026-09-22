@@ -26,7 +26,9 @@ enum class CategoriaLugar { HOSPEDAJE, RESTAURANTE, AGENCIA }
 enum class PublicoFaq { ASISTENTE, EXPOSITOR }
 
 /**
- * Que origino una notificacion. RECORDATORIO_CHARLA no se guarda en Firestore:
- * lo programa cada dispositivo con AlarmManager a partir de su propia agenda.
+ * Que origino una notificacion. RECORDATORIO_CHARLA lo dispara cada dispositivo
+ * con AlarmManager a partir de su propia agenda (el doc queda solo de historial).
+ * LUGAR_AGREGADO lo escribe el organizador para cada expositor y asistente al
+ * crear o reactivar un lugar del mapa; su referenciaId es el id del lugar.
  */
-enum class TipoNotificacion { PAGO_APROBADO, RECORDATORIO_CHARLA }
+enum class TipoNotificacion { PAGO_APROBADO, RECORDATORIO_CHARLA, LUGAR_AGREGADO }

@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.jnab2025.data.model.CharlaFirebase
 import com.example.jnab2025.data.model.NotificacionFirebase
 import com.example.jnab2025.data.model.SimposioFirebase
+import com.example.jnab2025.data.model.TipoNotificacion
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -65,12 +66,26 @@ object SincronizadorNotificaciones {
         if (notificacion.id.isBlank()) return
         if (RegistroNotificaciones.yaMostrada(context, notificacion.id)) return
 
+        // El recordatorio ya lo mostro la alarma local en el momento justo; el
+        // doc existe solo para el historial. Emitirlo de nuevo aca lo duplicaria
+        // (y en otro dispositivo del usuario llegaria tarde, via worker).
+        if (notificacion.tipo == TipoNotificacion.RECORDATORIO_CHARLA.name) return
+
+        val canal =
+            if (notificacion.tipo == TipoNotificacion.LUGAR_AGREGADO.name) {
+                Notificaciones.CANAL_LUGARES
+            } else {
+                Notificaciones.CANAL_PAGOS
+            }
+
         Notificaciones.mostrar(
             context = context,
             id = notificacion.id.hashCode(),
-            canal = Notificaciones.CANAL_PAGOS,
+            canal = canal,
             titulo = notificacion.titulo,
-            mensaje = notificacion.mensaje
+            mensaje = notificacion.mensaje,
+            tipo = notificacion.tipo,
+            referenciaId = notificacion.referenciaId
         )
 
         RegistroNotificaciones.marcarMostrada(context, notificacion.id)

@@ -37,10 +37,19 @@ class MapsFragment : Fragment() {
     private val marcadoresVisibles = mutableListOf<Marker>()
     private var mapaListo = false
 
+    /**
+     * Lugar al que hay que llevar la camara, cuando se llega desde una
+     * notificacion LUGAR_AGREGADO. Queda en null una vez enfocado.
+     */
+    private var lugarAEnfocar: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?
     ) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        // se lee del bundle de argumentos y se borra de ahi al enfocar, asi al
+        // rotar o volver atras no se repite el zoom
+        lugarAEnfocar = arguments?.getString(ARG_LUGAR_ID)
     }
 
     override fun onCreateOptionsMenu(menu: Menu,
@@ -95,6 +104,7 @@ class MapsFragment : Fragment() {
                 true
             }
             aplicarFiltros()
+            intentarEnfocar()
         }
 
     override fun onCreateView(
@@ -151,6 +161,7 @@ class MapsFragment : Fragment() {
                                 todosLosLugares =
                                     lugares
                                 aplicarFiltros()
+                                intentarEnfocar()
                             }
                     }
             }
@@ -175,6 +186,76 @@ class MapsFragment : Fragment() {
                             }
                     }
             }
+    }
+
+    /**
+     * Lleva la camara al lugar de la notificacion y abre su detalle, como
+     * cuando se busca una direccion en Google Maps. Hace falta el mapa listo y
+     * que el lugar ya haya llegado de Firestore, por eso se reintenta desde los
+     * dos lados (onMapReady y cada snapshot de lugares).
+     */
+    private fun intentarEnfocar() {
+        val id = lugarAEnfocar ?: return
+        if (!mapaListo) {
+            return
+        }
+        // se busca tambien entre los inactivos para poder avisar que ya no esta
+        val lugar =
+            lugaresViewModel
+                .todosLugares
+                .value
+                .firstOrNull { it.id == id }
+                ?: return // todavia no llego el snapshot con ese lugar
+
+        lugarAEnfocar = null
+        arguments?.remove(ARG_LUGAR_ID)
+
+        if (!lugar.activo) {
+            Toast.makeText(
+                requireContext(),
+                "Ese lugar ya no está disponible en el mapa",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        // con un filtro activo el marcador podria quedar oculto: se limpian y
+        // el observer de filtros vuelve a dibujar todos los marcadores
+        filtroViewModel.limpiarFiltros()
+
+        googleMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(
+                    lugar.latitud,
+                    lugar.longitud
+                ),
+                ZOOM_LUGAR
+            ),
+            DURACION_ZOOM_MS,
+            object : GoogleMap.CancelableCallback {
+                override fun onFinish() {
+                    mostrarDetalle(lugar)
+                }
+
+                // si el usuario toca el mapa a mitad de la animacion
+                override fun onCancel() {
+                    mostrarDetalle(lugar)
+                }
+            }
+        )
+    }
+
+    private fun mostrarDetalle(lugar: LugarFirebase) {
+        // la animacion pudo terminar con el fragment ya fuera de pantalla
+        if (!isAdded || parentFragmentManager.isStateSaved) {
+            return
+        }
+        DetalleLugarBottomSheetFragment
+            .newInstance(lugar)
+            .show(
+                parentFragmentManager,
+                "DetalleLugar"
+            )
     }
 
     private fun aplicarFiltros() {
@@ -248,5 +329,14 @@ class MapsFragment : Fragment() {
                     .add(it)
             }
         }
+    }
+
+    companion object {
+        /** Mismo nombre que el argumento de mapsFragment en nav_graph.xml. */
+        const val ARG_LUGAR_ID = "lugarId"
+
+        /** Nivel de calle, suficiente para distinguir el local. */
+        private const val ZOOM_LUGAR = 17f
+        private const val DURACION_ZOOM_MS = 1_500
     }
 }
