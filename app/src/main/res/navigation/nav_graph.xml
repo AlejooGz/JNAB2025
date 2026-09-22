@@ -200,7 +200,14 @@
     <fragment
         android:id="@+id/mapsFragment"
         android:name="com.example.jnab2025.ui.fragments.MapsFragment"
-        android:label="Mapa Descuentos" />
+        android:label="Mapa Descuentos">
+        <!-- Viene de una notificacion LUGAR_AGREGADO: el mapa se centra en ese lugar -->
+        <argument
+            android:name="lugarId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/charlaDetailFragment"
@@ -268,5 +275,9 @@
         android:name="com.example.jnab2025.ui.fragments.GestionLugaresFragment"
         android:label="Gestionar lugares"
         tools:layout="@layout/fragment_gestion_lugares" />
+    <fragment
+        android:id="@+id/notificacionesFragment"
+        android:name="com.example.jnab2025.ui.fragments.NotificacionesFragment"
+        android:label="Notificaciones" />
 </navigation>
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Campanita de la Toolbar. MainActivity la muestra solo en el home de
+     expositor y asistente (ver onPrepareOptionsMenu). -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_notificaciones"
+        android:icon="@drawable/outline_notifications_24"
+        android:title="Notificaciones"
+        android:visible="false"
+        app:actionLayout="@layout/accion_notificaciones"
+        app:showAsAction="always" />
+</menu>

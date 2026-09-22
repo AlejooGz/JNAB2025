@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vista propia del item "Notificaciones" de la Toolbar: la campanita mas el
+     globito de no leidas. Un icono de menu comun no puede mostrar el numero. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:clickable="true"
+    android:contentDescription="Notificaciones"
+    android:focusable="true">
+
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no"
+        android:src="@drawable/outline_notifications_24"
+        android:tint="@color/white"
+        tools:ignore="UseAppTint" />
+
+    <TextView
+        android:id="@+id/tvBadgeNotificaciones"
+        android:layout_width="wrap_content"
+        android:layout_height="18dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/bg_badge_notificaciones"
+        android:gravity="center"
+        android:minWidth="18dp"
+        android:paddingHorizontal="4dp"
+        android:textColor="@color/dark_red"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="3"
+        tools:visibility="visible" />
+
+</FrameLayout>

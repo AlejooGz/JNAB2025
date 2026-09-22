@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
@@ -15,12 +16,17 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import com.example.jnab2025.notificaciones.NotificacionesWorker
 import com.example.jnab2025.notificaciones.Notificaciones
 import com.example.jnab2025.notificaciones.ProgramadorRecordatorios
@@ -32,6 +38,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.example.jnab2025.data.firebase.FirebaseSeed
+import com.example.jnab2025.data.model.TipoNotificacion
+import com.example.jnab2025.ui.fragments.MapsFragment
 import com.example.jnab2025.ui.viewmodels.FiltroViewModel
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -43,6 +51,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     /** Ultimo usuario para el que ya se hizo la puesta al dia de avisos. */
     private var uidSincronizado: String? = null
+
+    /** Destino actual del NavController, para decidir si va la campanita. */
+    private var destinoActual: Int? = null
+
+    /** Globito de la campanita; existe recien despues de onCreateOptionsMenu. */
+    private var tvBadgeNotificaciones: TextView? = null
+
+    /**
+     * Lugar de una notificacion LUGAR_AGREGADO tocada en la bandeja del
+     * telefono. Se guarda hasta que haya sesion (en frio se arranca en el
+     * login) y ahi se navega al mapa.
+     */
+    private var lugarPendiente: String? = null
 
     private val pedirPermisoNotificaciones =
         registerForActivityResult(
@@ -56,6 +77,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(binding.root)
 
         prepararNotificaciones()
+
+        // Al recrearse (rotacion, etc.) el intent es el mismo: ya se atendio.
+        if (savedInstanceState == null) {
+            leerNotificacionTocada(intent)
+        }
 
         // Configurar Toolbar
         setSupportActionBar(binding.toolbar)
@@ -85,6 +111,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             bottomNav.setupWithNavController(navController)
 
             navController.addOnDestinationChangedListener { _, destination, _ ->
+                destinoActual = destination.id
+                // onPrepareOptionsMenu decide si la campanita va en este destino
+                invalidateOptionsMenu()
+
                 when (destination.id) {
                     R.id.loginFragment,
                     R.id.registroFragment -> {
@@ -104,6 +134,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         )
                         refrescarSesionEnUi()
                         sincronizarNotificacionesConSesion()
+                        // se difiere para no navegar desde dentro del listener
+                        binding.navHostFragment.post { abrirLugarPendiente() }
                     }
                 }
             }
@@ -116,6 +148,53 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             return
         }
         */
+    }
+
+    /** Con la app abierta, tocar un aviso llega aca (el intent es SINGLE_TOP). */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        leerNotificacionTocada(intent)
+        abrirLugarPendiente()
+    }
+
+    /**
+     * Anota a donde hay que ir si el intent viene de tocar una notificacion.
+     * Hoy solo LUGAR_AGREGADO lleva a una pantalla puntual; el resto abre la
+     * app donde estaba.
+     */
+    private fun leerNotificacionTocada(intent: Intent?) {
+        if (intent == null) return
+        // Abrir desde "recientes" vuelve a entregar el ultimo intent: no es un toque nuevo.
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+
+        val tipo = intent.getStringExtra(Notificaciones.EXTRA_TIPO)
+        val referenciaId = intent.getStringExtra(Notificaciones.EXTRA_REFERENCIA_ID)
+        intent.removeExtra(Notificaciones.EXTRA_TIPO)
+        intent.removeExtra(Notificaciones.EXTRA_REFERENCIA_ID)
+
+        if (tipo == TipoNotificacion.LUGAR_AGREGADO.name && !referenciaId.isNullOrBlank()) {
+            lugarPendiente = referenciaId
+        }
+    }
+
+    /**
+     * Navega al mapa centrado en el lugar pendiente, si lo hay. En el login o
+     * el registro todavia no hay sesion: se espera al siguiente destino.
+     */
+    private fun abrirLugarPendiente() {
+        val lugarId = lugarPendiente ?: return
+        val navController = findNavController(R.id.nav_host_fragment)
+        val destino = navController.currentDestination?.id ?: return
+        if (destino == R.id.loginFragment || destino == R.id.registroFragment) return
+
+        lugarPendiente = null
+        navController.navigate(
+            R.id.mapsFragment,
+            bundleOf(MapsFragment.ARG_LUGAR_ID to lugarId),
+            // si ya estaba en el mapa, se reemplaza en vez de apilar otro
+            NavOptions.Builder().setLaunchSingleTop(true).build()
+        )
     }
 
     /**
@@ -142,7 +221,58 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         notificacionesViewModel =
             ViewModelProvider(this)[NotificacionesViewModel::class.java]
 
+        // El globito de la campanita sigue en vivo a las no leidas.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                notificacionesViewModel.noLeidas.collect { actualizarBadge(it) }
+            }
+        }
+
         NotificacionesWorker.programarPeriodico(this)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_notificaciones, menu)
+
+        // Con actionLayout el toque lo recibe la vista propia, no llega solo a
+        // onOptionsItemSelected: hay que reenviarlo.
+        val item = menu.findItem(R.id.action_notificaciones)
+        val vista = item.actionView
+        vista?.setOnClickListener { onOptionsItemSelected(item) }
+        tvBadgeNotificaciones = vista?.findViewById(R.id.tvBadgeNotificaciones)
+        actualizarBadge(notificacionesViewModel.noLeidas.value)
+
+        return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        menu.findItem(R.id.action_notificaciones)?.isVisible = mostrarCampanita()
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_notificaciones) {
+            findNavController(R.id.nav_host_fragment)
+                .navigate(R.id.notificacionesFragment)
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    /**
+     * Solo en el home, y solo si ese home es el de expositor o asistente: al
+     * organizador no le llegan avisos (es quien aprueba pagos y fija horarios).
+     * Replica el criterio de MainFragment.mostrarHomeSegunRol().
+     */
+    private fun mostrarCampanita(): Boolean =
+        destinoActual == R.id.mainFragment &&
+                !Sesion.esOrganizador(this) &&
+                (Sesion.esExpositor(this) || Sesion.esAsistente(this))
+
+    private fun actualizarBadge(noLeidas: Int) {
+        val badge = tvBadgeNotificaciones ?: return
+        badge.visibility = if (noLeidas > 0) View.VISIBLE else View.GONE
+        badge.text = if (noLeidas > 9) "9+" else noLeidas.toString()
     }
 
     /**

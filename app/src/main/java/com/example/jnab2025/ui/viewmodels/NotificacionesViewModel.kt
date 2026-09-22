@@ -1,6 +1,7 @@
 package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.example.jnab2025.data.model.NotificacionFirebase
 import com.example.jnab2025.notificaciones.SincronizadorNotificaciones
@@ -18,6 +19,10 @@ import kotlinx.coroutines.flow.asStateFlow
  * Vive atado a MainActivity, que hospeda todas las pantallas, para que el aviso
  * llegue este donde este el usuario. El worker cubre el caso de la app cerrada;
  * ambos comparten el filtro de "ya mostrada" para no duplicar.
+ *
+ * Tambien alimenta la campanita (con [noLeidas]) y la pantalla de
+ * notificaciones (con [notificaciones]), que lo obtiene con activityViewModels
+ * para reusar este mismo listener en vez de abrir otro.
  */
 class NotificacionesViewModel(
     application: Application
@@ -28,6 +33,12 @@ class NotificacionesViewModel(
 
     private val _noLeidas = MutableStateFlow(0)
     val noLeidas: StateFlow<Int> = _noLeidas.asStateFlow()
+
+    /** Mas nuevas primero. null mientras todavia no llego el primer snapshot. */
+    private val _notificaciones =
+        MutableStateFlow<List<NotificacionFirebase>?>(null)
+    val notificaciones: StateFlow<List<NotificacionFirebase>?> =
+        _notificaciones.asStateFlow()
 
     private var listenerNotificaciones: ListenerRegistration? = null
     private var uidEscuchado: String? = null
@@ -48,6 +59,7 @@ class NotificacionesViewModel(
             listenerNotificaciones = null
             uidEscuchado = null
             _noLeidas.value = 0
+            _notificaciones.value = null
             return
         }
 
@@ -56,6 +68,9 @@ class NotificacionesViewModel(
 
         listenerNotificaciones?.remove()
         uidEscuchado = uid
+        // Que no se vea ni un instante la lista del usuario anterior.
+        _notificaciones.value = null
+        _noLeidas.value = 0
 
         listenerNotificaciones =
             firestore
@@ -77,8 +92,37 @@ class NotificacionesViewModel(
                         )
                     }
 
+                    // Se ordena aca y no con orderBy: combinado con el
+                    // whereEqualTo, Firestore pediria crear un indice compuesto.
+                    _notificaciones.value =
+                        notificaciones.sortedByDescending { it.creadaEn }
                     _noLeidas.value = notificaciones.count { !it.leida }
                 }
+    }
+
+    /**
+     * La pantalla de notificaciones llama a esto al mostrarse. El listener
+     * recibe el cambio enseguida (compensacion de latencia de Firestore), asi
+     * que el contador de la campanita baja sin esperar al servidor.
+     */
+    fun marcarTodasLeidas() {
+        val pendientes =
+            _notificaciones.value.orEmpty()
+                .filter { !it.leida && it.id.isNotBlank() }
+
+        if (pendientes.isEmpty()) return
+
+        val batch = firestore.batch()
+        pendientes.forEach { notificacion ->
+            batch.update(
+                firestore.collection("notificaciones").document(notificacion.id),
+                "leida",
+                true
+            )
+        }
+        batch.commit().addOnFailureListener {
+            Log.e("Notificaciones", "No se pudieron marcar como leidas", it)
+        }
     }
 
     override fun onCleared() {
