@@ -80,7 +80,18 @@
     <fragment
         android:id="@+id/crearNovedadFragment"
         android:name="com.example.jnab2025.ui.fragments.CrearNovedadFragment"
-        android:label="Crear Novedad" />
+        android:label="Crear Novedad">
+
+        <argument
+            android:name="novedadId"
+            app:argType="string"
+            android:defaultValue="" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/gestionarNovedadesFragment"
+        android:name="com.example.jnab2025.ui.fragments.GestionarNovedadesFragment"
+        android:label="Gestionar novedades" />
 
     <fragment
         android:id="@+id/misSimposiosFragment"

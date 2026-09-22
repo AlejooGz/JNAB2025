@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/mint_green"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvTituloGestion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gestionar novedades"
+        android:textColor="@color/dark_red"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnCrearNovedad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="+ Crear nueva novedad"
+        android:textAllCaps="false"
+        android:textColor="@color/cream"
+        android:backgroundTint="@color/dark_red"
+        android:layout_marginBottom="16dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewNovedades"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"/>
+
+</LinearLayout>

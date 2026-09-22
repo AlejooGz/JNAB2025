@@ -20,6 +20,13 @@ import com.example.jnab2025.databinding.FragmentGestionFaqBinding
 import com.example.jnab2025.ui.adapters.GestionFaqAdapter
 import com.example.jnab2025.ui.viewmodels.FaqViewModel
 import kotlinx.coroutines.launch
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.widget.Button
+import android.widget.TextView
+import com.example.jnab2025.R
+import android.widget.RadioButton
+
 
 class GestionFaqFragment : Fragment() {
     private var _binding: FragmentGestionFaqBinding? = null
@@ -98,117 +105,166 @@ class GestionFaqFragment : Fragment() {
     private fun mostrarFormulario(
         faq: FaqFirebase? = null
     ) {
-        val layout =
-            LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(50, 20, 50, 0)
+
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_faq, null)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        val tvTitulo = dialogView.findViewById<TextView>(
+            R.id.tvTituloFaqDialog
+        )
+
+        val etPregunta = dialogView.findViewById<EditText>(
+            R.id.etPreguntaDialog
+        )
+
+        val etRespuesta = dialogView.findViewById<EditText>(
+            R.id.etRespuestaDialog
+        )
+
+        val etOrden = dialogView.findViewById<EditText>(
+            R.id.etOrdenDialog
+        )
+
+        val rbAsistente = dialogView.findViewById<RadioButton>(
+            R.id.rbAsistente
+        )
+
+        val rbExpositor = dialogView.findViewById<RadioButton>(
+            R.id.rbExpositor
+        )
+
+        val btnCancelar = dialogView.findViewById<Button>(
+            R.id.btnCancelarFaq
+        )
+
+        val btnGuardar = dialogView.findViewById<Button>(
+            R.id.btnGuardarFaq
+        )
+
+        val esNueva = faq == null
+
+        tvTitulo.text =
+            if (esNueva) {
+                "Nueva pregunta frecuente"
+            } else {
+                "Editar pregunta"
             }
-        val etPregunta =
-            EditText(requireContext()).apply {
-                hint = "Pregunta"
-                setText(faq?.pregunta.orEmpty())
+
+        btnGuardar.text =
+            if (esNueva) {
+                "Publicar"
+            } else {
+                "Guardar"
             }
-        val etRespuesta =
-            EditText(requireContext()).apply {
-                hint = "Respuesta"
-                minLines = 4
-                setText(faq?.respuesta.orEmpty())
-            }
-        val etOrden =
-            EditText(requireContext()).apply {
-                hint = "Orden"
-                inputType = android.text.InputType.TYPE_CLASS_NUMBER
-                setText(
-                    faq?.orden
-                        ?.toString()
-                        ?: "1"
+
+        etPregunta.setText(faq?.pregunta.orEmpty())
+        etRespuesta.setText(faq?.respuesta.orEmpty())
+        etOrden.setText(
+            faq?.orden?.toString() ?: "1"
+        )
+
+        if (faq?.publico == PublicoFaq.EXPOSITOR.name) {
+            rbExpositor.isChecked = true
+        } else {
+            rbAsistente.isChecked = true
+        }
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnGuardar.setOnClickListener {
+
+            val publico =
+                if (rbExpositor.isChecked) {
+                    PublicoFaq.EXPOSITOR
+                } else {
+                    PublicoFaq.ASISTENTE
+                }
+
+            val orden =
+                etOrden.text
+                    .toString()
+                    .toIntOrNull()
+                    ?: 0
+
+            if (esNueva) {
+
+                viewModel.crear(
+                    publico = publico,
+                    pregunta = etPregunta.text.toString(),
+                    respuesta = etRespuesta.text.toString(),
+                    orden = orden
+                )
+
+            } else {
+
+                viewModel.editar(
+                    faq = faq,
+                    publico = publico,
+                    pregunta = etPregunta.text.toString(),
+                    respuesta = etRespuesta.text.toString(),
+                    orden = orden
                 )
             }
-        val opciones = arrayOf("Asistente", "Expositor")
-        val seleccionadoInicial =
-            if (
-                faq?.publico == PublicoFaq.EXPOSITOR.name
-            ) {
-                1
-            } else {
-                0
-            }
-        var publicoSeleccionado = seleccionadoInicial
-        layout.addView(etPregunta)
-        layout.addView(etRespuesta)
-        layout.addView(etOrden)
-        AlertDialog.Builder(requireContext())
-            .setTitle(
-                if (faq == null) { "Nueva pregunta frecuente"
-                } else { "Editar pregunta" }
-            )
-            .setSingleChoiceItems(
-                opciones,
-                seleccionadoInicial
-            ) { _, which ->
-                publicoSeleccionado =
-                    which
-            }
-            .setView(layout)
-            .setPositiveButton(
-                if (faq == null) {
-                    "Publicar"
-                } else {
-                    "Guardar"
-                }
-            ) { _, _ ->
-                val publico =
-                    if (
-                        publicoSeleccionado == 0
-                    ) {
-                        PublicoFaq.ASISTENTE
-                    } else {
-                        PublicoFaq.EXPOSITOR
-                    }
-                val orden = etOrden
-                        .text
-                        .toString()
-                        .toIntOrNull()
-                        ?: 0
-                if (faq == null) {
-                    viewModel.crear(
-                        publico = publico,
-                        pregunta = etPregunta.text.toString(),
-                        respuesta = etRespuesta.text.toString(),
-                        orden = orden
-                    )
-                } else {
-                    viewModel.editar(
-                        faq = faq,
-                        publico = publico,
-                        pregunta = etPregunta.text.toString(),
-                        respuesta = etRespuesta.text.toString(),
-                        orden = orden
-                    )
-                }
-            }
-            .setNegativeButton(
-                "Cancelar",
-                null
-            )
-            .show()
+
+            dialog.dismiss()
+        }
+
+        dialog.show()
+
+        dialog.window?.setBackgroundDrawable(
+            ColorDrawable(Color.TRANSPARENT)
+        )
     }
-    private fun confirmarEliminar(
-        faq: FaqFirebase
-    ) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Eliminar pregunta")
-            .setMessage(
-                "¿Querés dejar de mostrar esta pregunta?"
-            )
-            .setPositiveButton("Eliminar") { _, _ ->
-                viewModel.eliminar(faq)
-            }
-            .setNegativeButton(
-                "Cancelar",
-                null
-            )
-            .show()
+    private fun confirmarEliminar(faq: FaqFirebase) {
+
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_eliminar_novedad, null)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        val tvTitulo = dialogView.findViewById<TextView>(
+            R.id.tvTituloDialog
+        )
+
+        val tvMensaje = dialogView.findViewById<TextView>(
+            R.id.tvMensajeDialog
+        )
+
+        val btnCancelar = dialogView.findViewById<Button>(
+            R.id.btnCancelarDialog
+        )
+
+        val btnEliminar = dialogView.findViewById<Button>(
+            R.id.btnEliminarDialog
+        )
+
+        tvTitulo.text = "Eliminar pregunta"
+
+        tvMensaje.text =
+            "¿Querés dejar de mostrar esta pregunta?"
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnEliminar.setOnClickListener {
+            viewModel.eliminar(faq)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+
+        dialog.window?.setBackgroundDrawable(
+            ColorDrawable(Color.TRANSPARENT)
+        )
     }
 
     override fun onDestroyView() {

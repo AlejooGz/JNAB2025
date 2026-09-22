@@ -25,62 +25,153 @@ class CrearNovedadFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: NovedadesViewModel by viewModels()
     private var imagenUri: Uri? = null
+    private var imagenActualUrl: String? = null
+
+    // Si está vacío estamos creando
+    // Si tiene valor estamos editando
+    private val novedadId: String
+        get() = arguments?.getString("novedadId").orEmpty()
+
+    private val modoEdicion: Boolean
+        get() = novedadId.isNotBlank()
+
     private val seleccionarImagen =
         registerForActivityResult(
             ActivityResultContracts.OpenDocument()
         ) { uri ->
-            if (uri == null) { return@registerForActivityResult
+
+            if (uri == null) {
+                return@registerForActivityResult
             }
             runCatching {
                 requireContext()
                     .contentResolver
                     .takePersistableUriPermission(
-                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
                     )
             }
+
             imagenUri = uri
             binding.ivVistaPrevia.setImageURI(uri)
             binding.ivVistaPrevia.visibility = View.VISIBLE
             binding.tvImagenSeleccionada.text = nombreDe(uri)
         }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentCrearNovedadBinding.inflate(
-                inflater,
-                container,
-                false
-            )
+            inflater,
+            container,
+            false
+        )
         return binding.root
     }
+
     override fun onViewCreated(
-        view: View, savedInstanceState: Bundle?
+        view: View,
+        savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState
+        super.onViewCreated(
+            view,
+            savedInstanceState
         )
-        binding.btnSeleccionarImagen.setOnClickListener {
-                seleccionarImagen.launch(arrayOf("image/*")
-                )
+
+        configurarPantalla()
+        if (modoEdicion) {
+            cargarNovedad()
         }
+        binding.btnSeleccionarImagen.setOnClickListener {
+            seleccionarImagen.launch(
+                arrayOf("image/*")
+            )
+        }
+
         binding.btnPublicar.setOnClickListener {
-                viewModel.publicar(
-                    titulo = binding.etTitulo.text.toString(),
-                    descripcion = binding.etDescripcion.text.toString(),
-                    imagenUri = imagenUri
-                )
+            guardarNovedad()
         }
         observarEstado()
+    }
+    private fun configurarPantalla() {
+        if (modoEdicion) {
+            binding.tvTituloPantalla.text =
+                "Editar novedad"
+            binding.btnPublicar.text =
+                "Guardar cambios"
+
+        } else {
+            binding.tvTituloPantalla.text =
+                "Publicar novedad"
+            binding.btnPublicar.text =
+                "Publicar novedad"
+        }
+    }
+    private fun cargarNovedad() {
+        viewModel.obtenerNovedad(novedadId) { novedad ->
+            if (!isAdded || _binding == null) {
+                return@obtenerNovedad
+            }
+            if (novedad == null) {
+                Toast.makeText(
+                    requireContext(),
+                    "No se encontró la novedad",
+                    Toast.LENGTH_LONG
+                ).show()
+                findNavController().popBackStack()
+                return@obtenerNovedad
+            }
+            binding.etTitulo.setText(novedad.titulo
+            )
+            binding.etDescripcion.setText(novedad.descripcion
+            )
+            imagenActualUrl = novedad.imagenUrl
+
+            if (!novedad.imagenUrl.isNullOrBlank()) {
+                binding.ivVistaPrevia.visibility =
+                    View.VISIBLE
+                com.bumptech.glide.Glide
+                    .with(requireContext())
+                    .load(novedad.imagenUrl)
+                    .centerCrop()
+                    .into(binding.ivVistaPrevia)
+                binding.tvImagenSeleccionada.text =
+                    "Imagen actual"
+            }
+        }
+    }
+    private fun guardarNovedad() {
+        val titulo = binding.etTitulo.text.toString()
+        val descripcion = binding.etDescripcion.text.toString()
+
+        if (modoEdicion) {
+            viewModel.actualizar(
+                novedadId = novedadId,
+                titulo = titulo,
+                descripcion = descripcion,
+                imagenUri = imagenUri,
+                imagenActualUrl = imagenActualUrl
+            )
+        } else {
+            viewModel.publicar(
+                titulo = titulo,
+                descripcion = descripcion,
+                imagenUri = imagenUri
+            )
+        }
     }
     private fun observarEstado() {
         viewLifecycleOwner
             .lifecycleScope
-            .launch { viewLifecycleOwner
+            .launch {
+                viewLifecycleOwner
                     .repeatOnLifecycle(
                         Lifecycle.State.STARTED
                     ) {
-                        launch { viewModel
+                        launch {
+                            viewModel
                                 .publicando
                                 .collectLatest { publicando ->
                                     binding
@@ -108,25 +199,36 @@ class CrearNovedadFragment : Fragment() {
                                     when (evento) {
                                         NovedadesViewModel
                                             .Evento
-                                            .Publicada -> { Toast
-                                                .makeText(
-                                                    requireContext(),
-                                                    "Novedad publicada",
-                                                    Toast.LENGTH_LONG
-                                                )
-                                                .show()
+                                            .Publicada -> {
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Novedad publicada",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            findNavController()
+                                                .popBackStack()
+                                        }
+                                        NovedadesViewModel
+                                            .Evento
+                                            .Actualizada -> {
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Novedad actualizada",
+                                                Toast.LENGTH_LONG
+                                            ).show()
                                             findNavController()
                                                 .popBackStack()
                                         }
                                         is NovedadesViewModel
                                         .Evento
-                                        .Error -> { Toast
-                                                .makeText(
-                                                    requireContext(),
-                                                    evento.mensaje,
-                                                    Toast.LENGTH_LONG
-                                                )
-                                                .show()
+                                        .Error -> {
+                                            Toast.makeText(
+                                                requireContext(),
+                                                evento.mensaje,
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                        else -> { // No hacer nada
                                         }
                                     }
                                 }
@@ -134,9 +236,11 @@ class CrearNovedadFragment : Fragment() {
                     }
             }
     }
-    private fun nombreDe(uri: Uri
+    private fun nombreDe(
+        uri: Uri
     ): String {
-        val cursor = requireContext()
+        val cursor =
+            requireContext()
                 .contentResolver
                 .query(
                     uri,
@@ -149,15 +253,17 @@ class CrearNovedadFragment : Fragment() {
             val indice = it.getColumnIndex(
                     OpenableColumns.DISPLAY_NAME
                 )
-            if (indice >= 0 && it.moveToFirst()
+            if (
+                indice >= 0 && it.moveToFirst()
             ) {
                 it.getString(indice)
-            } else {
-                null
+            } else { null
             }
         } ?: "Imagen seleccionada"
     }
-    override fun onDestroyView() { super.onDestroyView()
+
+    override fun onDestroyView() {
+        super.onDestroyView()
         _binding = null
     }
 }

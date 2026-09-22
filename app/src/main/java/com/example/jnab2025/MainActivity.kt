@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.example.jnab2025.data.firebase.FirebaseSeed
 import androidx.lifecycle.ViewModelProvider
 import com.example.jnab2025.ui.viewmodels.FiltroViewModel
+import com.example.jnab2025.ui.viewmodels.FiltroInscriptosViewModel
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -139,21 +140,42 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
             }
             R.id.nav_logout -> {
-                // limpia los filtros del mapa antes de cerrar la sesión
-                val filtroViewModel = ViewModelProvider(this)[FiltroViewModel::class.java]
+
+                // Limpia los filtros del mapa antes de cerrar la sesión
+                val filtroViewModel =
+                    ViewModelProvider(this)[FiltroViewModel::class.java]
+
                 filtroViewModel.limpiarFiltros()
-                // limpia la sesión local
+
+
+                // Limpia los filtros de inscriptos antes de cerrar la sesión
+                val filtroInscriptosViewModel =
+                    ViewModelProvider(this)[FiltroInscriptosViewModel::class.java]
+
+                filtroInscriptosViewModel.limpiarFiltros()
+
+
+                // Limpia la sesión local
                 Sesion.cerrar(this)
-                // cierra sesión en Firebase Authentication
+
+
+                // Cierra sesión en Firebase Authentication
                 FirebaseAuth.getInstance().signOut()
-                // limpia preferencias locales de la app
+
+
+                // Limpia preferencias locales de la app
                 getSharedPreferences(
                     "AppPreferences",
                     Context.MODE_PRIVATE
                 )
-                    .edit().clear().apply()
-                //vuelve al login eliminando el historial de navegación
-                findNavController(R.id.nav_host_fragment
+                    .edit()
+                    .clear()
+                    .apply()
+
+
+                // Vuelve al login eliminando el historial de navegación
+                findNavController(
+                    R.id.nav_host_fragment
                 ).navigate(
                     R.id.loginFragment,
                     null,
@@ -165,14 +187,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         .build()
                 )
             }
-            R.id.nav_crear_novedad -> {
-                findNavController(R.id.nav_host_fragment).navigate(R.id.crearNovedadFragment)
-            }
             R.id.nav_gestionar_faq -> {
                 findNavController(R.id.nav_host_fragment).navigate(R.id.gestionFaqFragment)
             }
             R.id.nav_gestionar_lugares -> {
                 findNavController(R.id.nav_host_fragment).navigate(R.id.gestionLugaresFragment)
+            }
+            R.id.nav_gestionar_novedades -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.gestionarNovedadesFragment)
             }
         }
 
