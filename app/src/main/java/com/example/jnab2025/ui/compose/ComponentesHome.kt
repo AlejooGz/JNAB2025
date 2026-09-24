@@ -40,11 +40,18 @@ import com.example.jnab2025.R
  * Firebase; eso lo resuelve el ViewModel y les llega ya masticado.
  */
 
-/** Encabezado con la imagen tematica y el saludo, igual al del organizador. */
+/**
+ * Encabezado con la imagen tematica y el saludo, igual al del organizador.
+ * Cada rol puede pasar su propio animal en [imagen]; por defecto, la ballena.
+ * [alineacion] elige que parte de la imagen queda visible al recortarla (si
+ * el animal esta a un costado, conviene anclarla de ese lado).
+ */
 @Composable
 fun EncabezadoHome(
     saludo: String,
-    subtitulo: String
+    subtitulo: String,
+    @DrawableRes imagen: Int = R.drawable.fondoo,
+    alineacion: Alignment = Alignment.Center
 ) {
     // Box apila a sus hijos: primero la imagen de fondo, encima los textos
     Box(
@@ -53,9 +60,10 @@ fun EncabezadoHome(
             .height(210.dp)
     ) {
         Image(
-            painter = painterResource(R.drawable.fondoo),
+            painter = painterResource(imagen),
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            alignment = alineacion,
             modifier = Modifier.fillMaxSize()
         )
         Column(

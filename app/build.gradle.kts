@@ -141,6 +141,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     // collectAsStateWithLifecycle: leer los StateFlow de los ViewModels desde Compose
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // QR de la credencial del home del expositor
+    implementation(libs.zxing.core)
     // Habilita la vista previa (@Preview) en Android Studio; solo en debug
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

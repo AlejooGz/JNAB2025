@@ -16,13 +16,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.jnab2025.R
 import com.example.jnab2025.data.model.EstadoTrabajo
 import com.example.jnab2025.ui.viewmodels.HomeAsistenteViewModel
 import com.example.jnab2025.ui.viewmodels.HomeExpositorViewModel
@@ -30,22 +29,21 @@ import com.example.jnab2025.ui.viewmodels.HomeExpositorViewModel.Presentacion
 import com.example.jnab2025.ui.viewmodels.HomeExpositorViewModel.TrabajoResuelto
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 /** Acciones propias del expositor; las compartidas van en [AccionesAsistente]. */
 data class AccionesExpositor(
-    val abrirMisTrabajos: () -> Unit = {},
-    val enviarTrabajo: () -> Unit = {}
+    val abrirMisTrabajos: () -> Unit = {}
 )
 
 /**
- * Home del expositor: arriba lo propio (trabajos y presentaciones) y abajo
- * las mismas secciones que ve el asistente, reutilizadas sin copiar codigo.
+ * Home del expositor: el lobo marino arriba, lo propio (trabajos, credencial,
+ * presentaciones) y la agenda, que reutiliza la seccion del asistente.
  * Recibe dos estados porque los datos vienen de dos ViewModels.
  */
 @Composable
 fun HomeExpositorScreen(
     nombre: String,
+    credencial: DatosCredencial,
     estado: HomeExpositorViewModel.Estado,
     estadoAsistente: HomeAsistenteViewModel.Estado,
     acciones: AccionesExpositor,
@@ -59,7 +57,10 @@ fun HomeExpositorScreen(
     ) {
         EncabezadoHome(
             saludo = "¡Hola, $nombre!",
-            subtitulo = "Panel del expositor"
+            subtitulo = "Panel del expositor",
+            imagen = IMAGEN_ENCABEZADO_EXPOSITOR,
+            // el lobo marino esta a la derecha de la imagen
+            alineacion = Alignment.CenterEnd
         )
 
         if (estado.cargando || estadoAsistente.cargando) {
@@ -70,15 +71,11 @@ fun HomeExpositorScreen(
         SeccionCuentaRegresiva(estadoAsistente.inicioJornadas, estadoAsistente.finJornadas)
         AvisoPendientes(estado, accionesAsistente)
         ResumenTrabajos(estado, acciones)
+        SeccionCredencial(credencial, estadoAsistente.inscripcion, accionesAsistente)
         SeccionPresentaciones(estado.presentaciones, accionesAsistente)
-        SeccionResueltos(estado.resueltos, acciones)
-
-        // --- secciones reutilizadas del home del asistente ---
-        SeccionInscripcion(estadoAsistente.inscripcion, accionesAsistente)
+        // reutilizada del home del asistente
         SeccionProximasCharlas(estadoAsistente.proximasCharlas, accionesAsistente)
-        SeccionNovedades(estadoAsistente.novedades, accionesAsistente)
 
-        AccesosExpositor(acciones, accionesAsistente)
         EspacioFinal()
     }
 }
@@ -190,68 +187,6 @@ private fun SeccionPresentaciones(
     }
 }
 
-private val formatoResolucion: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
-@Composable
-private fun SeccionResueltos(
-    resueltos: List<TrabajoResuelto>,
-    acciones: AccionesExpositor
-) {
-    TituloSeccion("Últimas resoluciones")
-    TarjetaJnab(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        onClick = acciones.abrirMisTrabajos
-    ) {
-        if (resueltos.isEmpty()) {
-            TextoVacio("La organización todavía no resolvió ninguno de tus trabajos.")
-        }
-        resueltos.forEachIndexed { indice, trabajo ->
-            if (indice > 0) HorizontalDivider()
-            Column(modifier = Modifier.padding(vertical = 6.dp)) {
-                Text(trabajo.titulo, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                val (texto, color) = etiquetaEstado(trabajo.estado)
-                Text(
-                    text = texto + (trabajo.fecha?.let { " · ${it.format(formatoResolucion)}" } ?: ""),
-                    color = color,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
-                if (trabajo.estado == EstadoTrabajo.RECHAZADO && !trabajo.motivoRechazo.isNullOrBlank()) {
-                    Text("Motivo: ${trabajo.motivoRechazo}", fontSize = 13.sp)
-                }
-            }
-        }
-        EnlaceTarjeta("Ver mis trabajos", acciones.abrirMisTrabajos)
-    }
-}
-
-@Composable
-private fun etiquetaEstado(estado: EstadoTrabajo): Pair<String, Color> = when (estado) {
-    EstadoTrabajo.APROBADO -> "Aprobado" to MaterialTheme.colorScheme.tertiary
-    EstadoTrabajo.ACEPTADO_PENDIENTE_PAGO -> "Aceptado · falta el pago" to Color(0xFFB07800)
-    EstadoTrabajo.RECHAZADO -> "Rechazado" to MaterialTheme.colorScheme.primary
-    else -> "En revisión" to MaterialTheme.colorScheme.onSurface
-}
-
-@Composable
-private fun AccesosExpositor(
-    acciones: AccionesExpositor,
-    accionesAsistente: AccionesAsistente
-) {
-    TituloSeccion("Accesos rápidos")
-    FilaDeTarjetas {
-        AccesoRapido(R.drawable.outline_list_alt_add_24, "Enviar trabajo", acciones.enviarTrabajo, Modifier.weight(1f))
-        AccesoRapido(R.drawable.outline_edit_document_24, "Mis trabajos", acciones.abrirMisTrabajos, Modifier.weight(1f))
-    }
-    EspacioEntreFilas()
-    FilaDeTarjetas {
-        AccesoRapido(R.drawable.outline_event_available_24, "Cronograma", accionesAsistente.abrirCronograma, Modifier.weight(1f))
-        AccesoRapido(R.drawable.outline_check_circle_24, "Inscripción", accionesAsistente.abrirInscripcion, Modifier.weight(1f))
-    }
-}
-
 /* --------------------------------- Previews --------------------------------- */
 
 private val estadoExpositorEjemplo = HomeExpositorViewModel.Estado(
@@ -286,6 +221,7 @@ private fun PreviewHomeExpositor() {
     TemaJnab {
         HomeExpositorScreen(
             nombre = "Martín",
+            credencial = DatosCredencial("Martín Pérez", "Expositor", "uid-de-ejemplo", AVATAR_EXPOSITOR),
             estado = estadoExpositorEjemplo,
             estadoAsistente = estadoAsistenteEjemplo,
             acciones = AccionesExpositor(),
