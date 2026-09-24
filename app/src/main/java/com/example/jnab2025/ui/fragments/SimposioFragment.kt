@@ -69,6 +69,30 @@ class SimposiosFragment : Fragment() {
                             adapter.submitList(
                                 simposios
                             )
+                            binding.tvVacio.visibility =
+                                if (simposios.isEmpty()) {
+                                    View.VISIBLE
+                                } else {
+                                    View.GONE
+                                }
+                        }
+                }
+
+                /* La lista vacia significa dos cosas distintas y conviene
+                 * distinguirlas: que no hay ningun simposio cargado, o que hay
+                 * pero ninguno tiene todavia una charla programada. */
+                launch {
+                    simposioViewModel
+                        .hayOcultos
+                        .collectLatest { hayOcultos ->
+                            binding.tvVacio.text =
+                                if (hayOcultos) {
+                                    "Todavía no hay simposios con charlas confirmadas. " +
+                                            "Van a aparecer acá en cuanto la organización " +
+                                            "programe las presentaciones."
+                                } else {
+                                    "Todavía no hay simposios publicados."
+                                }
                         }
                 }
 

@@ -47,15 +47,12 @@ class InscripcionFragment : Fragment() {
         savedInstanceState: Bundle?
     ) {
         super.onViewCreated(view, savedInstanceState)
-        binding.rgTipo.setOnCheckedChangeListener { _, _ ->
-            pintarMonto()
-        }
+        pintarTipo()
         binding.cbEstudiante.setOnCheckedChangeListener { _, _ ->
             pintarMonto()
         }
         binding.btnInscribirse.setOnClickListener {
             viewModel.inscribirse(
-                tipo = tipoElegido(),
                 categoria = categoriaElegida()
             )
         }
@@ -170,14 +167,20 @@ class InscripcionFragment : Fragment() {
                 "Reemplazar comprobante"
             }
     }
-    private fun tipoElegido(): TipoInscripcion {
-        return when (
-            binding.rgTipo.checkedRadioButtonId
-        ) {
-            R.id.rbExpositor -> TipoInscripcion.EXPOSITOR
-            else ->
-                TipoInscripcion.ASISTENTE
-        }
+    /**
+     * El tipo ya no se elige, lo decide el rol. Se muestra igual para que
+     * quede claro como se esta inscribiendo y por que.
+     */
+    private fun pintarTipo() {
+        binding.tvTipo.text =
+            when (viewModel.tipoDeInscripcion) {
+                TipoInscripcion.EXPOSITOR ->
+                    "Te inscribís como expositor, porque estás registrado " +
+                            "para presentar un trabajo."
+
+                TipoInscripcion.ASISTENTE ->
+                    "Te inscribís como asistente, según tu rol en las jornadas."
+            }
     }
     private fun categoriaElegida():
             CategoriaInscripcion {
