@@ -6,12 +6,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
  * Programa, con AlarmManager, un aviso 30 minutos antes de cada charla que el
- * usuario tenga en su agenda.
+ * usuario tenga en su agenda. Si ya estamos dentro de esa media hora (se
+ * inicio sesion o se abrio la app tarde) y el aviso todavia no salio, se
+ * programa para ya: la media hora entera es la ventana para avisar.
  *
  * Se resuelve entero en el dispositivo a proposito: el horario de la charla se
  * conoce de antemano, asi que no hace falta que nadie mande un push. La alarma
@@ -45,16 +48,31 @@ object ProgramadorRecordatorios {
         cancelarTodos(app)
 
         val ahora = LocalDateTime.now()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
         val programadas = mutableSetOf<String>()
 
         charlas.forEach { charla ->
+            // Una charla que ya empezo no tiene nada que avisar.
+            if (!charla.inicio.isAfter(ahora)) return@forEach
+
             val momentoAviso = charla.inicio.minusMinutes(MINUTOS_ANTES)
 
-            // Una charla que ya paso, o cuyo aviso quedo atras, no se programa:
-            // AlarmManager la dispararia de inmediato.
-            if (momentoAviso.isBefore(ahora)) return@forEach
+            val cuando =
+                if (momentoAviso.isAfter(ahora)) {
+                    momentoAviso
+                } else {
+                    // Estamos dentro de la media hora previa. Si el aviso ya
+                    // salio en este dispositivo no se reprograma; si salio en
+                    // otro, lo frena el receiver al consultar Firestore.
+                    if (uid == null) return@forEach
+                    val idAviso =
+                        RecordatorioCharlaReceiver.idHistorial(uid, charla.charlaId, charla.inicio)
+                    if (RegistroNotificaciones.yaMostrada(app, idAviso)) return@forEach
+                    // una alarma en el pasado AlarmManager la dispara enseguida
+                    ahora
+                }
 
-            if (programar(app, charla, momentoAviso)) {
+            if (programar(app, charla, cuando)) {
                 programadas += charla.charlaId
             }
         }
@@ -94,6 +112,13 @@ object ProgramadorRecordatorios {
                 putExtra(
                     RecordatorioCharlaReceiver.EXTRA_HORA,
                     charla.inicio.toLocalTime().toString()
+                )
+                putExtra(
+                    RecordatorioCharlaReceiver.EXTRA_INICIO_MILLIS,
+                    charla.inicio
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli()
                 )
             }
 
