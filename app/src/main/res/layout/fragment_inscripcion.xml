@@ -112,7 +112,7 @@
                     android:id="@+id/tvTituloTipo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Elegí tu tipo de inscripción"
+                    android:text="Tipo de inscripción"
                     android:textColor="@color/dark_red"
                     android:textSize="16sp"
                     android:textStyle="bold"
@@ -120,38 +120,19 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <RadioGroup
-                    android:id="@+id/rgTipo"
+                <TextView
+                    android:id="@+id/tvTipo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="vertical"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/light_pink"
+                    android:padding="12dp"
+                    android:textColor="@color/dark_red"
+                    android:textSize="15sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/tvTituloTipo">
-
-                    <RadioButton
-                        android:id="@+id/rbAsistente"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:buttonTint="@color/dark_red"
-                        android:checked="true"
-                        android:gravity="center_vertical"
-                        android:text="Asistente"
-                        android:textColor="@color/dark_red"
-                        android:textSize="15sp" />
-
-                    <RadioButton
-                        android:id="@+id/rbExpositor"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:buttonTint="@color/dark_red"
-                        android:gravity="center_vertical"
-                        android:text="Expositor"
-                        android:textColor="@color/dark_red"
-                        android:textSize="15sp" />
-
-                </RadioGroup>
+                    app:layout_constraintTop_toBottomOf="@id/tvTituloTipo"
+                    tools:text="Te inscribís como expositor, según tu rol en las jornadas." />
 
                 <CheckBox
                     android:id="@+id/cbEstudiante"
@@ -165,7 +146,7 @@
                     android:textSize="15sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/rgTipo" />
+                    app:layout_constraintTop_toBottomOf="@id/tvTipo" />
 
                 <TextView
                     android:id="@+id/tvMonto"

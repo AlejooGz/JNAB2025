@@ -33,6 +33,22 @@ class InscripcionViewModel(
         const val MONTO_GENERAL = 25000.0
         const val MONTO_ESTUDIANTE = 12500.0
     }
+
+    /**
+     * El tipo de inscripcion no se elige: sale del rol con el que el usuario
+     * esta registrado. Un expositor se inscribe como expositor y un asistente
+     * como asistente. Antes era un par de radio buttons y cualquiera podia
+     * inscribirse como lo que quisiera, aunque no tuviera trabajos.
+     *
+     * Si alguien tiene los dos roles pesa el de expositor, que es el que lo
+     * habilita a presentar.
+     */
+    val tipoDeInscripcion: TipoInscripcion =
+        if (Sesion.esExpositor(application)) {
+            TipoInscripcion.EXPOSITOR
+        } else {
+            TipoInscripcion.ASISTENTE
+        }
     data class Vista(
         val inscripcion: InscripcionFirebase? = null,
         val comprobante: ComprobanteFirebase? = null
@@ -59,7 +75,6 @@ class InscripcionViewModel(
     }
 
     fun inscribirse(
-        tipo: TipoInscripcion,
         categoria: CategoriaInscripcion
     ) {
         val uid = auth.currentUser?.uid
@@ -90,7 +105,7 @@ class InscripcionViewModel(
                 usuarioUid = uid,
                 usuarioNombre = Sesion.nombre(context),
                 usuarioEmail = Sesion.email(context) ?: "",
-                tipo = tipo.name,
+                tipo = tipoDeInscripcion.name,
                 categoria = categoria.name,
                 estado = EstadoInscripcion
                         .PENDIENTE_PAGO

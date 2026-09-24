@@ -34,6 +34,22 @@
         app:layout_constraintTop_toBottomOf="@+id/tvTitulo"
         tools:listitem="@layout/item_simposio" />
 
+    <TextView
+        android:id="@+id/tvVacio"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:textAlignment="center"
+        android:textColor="@color/dark_red"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitulo"
+        tools:text="Todavía no hay simposios con charlas confirmadas."
+        tools:visibility="visible" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 
 
