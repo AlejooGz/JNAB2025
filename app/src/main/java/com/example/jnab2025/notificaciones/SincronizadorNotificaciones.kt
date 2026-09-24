@@ -56,8 +56,12 @@ object SincronizadorNotificaciones {
     }
 
     /**
-     * Emite el aviso solo si este dispositivo no lo mostro antes. Compartido
-     * con el listener en vivo para que ambos caminos filtren igual.
+     * Emite el aviso solo si nunca salio antes. Compartido con el listener en
+     * vivo para que ambos caminos filtren igual.
+     *
+     * "Ya salio" se decide con dos fuentes: el registro local (rapido y sin
+     * red) y el campo `notificada` del doc, que es el que sobrevive a cerrar
+     * sesion, reinstalar la app o cambiar de celular.
      */
     fun emitirSiEsNueva(
         context: Context,
@@ -65,6 +69,14 @@ object SincronizadorNotificaciones {
     ) {
         if (notificacion.id.isBlank()) return
         if (RegistroNotificaciones.yaMostrada(context, notificacion.id)) return
+
+        // Si ya se mostro (en este u otro dispositivo) o el usuario ya la vio
+        // en la pantalla de notificaciones, no se vuelve a emitir. Se anota en
+        // el registro local para no tener que volver a mirarla.
+        if (notificacion.notificada || notificacion.leida) {
+            RegistroNotificaciones.marcarMostrada(context, notificacion.id)
+            return
+        }
 
         // El recordatorio ya lo mostro la alarma local en el momento justo; el
         // doc existe solo para el historial. Emitirlo de nuevo aca lo duplicaria
@@ -89,6 +101,22 @@ object SincronizadorNotificaciones {
         )
 
         RegistroNotificaciones.marcarMostrada(context, notificacion.id)
+        marcarNotificadaEnFirestore(notificacion.id)
+    }
+
+    /**
+     * Deja constancia en el doc de que el aviso ya salio. No se espera la
+     * respuesta: sin red, Firestore guarda la escritura en su cache y la sube
+     * al volver la conexion; mientras tanto el registro local evita repetirlo.
+     */
+    private fun marcarNotificadaEnFirestore(notificacionId: String) {
+        FirebaseFirestore.getInstance()
+            .collection("notificaciones")
+            .document(notificacionId)
+            .update("notificada", true)
+            .addOnFailureListener {
+                Log.e(TAG, "No se pudo marcar como notificada $notificacionId", it)
+            }
     }
 
     /**

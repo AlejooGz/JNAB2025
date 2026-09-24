@@ -30,7 +30,6 @@ import kotlinx.coroutines.launch
 import com.example.jnab2025.notificaciones.NotificacionesWorker
 import com.example.jnab2025.notificaciones.Notificaciones
 import com.example.jnab2025.notificaciones.ProgramadorRecordatorios
-import com.example.jnab2025.notificaciones.RegistroNotificaciones
 import com.example.jnab2025.ui.viewmodels.NotificacionesViewModel
 import com.example.jnab2025.databinding.ActivityMainBinding
 import com.example.jnab2025.utils.Sesion
@@ -365,11 +364,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
             }
             R.id.nav_logout -> {
-                // Los avisos y las alarmas son del usuario que se va: si no se
-                // limpian, el proximo que entre en este telefono hereda sus
-                // recordatorios de charla.
+                // Las alarmas son del usuario que se va: si no se cancelan, el
+                // proximo que entre en este telefono hereda sus recordatorios
+                // de charla. El registro de avisos ya mostrados NO se borra:
+                // si se borrara, al volver a entrar se repetirian todos.
                 ProgramadorRecordatorios.cancelarTodos(this)
-                RegistroNotificaciones.limpiar(this)
                 NotificacionesWorker.cancelar(this)
                 uidSincronizado = null
 

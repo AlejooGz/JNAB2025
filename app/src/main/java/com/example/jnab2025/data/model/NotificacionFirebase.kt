@@ -22,5 +22,12 @@ data class NotificacionFirebase(
     /** Id del documento que origino el aviso: inscripcion, charla, etc. */
     val referenciaId: String = "",
     val creadaEn: Timestamp? = null,
-    val leida: Boolean = false
+    val leida: Boolean = false,
+    /**
+     * Ya salio como notificacion del sistema en algun dispositivo del
+     * destinatario. Vive en Firestore (y no solo en el telefono) para que el
+     * aviso no se repita al cerrar y abrir sesion, reinstalar o cambiar de
+     * celular.
+     */
+    val notificada: Boolean = false
 )

@@ -5,18 +5,26 @@ import android.content.Context
 /**
  * Memoria local de lo que este dispositivo ya hizo.
  *
- * Hace falta porque el mismo documento de Firestore lo pueden ver varios
- * dispositivos del mismo usuario, y porque el listener en vivo y el worker de
- * segundo plano leen la misma coleccion: sin este registro, una notificacion
- * aprobada saldria repetida en cada arranque de la app.
+ * Hace falta porque el listener en vivo y el worker de segundo plano leen la
+ * misma coleccion: sin este registro, una notificacion aprobada saldria
+ * repetida en cada arranque de la app. Es el filtro rapido; el definitivo es
+ * el campo `notificada` del doc en Firestore.
+ *
+ * Los ids ya mostrados NO se borran al cerrar sesion: cada doc de
+ * `notificaciones` tiene un unico destinatario, asi que recordar ids de otro
+ * usuario no le quita avisos a nadie, y borrarlos hacia que todo lo ya
+ * avisado volviera a sonar en el siguiente login.
  */
 object RegistroNotificaciones {
 
     private const val PREFS = "JnabNotificaciones"
+    /** Formato viejo (Set sin orden); se migra a [K_MOSTRADAS_ORDEN]. */
     private const val K_MOSTRADAS = "mostradas"
+    /** Ids separados por salto de linea, del mas viejo al mas nuevo. */
+    private const val K_MOSTRADAS_ORDEN = "mostradasOrden"
     private const val K_PROGRAMADAS = "charlasProgramadas"
 
-    /** Tope para que el set de ids ya avisados no crezca sin control. */
+    /** Tope para que la lista de ids ya avisados no crezca sin control. */
     private const val MAX_MOSTRADAS = 200
 
     private fun prefs(context: Context) =
@@ -25,32 +33,34 @@ object RegistroNotificaciones {
 
     // --- Notificaciones de Firestore ya mostradas -------------------------
 
+    private fun mostradas(context: Context): List<String> {
+        val prefs = prefs(context)
+        val ordenadas =
+            prefs.getString(K_MOSTRADAS_ORDEN, null)
+                ?.split('\n')
+                ?.filter { it.isNotBlank() }
+                .orEmpty()
+        // los del formato viejo van primero: son anteriores a la migracion
+        val viejas =
+            prefs.getStringSet(K_MOSTRADAS, emptySet())
+                .orEmpty()
+                .filter { it !in ordenadas }
+        return viejas + ordenadas
+    }
+
     fun yaMostrada(context: Context, notificacionId: String): Boolean =
-        notificacionId in prefs(context)
-            .getStringSet(K_MOSTRADAS, emptySet())
-            .orEmpty()
+        notificacionId in mostradas(context)
 
     fun marcarMostrada(context: Context, notificacionId: String) {
-        val actuales =
-            prefs(context)
-                .getStringSet(K_MOSTRADAS, emptySet())
-                .orEmpty()
-                .toMutableSet()
+        val actuales = mostradas(context) - notificacionId + notificacionId
 
-        actuales += notificacionId
-
-        // getStringSet no conserva orden, asi que al podar se descarta
-        // cualquier subconjunto. Es aceptable: lo unico que se pierde es la
-        // memoria de avisos viejos, que ya nadie va a volver a emitir.
-        val podadas =
-            if (actuales.size > MAX_MOSTRADAS) {
-                actuales.take(MAX_MOSTRADAS / 2).toSet()
-            } else {
-                actuales
-            }
+        // al pasar el tope se olvidan los mas viejos, que ya nadie va a volver
+        // a emitir (y si llegara a pasar, el campo `notificada` los frena)
+        val podadas = actuales.takeLast(MAX_MOSTRADAS)
 
         prefs(context).edit()
-            .putStringSet(K_MOSTRADAS, podadas)
+            .putString(K_MOSTRADAS_ORDEN, podadas.joinToString("\n"))
+            .remove(K_MOSTRADAS)
             .apply()
     }
 
@@ -66,10 +76,5 @@ object RegistroNotificaciones {
         prefs(context).edit()
             .putStringSet(K_PROGRAMADAS, charlaIds)
             .apply()
-    }
-
-    /** Al cerrar sesion no deben quedar avisos del usuario anterior. */
-    fun limpiar(context: Context) {
-        prefs(context).edit().clear().apply()
     }
 }
