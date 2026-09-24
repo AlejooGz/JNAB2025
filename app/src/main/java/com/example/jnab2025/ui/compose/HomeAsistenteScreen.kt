@@ -7,12 +7,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.jnab2025.R
 import com.example.jnab2025.ui.viewmodels.HomeAsistenteViewModel
 import com.example.jnab2025.ui.viewmodels.HomeAsistenteViewModel.CharlaProxima
-import com.example.jnab2025.ui.viewmodels.HomeAsistenteViewModel.NovedadResumen
 import com.example.jnab2025.ui.viewmodels.HomeAsistenteViewModel.SituacionInscripcion
 import java.time.LocalDate
 import java.time.LocalTime
@@ -29,6 +28,7 @@ import java.time.LocalTime
 @Composable
 fun HomeAsistenteScreen(
     nombre: String,
+    credencial: DatosCredencial,
     estado: HomeAsistenteViewModel.Estado,
     acciones: AccionesAsistente
 ) {
@@ -41,7 +41,10 @@ fun HomeAsistenteScreen(
     ) {
         EncabezadoHome(
             saludo = "¡Hola, $nombre!",
-            subtitulo = "Tu paso por las Jornadas"
+            subtitulo = "Tu paso por las Jornadas",
+            imagen = IMAGEN_ENCABEZADO_ASISTENTE,
+            // el pinguino esta a la derecha de la imagen
+            alineacion = Alignment.CenterEnd
         )
 
         // mientras llegan los primeros datos, solo la ruedita
@@ -51,27 +54,9 @@ fun HomeAsistenteScreen(
         }
 
         SeccionCuentaRegresiva(estado.inicioJornadas, estado.finJornadas)
-        SeccionInscripcion(estado.inscripcion, acciones)
+        SeccionCredencial(credencial, estado.inscripcion, acciones)
         SeccionProximasCharlas(estado.proximasCharlas, acciones)
-        SeccionNovedades(estado.novedades, acciones)
-        AccesosAsistente(acciones)
         EspacioFinal()
-    }
-}
-
-@Composable
-private fun AccesosAsistente(acciones: AccionesAsistente) {
-    TituloSeccion("Accesos rápidos")
-    FilaDeTarjetas {
-        // Modifier.weight(1f) solo existe dentro de un Row/Column: por eso
-        // FilaDeTarjetas recibe un lambda con RowScope
-        AccesoRapido(R.drawable.outline_event_available_24, "Cronograma", acciones.abrirCronograma, Modifier.weight(1f))
-        AccesoRapido(R.drawable.outline_check_circle_24, "Inscripción", acciones.abrirInscripcion, Modifier.weight(1f))
-    }
-    EspacioEntreFilas()
-    FilaDeTarjetas {
-        AccesoRapido(R.drawable.outline_add_location_alt_24, "Mapa de descuentos", acciones.abrirMapa, Modifier.weight(1f))
-        AccesoRapido(R.drawable.baseline_help_outline_24, "Preguntas frecuentes", acciones.abrirFaq, Modifier.weight(1f))
     }
 }
 
@@ -94,18 +79,17 @@ internal val estadoAsistenteEjemplo = HomeAsistenteViewModel.Estado(
             "c2", "Isótopos estables y dieta en el Holoceno tardío",
             LocalDate.now().plusDays(12), LocalTime.of(10, 30), LocalTime.of(11, 0), "Aula 3"
         )
-    ),
-    novedades = listOf(
-        NovedadResumen("n1", "Se extendió el plazo de inscripción", LocalDate.now().minusDays(1)),
-        NovedadResumen("n2", "Ya está disponible el cronograma", LocalDate.now().minusDays(5))
     )
 )
+
+private val credencialAsistenteEjemplo =
+    DatosCredencial("Lucía Fernández", "Asistente", "uid-de-ejemplo", AVATAR_ASISTENTE)
 
 @Preview(name = "Home asistente", showBackground = true, heightDp = 1400)
 @Composable
 private fun PreviewHomeAsistente() {
     TemaJnab {
-        HomeAsistenteScreen("Lucía", estadoAsistenteEjemplo, AccionesAsistente())
+        HomeAsistenteScreen("Lucía", credencialAsistenteEjemplo, estadoAsistenteEjemplo, AccionesAsistente())
     }
 }
 
@@ -115,6 +99,7 @@ private fun PreviewHomeAsistenteVacio() {
     TemaJnab {
         HomeAsistenteScreen(
             "Lucía",
+            credencialAsistenteEjemplo,
             HomeAsistenteViewModel.Estado(cargando = false),
             AccionesAsistente()
         )

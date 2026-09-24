@@ -22,8 +22,8 @@ import java.time.ZoneId
 
 /**
  * Datos propios del home del expositor: sus trabajos y sus presentaciones.
- * Las secciones que comparte con el asistente (inscripcion, agenda,
- * novedades) las sigue resolviendo [HomeAsistenteViewModel].
+ * Lo que comparte con el asistente (inscripcion, agenda, cuenta regresiva)
+ * lo sigue resolviendo [HomeAsistenteViewModel].
  */
 class HomeExpositorViewModel(
     application: Application

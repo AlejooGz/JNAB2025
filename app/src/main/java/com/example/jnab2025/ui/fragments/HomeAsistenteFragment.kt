@@ -10,9 +10,12 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.jnab2025.ui.compose.AVATAR_ASISTENTE
+import com.example.jnab2025.ui.compose.DatosCredencial
 import com.example.jnab2025.ui.compose.HomeAsistenteScreen
 import com.example.jnab2025.ui.compose.TemaJnab
 import com.example.jnab2025.ui.viewmodels.HomeAsistenteViewModel
+import com.example.jnab2025.utils.Sesion
 
 /**
  * Puente entre el mundo de Fragments/XML y Compose.
@@ -32,6 +35,12 @@ class HomeAsistenteFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         val nombre = primerNombre("Asistente")
+        val credencial = DatosCredencial(
+            nombre = Sesion.nombre(requireContext()).trim().ifBlank { nombre },
+            rol = "Asistente",
+            uid = Sesion.firebaseUid(requireContext()),
+            avatar = AVATAR_ASISTENTE
+        )
         val acciones = accionesAsistente()
 
         return ComposeView(requireContext()).apply {
@@ -49,6 +58,7 @@ class HomeAsistenteFragment : Fragment() {
                 TemaJnab {
                     HomeAsistenteScreen(
                         nombre = nombre,
+                        credencial = credencial,
                         estado = estado,
                         acciones = acciones
                     )

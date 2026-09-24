@@ -30,8 +30,8 @@ internal fun Fragment.primerNombre(porDefecto: String): String =
         .ifBlank { porDefecto }
 
 /**
- * Cambia de pestaña en la barra de abajo. Para Charlas, Novedades, Mapa y FAQ
- * se hace asi en lugar de navigate(): de esa forma la pestaña queda marcada,
+ * Cambia de pestaña en la barra de abajo (hoy, el cronograma). Se hace asi
+ * en lugar de navigate(): de esa forma la pestaña queda marcada,
  * igual que si el usuario la hubiera tocado.
  */
 internal fun Fragment.irAPestania(@IdRes destino: Int) {
@@ -50,10 +50,7 @@ internal fun Fragment.accionesAsistente() = AccionesAsistente(
             NavGraphDirections.actionAgendaFragmentToCharlaDetailFragment(charlaId)
         )
     },
-    abrirCronograma = { irAPestania(R.id.agendaFragment) },
-    abrirNovedades = { irAPestania(R.id.novedadesFragment) },
-    abrirMapa = { irAPestania(R.id.mapsFragment) },
-    abrirFaq = { irAPestania(R.id.faqFragment) }
+    abrirCronograma = { irAPestania(R.id.agendaFragment) }
 )
 
 /** Muestra como Toast los errores que emite un ViewModel del home. */

@@ -7,7 +7,6 @@ import com.example.jnab2025.data.model.ComprobanteFirebase
 import com.example.jnab2025.data.model.EstadoComprobante
 import com.example.jnab2025.data.model.EstadoInscripcion
 import com.example.jnab2025.data.model.InscripcionFirebase
-import com.example.jnab2025.data.model.NovedadFirebase
 import com.example.jnab2025.data.model.SimposioFirebase
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -47,12 +46,6 @@ class HomeAsistenteViewModel(
         val aula: String?
     )
 
-    data class NovedadResumen(
-        val id: String,
-        val titulo: String,
-        val fecha: LocalDate?
-    )
-
     /** Lo que el home le tiene que decir al usuario sobre su inscripcion. */
     sealed interface SituacionInscripcion {
         data object SinInscripcion : SituacionInscripcion
@@ -69,13 +62,11 @@ class HomeAsistenteViewModel(
         val inicioJornadas: LocalDate? = null,
         val finJornadas: LocalDate? = null,
         val inscripcion: SituacionInscripcion = SituacionInscripcion.SinInscripcion,
-        val proximasCharlas: List<CharlaProxima> = emptyList(),
-        val novedades: List<NovedadResumen> = emptyList()
+        val proximasCharlas: List<CharlaProxima> = emptyList()
     )
 
     companion object {
         const val MAX_CHARLAS = 3
-        const val MAX_NOVEDADES = 3
     }
 
     private val firestore = FirebaseFirestore.getInstance()
@@ -104,7 +95,6 @@ class HomeAsistenteViewModel(
     init {
         escucharCharlas()
         escucharSimposios()
-        escucharNovedades()
         if (uid == null) {
             pendientes.clear()
             reconstruir()
@@ -185,33 +175,6 @@ class HomeAsistenteViewModel(
                 if (error != null) return@addSnapshotListener
                 comprobante = snapshot?.toObject(ComprobanteFirebase::class.java)
                 reconstruir()
-            }
-    }
-
-    private fun escucharNovedades() {
-        listeners += firestore
-            .collection("novedades")
-            .whereEqualTo("publicada", true)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
-                val novedades = snapshot
-                    ?.documents
-                    ?.mapNotNull { documento ->
-                        documento
-                            .toObject(NovedadFirebase::class.java)
-                            ?.copy(id = documento.id)
-                    }
-                    .orEmpty()
-                    .sortedByDescending { it.fechaPublicacion }
-                    .take(MAX_NOVEDADES)
-                    .map {
-                        NovedadResumen(
-                            id = it.id,
-                            titulo = it.titulo,
-                            fecha = it.fechaPublicacion?.aLocalDate()
-                        )
-                    }
-                _estado.value = _estado.value.copy(novedades = novedades)
             }
     }
 
