@@ -30,5 +30,16 @@ enum class PublicoFaq { ASISTENTE, EXPOSITOR }
  * con AlarmManager a partir de su propia agenda (el doc queda solo de historial).
  * LUGAR_AGREGADO lo escribe el organizador para cada expositor y asistente al
  * crear o reactivar un lugar del mapa; su referenciaId es el id del lugar.
+ * TRABAJO_ENVIADO lo escribe el expositor para el organizador del simposio; su
+ * referenciaId es el id del SIMPOSIO (al tocarlo se abren sus propuestas).
+ * TRABAJO_ACEPTADO y TRABAJO_RECHAZADO los escribe el organizador para el
+ * autor al resolver el trabajo; su referenciaId es el id del trabajo.
  */
-enum class TipoNotificacion { PAGO_APROBADO, RECORDATORIO_CHARLA, LUGAR_AGREGADO }
+enum class TipoNotificacion {
+    PAGO_APROBADO,
+    RECORDATORIO_CHARLA,
+    LUGAR_AGREGADO,
+    TRABAJO_ENVIADO,
+    TRABAJO_ACEPTADO,
+    TRABAJO_RECHAZADO
+}
