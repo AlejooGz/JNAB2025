@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -15,10 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.example.jnab2025.NavGraphDirections
-import com.example.jnab2025.R
 import com.example.jnab2025.data.model.NotificacionFirebase
-import com.example.jnab2025.data.model.TipoNotificacion
 import com.example.jnab2025.ui.compose.NotificacionesScreen
 import com.example.jnab2025.ui.compose.TemaJnab
 import com.example.jnab2025.ui.viewmodels.NotificacionesViewModel
@@ -27,7 +23,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Pantalla a la que lleva la campanita del home (expositor y asistente).
+ * Pantalla a la que lleva la campanita del home (expositor, asistente y
+ * organizador).
  *
  * Usa el NotificacionesViewModel de la Activity, que ya tiene el listener de
  * Firestore abierto: no hace falta una segunda consulta.
@@ -84,29 +81,9 @@ class NotificacionesFragment : Fragment() {
 
     /** Lleva a la pantalla relacionada con el aviso, si tiene una. */
     private fun abrir(notificacion: NotificacionFirebase) {
-        when (notificacion.tipo) {
-            TipoNotificacion.RECORDATORIO_CHARLA.name -> {
-                if (notificacion.referenciaId.isBlank()) return
-                // accion global del nav_graph, igual que desde el home
-                findNavController().navigate(
-                    NavGraphDirections.actionAgendaFragmentToCharlaDetailFragment(
-                        notificacion.referenciaId
-                    )
-                )
-            }
-
-            TipoNotificacion.PAGO_APROBADO.name ->
-                findNavController().navigate(R.id.inscripcionFragment)
-
-            // el mapa se centra en el lugar y abre su detalle
-            TipoNotificacion.LUGAR_AGREGADO.name ->
-                findNavController().navigate(
-                    R.id.mapsFragment,
-                    bundleOf(
-                        MapsFragment.ARG_LUGAR_ID to
-                                notificacion.referenciaId.ifBlank { null }
-                    )
-                )
-        }
+        findNavController().abrirDestinoDeAviso(
+            notificacion.tipo,
+            notificacion.referenciaId
+        )
     }
 }

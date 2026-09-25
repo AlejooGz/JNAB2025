@@ -84,10 +84,12 @@ object SincronizadorNotificaciones {
         if (notificacion.tipo == TipoNotificacion.RECORDATORIO_CHARLA.name) return
 
         val canal =
-            if (notificacion.tipo == TipoNotificacion.LUGAR_AGREGADO.name) {
-                Notificaciones.CANAL_LUGARES
-            } else {
-                Notificaciones.CANAL_PAGOS
+            when (notificacion.tipo) {
+                TipoNotificacion.LUGAR_AGREGADO.name -> Notificaciones.CANAL_LUGARES
+                TipoNotificacion.TRABAJO_ENVIADO.name,
+                TipoNotificacion.TRABAJO_ACEPTADO.name,
+                TipoNotificacion.TRABAJO_RECHAZADO.name -> Notificaciones.CANAL_TRABAJOS
+                else -> Notificaciones.CANAL_PAGOS
             }
 
         Notificaciones.mostrar(

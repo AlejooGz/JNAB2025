@@ -27,10 +27,12 @@ object Notificaciones {
     const val CANAL_PAGOS = "jnab_pagos"
     const val CANAL_RECORDATORIOS = "jnab_recordatorios"
     const val CANAL_LUGARES = "jnab_lugares"
+    const val CANAL_TRABAJOS = "jnab_trabajos"
 
     /**
      * Extras del intent que abre la app al tocar el aviso. MainActivity los lee
-     * para llevar a la pantalla del aviso (hoy, el mapa en un lugar puntual).
+     * para llevar a la pantalla del aviso (el mapa en un lugar, las propuestas
+     * de un simposio, Mis trabajos).
      */
     const val EXTRA_TIPO = "notificacion_tipo"
     const val EXTRA_REFERENCIA_ID = "notificacion_referencia_id"
@@ -75,6 +77,17 @@ object Notificaciones {
             ).apply {
                 description =
                     "Avisa cuando se agrega un lugar con descuento al mapa"
+            }
+        )
+
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CANAL_TRABAJOS,
+                "Trabajos",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description =
+                    "Envios de trabajos a tus simposios y resoluciones de tus trabajos"
             }
         )
     }
