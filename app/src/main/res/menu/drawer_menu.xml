@@ -51,6 +51,10 @@
         android:id="@+id/group_asistente"
         android:checkableBehavior="none">
         <item
+            android:id="@+id/nav_mi_agenda"
+            android:icon="@drawable/outline_event_available_24"
+            android:title="Mi Agenda" />
+        <item
             android:id="@+id/nav_inscripcion"
             android:title="Inscripción"
             android:icon="@drawable/outline_edit_document_24" />

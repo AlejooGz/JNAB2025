@@ -2,6 +2,7 @@ package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.jnab2025.data.model.AgendaUsuarioFirebase
 import com.example.jnab2025.data.model.CharlaFirebase
 import com.example.jnab2025.data.model.ItemAgendaFirebase
@@ -16,9 +17,14 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -50,6 +56,124 @@ class CronogramaViewModel(
     private val _avisos = Channel<String>(Channel.BUFFERED)
 
     val avisos: Flow<String> = _avisos.receiveAsFlow()
+
+    /** El cronograma completo, sin filtrar por dia ni por agenda. */
+    private val _todos = MutableStateFlow<List<ItemAgendaFirebase>>(emptyList())
+
+    /**
+     * La agenda del dia del usuario: lo que marco con la estrella mas las
+     * actividades generales del congreso.
+     *
+     * El coffee break y la acreditacion no se agendan, valen para todos, asi
+     * que se muestran siempre. Sin eso la agenda de un asistente serian solo
+     * sus charlas sueltas y no se entenderia como transcurre el dia.
+     */
+    val miAgendaDelDia: StateFlow<List<ItemAgendaFirebase>> =
+        combine(_todos, _dia) { todos, dia ->
+            if (dia == null) {
+                emptyList()
+            } else {
+                todos.filter { item ->
+                    item.fecha == dia &&
+                            (item.enMiAgenda || esActividadGeneral(item.tipo))
+                }
+            }
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            emptyList()
+        )
+
+    private fun esActividadGeneral(tipo: TipoActividad): Boolean =
+        tipo == TipoActividad.COFFEE_BREAK ||
+                tipo == TipoActividad.ACREDITACION
+
+    /**
+     * Una fila del itinerario. Entre dos actividades va un tramo, que es la
+     * "ruta organizada" que pide el enunciado: cuanto tiempo hay y a donde
+     * tiene que moverse el usuario.
+     */
+    sealed interface FilaAgenda {
+        /** Identidad estable, para que DiffUtil no rearme la lista entera. */
+        val clave: String
+
+        data class Actividad(
+            val item: ItemAgendaFirebase
+        ) : FilaAgenda {
+            override val clave: String get() = "actividad:${item.charlaId}"
+        }
+
+        data class Tramo(
+            val desdeCharlaId: String,
+            val hastaCharlaId: String,
+            val minutosLibres: Long,
+            val desdeAula: String?,
+            val hastaAula: String?,
+            val desdePiso: Int?,
+            val hastaPiso: Int?
+        ) : FilaAgenda {
+            override val clave: String
+                get() = "tramo:$desdeCharlaId>$hastaCharlaId"
+
+            /** La siguiente arranca antes de que termine la anterior. */
+            val seSuperpone: Boolean get() = minutosLibres < 0
+
+            val mismoLugar: Boolean
+                get() = desdeAula != null && desdeAula == hastaAula
+
+            val cambiaDePiso: Boolean
+                get() = desdePiso != null &&
+                        hastaPiso != null &&
+                        desdePiso != hastaPiso
+
+            /** Hay que moverse y queda poco tiempo: conviene avisar. */
+            val ajustado: Boolean
+                get() = !seSuperpone && !mismoLugar && minutosLibres <= 10
+        }
+    }
+
+    /**
+     * La agenda del dia como itinerario: actividad, tramo, actividad, tramo...
+     *
+     * Es lo que diferencia esta pantalla del cronograma. El cronograma es la
+     * lista de todo lo que pasa; esto es el recorrido de una persona, con los
+     * traslados entre una cosa y la otra a la vista.
+     */
+    val itinerario: StateFlow<List<FilaAgenda>> =
+        miAgendaDelDia
+            .map { items -> construirItinerario(items) }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                emptyList()
+            )
+
+    private fun construirItinerario(
+        items: List<ItemAgendaFirebase>
+    ): List<FilaAgenda> {
+        if (items.isEmpty()) return emptyList()
+
+        val filas = mutableListOf<FilaAgenda>()
+
+        items.forEachIndexed { indice, item ->
+            if (indice > 0) {
+                val anterior = items[indice - 1]
+                filas += FilaAgenda.Tramo(
+                    desdeCharlaId = anterior.charlaId,
+                    hastaCharlaId = item.charlaId,
+                    minutosLibres = Duration
+                        .between(anterior.horaFin, item.horaInicio)
+                        .toMinutes(),
+                    desdeAula = anterior.aula,
+                    hastaAula = item.aula,
+                    desdePiso = anterior.piso,
+                    hastaPiso = item.piso
+                )
+            }
+            filas += FilaAgenda.Actividad(item)
+        }
+        return filas
+    }
     init {
         escucharCharlas()
         escucharTrabajos()
@@ -253,6 +377,7 @@ class CronogramaViewModel(
         ) {
             _dia.value = diasDisponibles.firstOrNull()
         }
+        _todos.value = lista
         programarRecordatorios(lista)
         aplicarFiltro(lista)
     }

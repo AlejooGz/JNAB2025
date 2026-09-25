@@ -363,6 +363,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.nav_inscripcion -> {
                 findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
             }
+            R.id.nav_mi_agenda -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.miAgendaFragment)
+            }
             R.id.nav_logout -> {
                 // Las alarmas son del usuario que se va: si no se cancelan, el
                 // proximo que entre en este telefono hereda sus recordatorios

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Punto de la linea de tiempo de Mi Agenda. El color se pone por codigo:
+     bordo si el usuario eligio la actividad, rosa si es general del congreso. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/dark_red" />
+    <size
+        android:width="14dp"
+        android:height="14dp" />
+</shape>

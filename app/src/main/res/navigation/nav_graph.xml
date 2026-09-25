@@ -44,15 +44,15 @@
 
 
 
-    <!--
-
-
-        <fragment
+    <fragment
         android:id="@+id/miAgendaFragment"
         android:name="com.example.jnab2025.ui.fragments.MiAgendaFragment"
         android:label="Mi Agenda"
-        tools:layout="@layout/fragment_mi_agenda" />
-    -->
+        tools:layout="@layout/fragment_mi_agenda">
+        <action
+            android:id="@+id/action_miAgendaFragment_to_charlaDetailFragment"
+            app:destination="@id/charlaDetailFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/agendaFragment"

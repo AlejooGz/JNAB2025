@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El tramo entre dos actividades: cuanto tiempo hay y a donde moverse.
+     Es la "ruta organizada" del enunciado. No es una tarjeta a proposito: va
+     sobre el fondo, colgado de la linea de tiempo, para que se lea como un
+     traslado y no como otra actividad.
+
+     OJO con los margenes: la linea tiene que caer justo sobre la de
+     item_mi_agenda.xml, si no el recorrido se ve en zigzag. Ahi el punto
+     arranca despues de la columna de la hora (8dp de margen + 54dp de ancho +
+     10dp de margen = 72dp) y mide 14dp, asi que su centro esta a 79dp. Con la
+     linea de 2dp, el margen de aca tiene que ser 78dp. Si se toca el ancho de
+     la columna de la hora, hay que tocar esto tambien. -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <View
+        android:id="@+id/lineaTramo"
+        android:layout_width="2dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="78dp"
+        android:background="@color/dusty_rose"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvEspera"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="12dp"
+        android:textColor="@color/dark_red"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/lineaTramo"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="30 minutos libres" />
+
+    <TextView
+        android:id="@+id/tvRuta"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:textColor="@color/black"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/tvEspera"
+        app:layout_constraintStart_toStartOf="@id/tvEspera"
+        app:layout_constraintTop_toBottomOf="@id/tvEspera"
+        tools:text="De Sala 1 a Sala 8: subís de planta baja al piso 2" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
