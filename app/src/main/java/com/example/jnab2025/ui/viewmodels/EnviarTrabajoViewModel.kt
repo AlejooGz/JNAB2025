@@ -2,8 +2,11 @@ package com.example.jnab2025.ui.viewmodels
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import com.example.jnab2025.data.model.NotificacionFirebase
 import com.example.jnab2025.data.model.SimposioFirebase
+import com.example.jnab2025.data.model.TipoNotificacion
 import com.example.jnab2025.data.model.TrabajoFirebase
 import com.example.jnab2025.utils.Sesion
 import com.google.firebase.Timestamp
@@ -196,6 +199,7 @@ class EnviarTrabajoViewModel(
                 terminar(
                     Envio.Ok
                 )
+                avisarAlOrganizador(trabajo, simposio)
             }
             .addOnFailureListener { error ->
                 //si firestore falla, eliminamos el PDF para no dejar un archivo huérfano
@@ -205,6 +209,40 @@ class EnviarTrabajoViewModel(
                         "El PDF se subió, pero no se pudo guardar el trabajo: ${error.message}"
                     )
                 )
+            }
+    }
+
+    /**
+     * Deja una notificacion TRABAJO_ENVIADO para el organizador del simposio.
+     * Se escribe aparte y recien con el trabajo ya guardado: si el aviso falla
+     * (sin red, reglas de Firestore) el envio igual queda hecho.
+     */
+    private fun avisarAlOrganizador(
+        trabajo: TrabajoFirebase,
+        simposio: SimposioFirebase
+    ) {
+        val organizadorUid = simposio.organizadorUid
+        // simposio sin organizador cargado, o el organizador se envio a si mismo
+        if (organizadorUid.isBlank() || organizadorUid == trabajo.autorUid) return
+
+        val referencia = firestore.collection("notificaciones").document()
+        val autor = trabajo.autorNombre.ifBlank { "Un expositor" }
+
+        referencia
+            .set(
+                NotificacionFirebase(
+                    id = referencia.id,
+                    destinatarioUid = organizadorUid,
+                    tipo = TipoNotificacion.TRABAJO_ENVIADO.name,
+                    titulo = "Nuevo trabajo en ${simposio.titulo}",
+                    mensaje = "$autor envió \"${trabajo.titulo}\". Tocá para revisarlo.",
+                    // el simposio, para abrir sus propuestas al tocarlo
+                    referenciaId = simposio.id,
+                    creadaEn = Timestamp.now()
+                )
+            )
+            .addOnFailureListener {
+                Log.e(TAG, "No se pudo avisar al organizador del trabajo ${trabajo.id}", it)
             }
     }
 
@@ -231,5 +269,9 @@ class EnviarTrabajoViewModel(
     override fun onCleared() {
         super.onCleared()
         listenerSimposios?.remove()
+    }
+
+    private companion object {
+        const val TAG = "EnviarTrabajo"
     }
 }
