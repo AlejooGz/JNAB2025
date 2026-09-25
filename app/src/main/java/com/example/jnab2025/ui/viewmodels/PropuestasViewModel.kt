@@ -19,6 +19,8 @@ import com.example.jnab2025.data.model.TipoActividad
 import com.example.jnab2025.data.model.InscripcionFirebase
 import com.example.jnab2025.data.model.EstadoInscripcion
 import com.example.jnab2025.data.model.EstadoTrabajo
+import com.example.jnab2025.data.model.NotificacionFirebase
+import com.example.jnab2025.data.model.TipoNotificacion
 import com.google.firebase.firestore.WriteBatch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -158,15 +160,42 @@ class PropuestasViewModel(
             "resueltoPorUid" to organizadorUid
         )
         _enviando.value = true
-        firestore
+        val trabajoRef = firestore
             .collection("trabajos")
             .document(trabajoId)
-            .update(cambios)
-            .addOnSuccessListener {
-                terminar(
-                    "Propuesta rechazada"
+        // se lee el trabajo para saber a quien avisar y con que titulo
+        trabajoRef
+            .get()
+            .addOnSuccessListener { documento ->
+                val trabajo = documento
+                    .toObject(TrabajoFirebase::class.java)
+                    ?.copy(id = documento.id)
+                if (trabajo == null) {
+                    terminar("No se encontró el trabajo")
+                    return@addOnSuccessListener
+                }
+                val batch = firestore.batch()
+                batch.update(trabajoRef, cambios)
+                avisarAlAutor(
+                    batch = batch,
+                    trabajo = trabajo,
+                    tipo = TipoNotificacion.TRABAJO_RECHAZADO,
+                    titulo = "Tu trabajo fue rechazado",
+                    mensaje = "\"${trabajo.titulo}\" no fue aceptado" +
+                            enSimposio(trabajo) + ". Motivo: ${motivo.trim()}"
                 )
-                _resueltas.trySend(Unit)
+                batch.commit()
+                    .addOnSuccessListener {
+                        terminar(
+                            "Propuesta rechazada"
+                        )
+                        _resueltas.trySend(Unit)
+                    }
+                    .addOnFailureListener { error ->
+                        terminar(
+                            "No se pudo rechazar: ${error.message}"
+                        )
+                    }
             }
             .addOnFailureListener { error ->
                 terminar(
@@ -174,6 +203,39 @@ class PropuestasViewModel(
                 )
             }
     }
+
+    /**
+     * Agrega al batch el aviso para el autor del trabajo. Va en el mismo batch
+     * que la resolucion (como el aviso de pago aprobado): o se guardan las dos
+     * cosas o ninguna, y el expositor nunca queda sin enterarse.
+     */
+    private fun avisarAlAutor(
+        batch: WriteBatch,
+        trabajo: TrabajoFirebase,
+        tipo: TipoNotificacion,
+        titulo: String,
+        mensaje: String
+    ) {
+        if (trabajo.autorUid.isBlank()) return
+        val referencia = firestore
+            .collection("notificaciones")
+            .document()
+        batch.set(
+            referencia,
+            NotificacionFirebase(
+                id = referencia.id,
+                destinatarioUid = trabajo.autorUid,
+                tipo = tipo.name,
+                titulo = titulo,
+                mensaje = mensaje,
+                referenciaId = trabajo.id,
+                creadaEn = Timestamp.now()
+            )
+        )
+    }
+
+    private fun enSimposio(trabajo: TrabajoFirebase): String =
+        if (trabajo.simposioTitulo.isBlank()) "" else " en ${trabajo.simposioTitulo}"
 
     // cierra una resolución: apaga la ruedita y avisa el resultado
     private fun terminar(mensaje: String) {
@@ -418,10 +480,20 @@ class PropuestasViewModel(
             "fechaResolucion" to Timestamp.now(),
             "resueltoPorUid" to organizadorUid
         )
-        firestore
-            .collection("trabajos")
-            .document(trabajo.id)
-            .update(cambios)
+        val batch = firestore.batch()
+        batch.update(
+            firestore.collection("trabajos").document(trabajo.id),
+            cambios
+        )
+        avisarAlAutor(
+            batch = batch,
+            trabajo = trabajo,
+            tipo = TipoNotificacion.TRABAJO_ACEPTADO,
+            titulo = "Tu trabajo fue aceptado",
+            mensaje = "\"${trabajo.titulo}\" fue aceptado" + enSimposio(trabajo) +
+                    ". Para que se programe tu presentación, falta acreditar tu inscripción."
+        )
+        batch.commit()
             .addOnSuccessListener {
                 terminar(
                     "Trabajo aceptado académicamente. Falta acreditar la inscripción del expositor."
@@ -445,10 +517,20 @@ class PropuestasViewModel(
             "resueltoPorUid" to organizadorUid
         )
 
-        firestore
-            .collection("trabajos")
-            .document(trabajo.id)
-            .update(cambios)
+        val batch = firestore.batch()
+        batch.update(
+            firestore.collection("trabajos").document(trabajo.id),
+            cambios
+        )
+        avisarAlAutor(
+            batch = batch,
+            trabajo = trabajo,
+            tipo = TipoNotificacion.TRABAJO_ACEPTADO,
+            titulo = "Tu trabajo fue aceptado",
+            mensaje = "\"${trabajo.titulo}\" fue aceptado" + enSimposio(trabajo) +
+                    ". Ahora la organización va a programar tu presentación."
+        )
+        batch.commit()
             .addOnSuccessListener {
 
                 terminar(
