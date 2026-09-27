@@ -102,12 +102,11 @@ class ActividadDetailFragment : Fragment() {
                             actividad.horaInicio,
                             actividad.horaFin
                         )
-                    binding.tvSala.text =
-                        construirUbicacion(
-                            aulaNombre = actividad.aulaNombre,
-                            edificio = actividad.aulaEdificio,
-                            piso = actividad.aulaPiso
-                        )
+                    pintarUbicacion(
+                        aulaNombre = actividad.aulaNombre,
+                        edificio = actividad.aulaEdificio,
+                        piso = actividad.aulaPiso
+                    )
                     binding.tvDescripcion.text =
                         actividad.descripcion
                             .ifBlank {
@@ -153,27 +152,31 @@ class ActividadDetailFragment : Fragment() {
         return "$horaInicio - $horaFin ($minutos minutos)"
     }
 
-    private fun construirUbicacion(
+    /**
+     * El aula en dos lineas, igual que en el detalle de una charla: arriba el
+     * nombre y abajo donde queda. Planta baja tambien se escribe: antes el piso
+     * cero se omitia y la actividad quedaba sin ninguna referencia de lugar.
+     */
+    private fun pintarUbicacion(
         aulaNombre: String,
         edificio: String,
         piso: Int
-    ): String {
+    ) {
         if (aulaNombre.isBlank()) {
-            return "Actividad general · sin aula"
+            binding.tvSala.text = "Actividad general · sin aula"
+            binding.tvSalaDetalle.visibility = View.GONE
+            return
         }
+        binding.tvSala.text = aulaNombre
 
         val partes = mutableListOf<String>()
-
-        partes += aulaNombre
-
         if (edificio.isNotBlank()) {
             partes += edificio
         }
+        partes += if (piso == 0) "Planta baja" else "Piso $piso"
 
-        if (piso > 0) {
-            partes += "Piso $piso"
-        }
-        return partes.joinToString(" - ")
+        binding.tvSalaDetalle.text = partes.joinToString(" · ")
+        binding.tvSalaDetalle.visibility = View.VISIBLE
     }
 
     private fun etiquetaTipo(
