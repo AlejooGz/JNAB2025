@@ -6,43 +6,88 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.jnab2025.data.model.SimposioFirebase
+import com.example.jnab2025.databinding.ItemEncabezadoAulaBinding
 import com.example.jnab2025.databinding.ItemSimposioAdminBinding
+import com.example.jnab2025.ui.viewmodels.MisSimposiosViewModel.Fila
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/**
+ * Los simposios del organizador, agrupados por aula.
+ *
+ * La lista alterna encabezados de aula y simposios. El orden lo decide el
+ * ViewModel: aulas alfabeticamente y, adentro de cada una, por fecha.
+ */
 class MisSimposiosAdapter(
     private val onEditarClick: (SimposioFirebase) -> Unit,
     private val onVerPropuestasClick: (SimposioFirebase) -> Unit,
     private val onVerTrabajosClick: (SimposioFirebase) -> Unit
-) : ListAdapter<SimposioFirebase, MisSimposiosAdapter.ViewHolder>(Diff()) {
+) : ListAdapter<Fila, RecyclerView.ViewHolder>(Diff()) {
 
     private val formato = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
-    class ViewHolder(
+    class AulaViewHolder(
+        val binding: ItemEncabezadoAulaBinding
+    ) : RecyclerView.ViewHolder(binding.root)
+
+    class SimposioViewHolder(
         val binding: ItemSimposioAdminBinding
     ) : RecyclerView.ViewHolder(binding.root)
+
+    override fun getItemViewType(position: Int): Int =
+        when (getItem(position)) {
+            is Fila.Aula -> TIPO_AULA
+            is Fila.Simposio -> TIPO_SIMPOSIO
+        }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): ViewHolder {
+    ): RecyclerView.ViewHolder {
 
-        val binding = ItemSimposioAdminBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val inflador = LayoutInflater.from(parent.context)
 
-        return ViewHolder(binding)
+        return if (viewType == TIPO_AULA) {
+            AulaViewHolder(
+                ItemEncabezadoAulaBinding.inflate(inflador, parent, false)
+            )
+        } else {
+            SimposioViewHolder(
+                ItemSimposioAdminBinding.inflate(inflador, parent, false)
+            )
+        }
     }
 
     override fun onBindViewHolder(
-        holder: ViewHolder,
+        holder: RecyclerView.ViewHolder,
         position: Int
     ) {
+        when (val fila = getItem(position)) {
+            is Fila.Aula -> pintarAula(holder as AulaViewHolder, fila)
+            is Fila.Simposio -> pintarSimposio(holder as SimposioViewHolder, fila.simposio)
+        }
+    }
 
-        val simposio = getItem(position)
+    private fun pintarAula(holder: AulaViewHolder, aula: Fila.Aula) {
+        with(holder.binding) {
+            tvAulaNombre.text = aula.nombre
 
+            val cuantos = if (aula.cantidad == 1) {
+                "1 simposio"
+            } else {
+                "${aula.cantidad} simposios"
+            }
+
+            tvAulaDetalle.text = listOf(aula.ubicacion, cuantos)
+                .filter { it.isNotBlank() }
+                .joinToString(" · ")
+        }
+    }
+
+    private fun pintarSimposio(
+        holder: SimposioViewHolder,
+        simposio: SimposioFirebase
+    ) {
         with(holder.binding) {
 
             tvTituloSimposioAdmin.text = simposio.titulo
@@ -70,8 +115,9 @@ class MisSimposiosAdapter(
                     "$desde al $hasta"
                 }
 
-            tvDuracionAdmin.text =
-                "$fechas  ·  ${simposio.aulaNombre}"
+            /* El aula ya la dice el encabezado del grupo: repetirla en cada
+             * tarjeta solo agrega ruido. */
+            tvDuracionAdmin.text = fechas
 
             btnEditar.setOnClickListener {
                 onEditarClick(simposio)
@@ -87,31 +133,41 @@ class MisSimposiosAdapter(
         }
     }
 
-    private class Diff :
-        DiffUtil.ItemCallback<SimposioFirebase>() {
+    private class Diff : DiffUtil.ItemCallback<Fila>() {
 
-        override fun areItemsTheSame(
-            oldItem: SimposioFirebase,
-            newItem: SimposioFirebase
-        ): Boolean {
-            return oldItem.id == newItem.id
-        }
+        override fun areItemsTheSame(oldItem: Fila, newItem: Fila): Boolean =
+            oldItem.clave == newItem.clave
 
-        override fun areContentsTheSame(
-            oldItem: SimposioFirebase,
-            newItem: SimposioFirebase
-        ): Boolean {
-            return oldItem.id == newItem.id &&
-                    oldItem.organizadorUid == newItem.organizadorUid &&
-                    oldItem.aulaId == newItem.aulaId &&
-                    oldItem.aulaNombre == newItem.aulaNombre &&
-                    oldItem.aulaEdificio == newItem.aulaEdificio &&
-                    oldItem.aulaPiso == newItem.aulaPiso &&
-                    oldItem.titulo == newItem.titulo &&
-                    oldItem.descripcion == newItem.descripcion &&
-                    oldItem.temaCentral == newItem.temaCentral &&
-                    oldItem.fechaInicio == newItem.fechaInicio &&
-                    oldItem.fechaFin == newItem.fechaFin
-        }
+        override fun areContentsTheSame(oldItem: Fila, newItem: Fila): Boolean =
+            when {
+                oldItem is Fila.Aula && newItem is Fila.Aula ->
+                    oldItem == newItem
+
+                oldItem is Fila.Simposio && newItem is Fila.Simposio ->
+                    mismoContenido(oldItem.simposio, newItem.simposio)
+
+                else -> false
+            }
+
+        private fun mismoContenido(
+            viejo: SimposioFirebase,
+            nuevo: SimposioFirebase
+        ): Boolean =
+            viejo.id == nuevo.id &&
+                    viejo.organizadorUid == nuevo.organizadorUid &&
+                    viejo.aulaId == nuevo.aulaId &&
+                    viejo.aulaNombre == nuevo.aulaNombre &&
+                    viejo.aulaEdificio == nuevo.aulaEdificio &&
+                    viejo.aulaPiso == nuevo.aulaPiso &&
+                    viejo.titulo == nuevo.titulo &&
+                    viejo.descripcion == nuevo.descripcion &&
+                    viejo.temaCentral == nuevo.temaCentral &&
+                    viejo.fechaInicio == nuevo.fechaInicio &&
+                    viejo.fechaFin == nuevo.fechaFin
+    }
+
+    companion object {
+        private const val TIPO_AULA = 0
+        private const val TIPO_SIMPOSIO = 1
     }
 }

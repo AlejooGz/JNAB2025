@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -81,15 +80,13 @@ class MisSimposiosFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.simposios.collectLatest { simposios ->
-                    adapter.submitList(simposios)
-                    if (simposios.isEmpty()) {
-                        Toast.makeText(
-                            requireContext(),
-                            "No organizas ningun simposio todavia",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                viewModel.filas.collectLatest { filas ->
+                    adapter.submitList(filas)
+
+                    /* Antes esto era un Toast, y el listener de Firestore emite
+                     * varias veces: al entrar sin simposios aparecia repetido. */
+                    binding.tvVacio.visibility =
+                        if (filas.isEmpty()) View.VISIBLE else View.GONE
                 }
             }
         }
