@@ -22,137 +22,308 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Conferencia de Inteligencia Artificial" />
+            tools:text="Variabilidad craneofacial en poblaciones del NOA" />
 
         <TextView
-            android:id="@+id/tvExpositor"
+            android:id="@+id/tvTipo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             android:textColor="@color/dusty_rose"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="italic"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvTituloCharla"
-            tools:text="Dr. Juan Pérez - Universidad Nacional" />
+            app:layout_constraintTop_toBottomOf="@id/tvTituloCharla"
+            tools:text="Presentación · Simposio de Bioarqueología" />
 
         <View
             android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="@color/dusty_rose"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTipo" />
+
+        <!-- Cuando y donde. Va en tarjeta como el resto, y queda enmarcada entre
+             las dos lineas: arriba la logistica, abajo el contenido. -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardCuandoDonde"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            app:cardBackgroundColor="@color/cream"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="14dp">
+
+                <TextView
+                    android:id="@+id/tvCuandoDondeLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="CUÁNDO Y DÓNDE"
+                    android:textColor="@color/dusty_rose"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/ivCalendar"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="10dp"
+                    android:contentDescription="Fecha"
+                    android:src="@android:drawable/ic_menu_my_calendar"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvCuandoDondeLabel"
+                    app:tint="@color/dark_red" />
+
+                <TextView
+                    android:id="@+id/tvFecha"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textColor="@color/dark_red"
+                    android:textSize="16sp"
+                    app:layout_constraintBottom_toBottomOf="@id/ivCalendar"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/ivCalendar"
+                    app:layout_constraintTop_toTopOf="@id/ivCalendar"
+                    tools:text="Miércoles, 04 de noviembre de 2026" />
+
+                <ImageView
+                    android:id="@+id/ivClock"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="12dp"
+                    android:contentDescription="Horario"
+                    android:src="@android:drawable/ic_menu_recent_history"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvFecha"
+                    app:tint="@color/dark_red" />
+
+                <TextView
+                    android:id="@+id/tvHorario"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textColor="@color/dark_red"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/ivClock"
+                    app:layout_constraintTop_toTopOf="@id/ivClock"
+                    tools:text="14:00 - 14:30 (20 de exposición + 10 de preguntas)" />
+
+                <ImageView
+                    android:id="@+id/ivLocation"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="12dp"
+                    android:contentDescription="Lugar"
+                    android:src="@android:drawable/ic_menu_mylocation"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvHorario"
+                    app:tint="@color/dark_red" />
+
+                <TextView
+                    android:id="@+id/tvSala"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textColor="@color/dark_red"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/ivLocation"
+                    app:layout_constraintTop_toTopOf="@id/ivLocation"
+                    tools:text="Auditorio Orensanz" />
+
+                <TextView
+                    android:id="@+id/tvSalaDetalle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/dusty_rose"
+                    android:textSize="14sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@id/tvSala"
+                    app:layout_constraintTop_toBottomOf="@id/tvSala"
+                    tools:text="CENPAT · Planta baja · Capacidad 120" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Cierra la banda de logistica: lo de abajo es el contenido. -->
+        <View
+            android:id="@+id/dividerLugar"
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_marginTop="16dp"
             android:background="@color/dusty_rose"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvExpositor" />
+            app:layout_constraintTop_toBottomOf="@id/cardCuandoDonde" />
 
-        <ImageView
-            android:id="@+id/ivCalendar"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+        <!-- Expositor -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardExpositor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:src="@android:drawable/ic_menu_my_calendar"
-            app:tint="@color/dark_red"
+            app:cardBackgroundColor="@color/cream"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider" />
+            app:layout_constraintTop_toBottomOf="@id/dividerLugar">
 
-        <TextView
-            android:id="@+id/tvFecha"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="EXPOSITOR"
+                    android:textColor="@color/dusty_rose"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvExpositor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/dark_red"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    tools:text="Alejo González" />
+
+                <TextView
+                    android:id="@+id/tvExpositorEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    tools:text="alejo@ejemplo.com" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Resumen del trabajo -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardResumen"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textColor="@color/dark_red"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/ivCalendar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/ivCalendar"
-            app:layout_constraintTop_toTopOf="@+id/ivCalendar"
-            tools:text="Viernes, 26 de abril de 2025" />
-
-        <ImageView
-            android:id="@+id/ivClock"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
             android:layout_marginTop="12dp"
-            android:src="@android:drawable/ic_menu_recent_history"
-            app:tint="@color/dark_red"
+            app:cardBackgroundColor="@color/cream"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ivCalendar" />
+            app:layout_constraintTop_toBottomOf="@id/cardExpositor">
 
-        <TextView
-            android:id="@+id/tvHorario"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="RESUMEN DEL TRABAJO"
+                    android:textColor="@color/dusty_rose"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvResumen"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    tools:text="Se analiza la variabilidad craneofacial de series esqueletales del Noroeste argentino." />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Simposio -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardSimposio"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textColor="@color/dark_red"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/ivClock"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/ivClock"
-            app:layout_constraintTop_toTopOf="@+id/ivClock"
-            tools:text="14:00 - 14:30 (30 minutos)" />
-
-        <ImageView
-            android:id="@+id/ivLocation"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
             android:layout_marginTop="12dp"
-            android:src="@android:drawable/ic_menu_mylocation"
-            app:tint="@color/dark_red"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ivClock" />
-
-        <TextView
-            android:id="@+id/tvSala"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textColor="@color/dark_red"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/ivLocation"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/ivLocation"
-            app:layout_constraintTop_toTopOf="@+id/ivLocation"
-            tools:text="Sala 1 - Edificio Principal" />
-
-        <TextView
-            android:id="@+id/tvDescripcionLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Descripción"
-            android:textColor="@color/dark_red"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ivLocation" />
-
-        <TextView
-            android:id="@+id/tvDescripcion"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="@color/dusty_rose"
-            android:textSize="16sp"
-            android:text="Esta charla explorará las últimas innovaciones en inteligencia artificial y su aplicación en el desarrollo de software moderno. Se discutirán casos de uso prácticos y las mejores prácticas para implementar soluciones de IA."
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/cream"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvDescripcionLabel" />
+            app:layout_constraintTop_toBottomOf="@id/cardResumen">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnToggleFavorito"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Agregar a favoritos"
-            android:textColor="@color/white"
-            app:backgroundTint="@color/dusty_rose"
-            app:icon="@android:drawable/btn_star"
-            app:iconTint="@color/white"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvDescripcion" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SIMPOSIO"
+                    android:textColor="@color/dusty_rose"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSimposioTitulo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/dark_red"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    tools:text="Simposio de Bioarqueología" />
+
+                <TextView
+                    android:id="@+id/tvSimposioTema"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/dark_red"
+                    android:textSize="14sp"
+                    tools:text="Tema central: poblamiento temprano" />
+
+                <TextView
+                    android:id="@+id/tvSimposioDescripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    tools:text="Espacio de discusión sobre los aportes recientes de la bioarqueología regional." />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
