@@ -34,18 +34,13 @@ import java.time.format.DateTimeFormatter
  * poner cualquier horario y recien despues enterarse de que estaba tomado.
  */
 class ProgramarPresentacionFragment : Fragment() {
-
     private var _binding: FragmentProgramarPresentacionBinding? = null
     private val binding get() = _binding!!
-
     private val args: ProgramarPresentacionFragmentArgs by navArgs()
     private val viewModel: CharlaViewModel by viewModels()
-
-    private lateinit var adapter: SlotHorarioAdapter
-
+    private lateinit var adapter: SlotHorarioAdapter<CharlaViewModel.Slot>
     private var fechaDelSimposio: LocalDate? = null
     private var horaSeleccionada: LocalTime? = null
-
     private val formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     override fun onCreateView(
@@ -59,27 +54,27 @@ class ProgramarPresentacionFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         viewModel.cargarTrabajo(args.trabajoId)
-
-        adapter = SlotHorarioAdapter { slot ->
+        adapter = SlotHorarioAdapter<CharlaViewModel.Slot>(
+            obtenerInicio = { it.inicio },
+            obtenerFin = { it.fin },
+            estaLibre = { it.libre },
+            obtenerOcupadoPor = { it.ocupadoPor }
+        ) { slot ->
             horaSeleccionada = slot.inicio
             adapter.seleccionar(slot.inicio)
             pintarSeleccion()
         }
         binding.rvSlots.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSlots.adapter = adapter
-
         binding.btnProgramar.setOnClickListener { programar() }
         binding.btnCancelar.setOnClickListener { findNavController().popBackStack() }
-
         observarDatos()
     }
 
     private fun programar() {
         val fecha = fechaDelSimposio
         val hora = horaSeleccionada
-
         if (fecha == null) {
             avisar("Todavía no se pudo leer la fecha del simposio")
             return
@@ -88,7 +83,6 @@ class ProgramarPresentacionFragment : Fragment() {
             avisar("Elegí un horario de la lista")
             return
         }
-
         viewModel.programarPresentacion(
             trabajoId = args.trabajoId,
             fecha = fecha,
@@ -99,7 +93,6 @@ class ProgramarPresentacionFragment : Fragment() {
     private fun observarDatos() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
                 launch {
                     viewModel.trabajo.collectLatest { trabajo ->
                         binding.tvTituloTrabajo.text = trabajo?.titulo.orEmpty()
@@ -109,7 +102,6 @@ class ProgramarPresentacionFragment : Fragment() {
                             .orEmpty()
                     }
                 }
-
                 launch {
                     viewModel.simposio.collectLatest { simposio ->
                         simposio ?: return@collectLatest
@@ -127,14 +119,12 @@ class ProgramarPresentacionFragment : Fragment() {
                         }
                     }
                 }
-
                 launch {
                     viewModel.fechaDelSimposio.collectLatest { fecha ->
                         fechaDelSimposio = fecha
                         pintarSeleccion()
                     }
                 }
-
                 launch {
                     viewModel.slots.collectLatest { slots ->
                         adapter.submitList(slots)
@@ -156,15 +146,12 @@ class ProgramarPresentacionFragment : Fragment() {
                         }
                     }
                 }
-
                 launch {
                     viewModel.enviando.collectLatest { mostrarCargando(it, "Programando…") }
                 }
-
                 launch {
                     viewModel.avisos.collectLatest { avisar(it) }
                 }
-
                 launch {
                     viewModel.programadas.collectLatest { findNavController().popBackStack() }
                 }

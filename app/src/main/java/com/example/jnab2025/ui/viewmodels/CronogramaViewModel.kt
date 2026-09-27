@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jnab2025.data.model.AgendaUsuarioFirebase
+import com.example.jnab2025.data.model.ActividadFirebase
 import com.example.jnab2025.data.model.CharlaFirebase
 import com.example.jnab2025.data.model.ItemAgendaFirebase
 import com.example.jnab2025.data.model.SimposioFirebase
@@ -33,79 +34,76 @@ import java.time.ZoneId
 class CronogramaViewModel(
     application: Application
 ) : AndroidViewModel(application) {
+
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+
     private var listenerCharlas: ListenerRegistration? = null
     private var listenerTrabajos: ListenerRegistration? = null
     private var listenerSimposios: ListenerRegistration? = null
     private var listenerAgenda: ListenerRegistration? = null
+    private var listenerActividades: ListenerRegistration? = null
+    private var listenerAuth: FirebaseAuth.AuthStateListener? = null
+
     private var charlasFirebase: List<CharlaFirebase> = emptyList()
     private var trabajosFirebase: List<TrabajoFirebase> = emptyList()
     private var simposiosFirebase: List<SimposioFirebase> = emptyList()
-    private var agendaIds: Set<String> = emptySet()
-    /** Ultimo conjunto de recordatorios programado, para no reprogramar de gusto. */
+    private var actividadesFirebase: List<ActividadFirebase> = emptyList()
+
+    private var agendaCharlaIds: Set<String> = emptySet()
+    private var agendaActividadIds: Set<String> = emptySet()
+
+    /** Último conjunto de recordatorios programado. */
     private var firmaRecordatorios: String? = null
+
     private val _dia = MutableStateFlow<LocalDate?>(null)
     val dia: StateFlow<LocalDate?> = _dia.asStateFlow()
+
     private val _dias = MutableStateFlow<List<LocalDate>>(emptyList())
     val dias: StateFlow<List<LocalDate>> = _dias.asStateFlow()
+
     private val _items = MutableStateFlow<List<ItemAgendaFirebase>>(emptyList())
     val items: StateFlow<List<ItemAgendaFirebase>> = _items.asStateFlow()
+
     private val _soloMiAgenda = MutableStateFlow(false)
     val soloMiAgenda: StateFlow<Boolean> = _soloMiAgenda.asStateFlow()
+
     private val _avisos = Channel<String>(Channel.BUFFERED)
-
     val avisos: Flow<String> = _avisos.receiveAsFlow()
+    private val _todos =
+        MutableStateFlow<List<ItemAgendaFirebase>>(emptyList())
 
-    /** El cronograma completo, sin filtrar por dia ni por agenda. */
-    private val _todos = MutableStateFlow<List<ItemAgendaFirebase>>(emptyList())
-
-    /**
-     * La agenda del dia del usuario: lo que marco con la estrella mas las
-     * actividades generales del congreso.
-     *
-     * El coffee break y la acreditacion no se agendan, valen para todos, asi
-     * que se muestran siempre. Sin eso la agenda de un asistente serian solo
-     * sus charlas sueltas y no se entenderia como transcurre el dia.
-     */
+    /* Agenda personal del día: tanto una charla como una actividad pueden formar parte de Mi Agenda */
     val miAgendaDelDia: StateFlow<List<ItemAgendaFirebase>> =
         combine(_todos, _dia) { todos, dia ->
+
             if (dia == null) {
                 emptyList()
             } else {
                 todos.filter { item ->
                     item.fecha == dia &&
-                            (item.enMiAgenda || esActividadGeneral(item.tipo))
+                            item.enMiAgenda
                 }
             }
+
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
             emptyList()
         )
 
-    private fun esActividadGeneral(tipo: TipoActividad): Boolean =
-        tipo == TipoActividad.COFFEE_BREAK ||
-                tipo == TipoActividad.ACREDITACION
-
-    /**
-     * Una fila del itinerario. Entre dos actividades va un tramo, que es la
-     * "ruta organizada" que pide el enunciado: cuanto tiempo hay y a donde
-     * tiene que moverse el usuario.
-     */
     sealed interface FilaAgenda {
-        /** Identidad estable, para que DiffUtil no rearme la lista entera. */
         val clave: String
-
         data class Actividad(
             val item: ItemAgendaFirebase
         ) : FilaAgenda {
-            override val clave: String get() = "actividad:${item.charlaId}"
+            override val clave: String
+                get() = "actividad:${item.id}"
         }
 
         data class Tramo(
-            val desdeCharlaId: String,
-            val hastaCharlaId: String,
+            val desdeId: String,
+            val hastaId: String,
             val minutosLibres: Long,
             val desdeAula: String?,
             val hastaAula: String?,
@@ -113,35 +111,32 @@ class CronogramaViewModel(
             val hastaPiso: Int?
         ) : FilaAgenda {
             override val clave: String
-                get() = "tramo:$desdeCharlaId>$hastaCharlaId"
-
-            /** La siguiente arranca antes de que termine la anterior. */
-            val seSuperpone: Boolean get() = minutosLibres < 0
-
+                get() = "tramo:$desdeId>$hastaId"
+            val seSuperpone: Boolean
+                get() = minutosLibres < 0
             val mismoLugar: Boolean
-                get() = desdeAula != null && desdeAula == hastaAula
+                get() =
+                    desdeAula != null &&
+                            desdeAula == hastaAula
 
             val cambiaDePiso: Boolean
-                get() = desdePiso != null &&
-                        hastaPiso != null &&
-                        desdePiso != hastaPiso
-
-            /** Hay que moverse y queda poco tiempo: conviene avisar. */
+                get() =
+                    desdePiso != null &&
+                            hastaPiso != null &&
+                            desdePiso != hastaPiso
             val ajustado: Boolean
-                get() = !seSuperpone && !mismoLugar && minutosLibres <= 10
+                get() =
+                    !seSuperpone &&
+                            !mismoLugar &&
+                            minutosLibres <= 10
         }
     }
 
-    /**
-     * La agenda del dia como itinerario: actividad, tramo, actividad, tramo...
-     *
-     * Es lo que diferencia esta pantalla del cronograma. El cronograma es la
-     * lista de todo lo que pasa; esto es el recorrido de una persona, con los
-     * traslados entre una cosa y la otra a la vista.
-     */
     val itinerario: StateFlow<List<FilaAgenda>> =
         miAgendaDelDia
-            .map { items -> construirItinerario(items) }
+            .map { items ->
+                construirItinerario(items)
+            }
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
@@ -151,19 +146,30 @@ class CronogramaViewModel(
     private fun construirItinerario(
         items: List<ItemAgendaFirebase>
     ): List<FilaAgenda> {
-        if (items.isEmpty()) return emptyList()
+
+        if (items.isEmpty()) {
+            return emptyList()
+        }
+
+        val ordenados =
+            items.sortedWith(
+                compareBy<ItemAgendaFirebase> { it.horaInicio }
+                    .thenBy { it.horaFin }
+            )
 
         val filas = mutableListOf<FilaAgenda>()
 
-        items.forEachIndexed { indice, item ->
+        ordenados.forEachIndexed { indice, item ->
             if (indice > 0) {
-                val anterior = items[indice - 1]
+                val anterior = ordenados[indice - 1]
                 filas += FilaAgenda.Tramo(
-                    desdeCharlaId = anterior.charlaId,
-                    hastaCharlaId = item.charlaId,
-                    minutosLibres = Duration
-                        .between(anterior.horaFin, item.horaInicio)
-                        .toMinutes(),
+                    desdeId = anterior.id,
+                    hastaId = item.id,
+                    minutosLibres =
+                        Duration.between(
+                            anterior.horaFin,
+                            item.horaInicio
+                        ).toMinutes(),
                     desdeAula = anterior.aula,
                     hastaAula = item.aula,
                     desdePiso = anterior.piso,
@@ -174,22 +180,37 @@ class CronogramaViewModel(
         }
         return filas
     }
+
     init {
         escucharCharlas()
         escucharTrabajos()
         escucharSimposios()
-        escucharMiAgenda()
+        escucharActividades()
+
+        listenerAuth = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            if (firebaseAuth.currentUser != null) {
+                escucharMiAgenda()
+            } else {
+                listenerAgenda?.remove()
+                listenerAgenda = null
+                agendaCharlaIds = emptySet()
+                agendaActividadIds = emptySet()
+
+                reconstruir()
+            }
+        }
+        auth.addAuthStateListener(listenerAuth!!)
     }
+
     private fun escucharCharlas() {
         listenerCharlas?.remove()
-
         listenerCharlas =
             firestore
                 .collection("charlas")
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         _avisos.trySend(
-                            "No se pudo cargar el cronograma: ${error.message}"
+                            "No se pudieron cargar las charlas: ${error.message}"
                         )
                         return@addSnapshotListener
                     }
@@ -202,12 +223,13 @@ class CronogramaViewModel(
                                 )
                             }
                             .orEmpty()
+
                     reconstruir()
                 }
     }
+
     private fun escucharTrabajos() {
         listenerTrabajos?.remove()
-
         listenerTrabajos =
             firestore
                 .collection("trabajos")
@@ -227,13 +249,13 @@ class CronogramaViewModel(
                                 )
                             }
                             .orEmpty()
+
                     reconstruir()
                 }
     }
 
     private fun escucharSimposios() {
         listenerSimposios?.remove()
-
         listenerSimposios =
             firestore
                 .collection("simposios")
@@ -253,26 +275,56 @@ class CronogramaViewModel(
                                 )
                             }
                             .orEmpty()
+
                     reconstruir()
                 }
     }
 
+    private fun escucharActividades() {
+        listenerActividades?.remove()
+        listenerActividades =
+            firestore
+                .collection("actividades")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        _avisos.trySend(
+                            "No se pudieron cargar las actividades: ${error.message}"
+                        )
+                        return@addSnapshotListener
+                    }
+
+                    actividadesFirebase =
+                        snapshot
+                            ?.documents
+                            ?.mapNotNull { documento ->
+                                documento.toObject(
+                                    ActividadFirebase::class.java
+                                )
+                            }
+                            .orEmpty()
+
+                    reconstruir()
+                }
+    }
+
+    //escucha la agenda personal del usuario autenticado
     private fun escucharMiAgenda() {
-        val uid =
-            auth.currentUser?.uid
+        val uid = auth.currentUser?.uid
         if (uid == null) {
-            agendaIds = emptySet()
+            agendaCharlaIds = emptySet()
+            agendaActividadIds = emptySet()
+
             reconstruir()
+
             return
         }
+
         listenerAgenda?.remove()
         listenerAgenda =
             firestore
                 .collection("agendaUsuarios")
-                .whereEqualTo(
-                    "usuarioUid",
-                    uid
-                )
+                .whereEqualTo("usuarioUid", uid)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         _avisos.trySend(
@@ -280,20 +332,35 @@ class CronogramaViewModel(
                         )
                         return@addSnapshotListener
                     }
-                    agendaIds =
+                    agendaCharlaIds =
                         snapshot
                             ?.documents
                             ?.mapNotNull {
                                 it.getString("charlaId")
                             }
+                            ?.filter {
+                                it.isNotBlank()
+                            }
                             ?.toSet()
                             .orEmpty()
+                    agendaActividadIds =
+                        snapshot
+                            ?.documents
+                            ?.mapNotNull {
+                                it.getString("actividadId")
+                            }
+                            ?.filter {
+                                it.isNotBlank()
+                            }
+                            ?.toSet()
+                            .orEmpty()
+
                     reconstruir()
                 }
     }
 
     private fun reconstruir() {
-        val lista =
+        val listaCharlas =
             charlasFirebase.mapNotNull { charla ->
                 val fecha =
                     charla.fecha
@@ -304,6 +371,7 @@ class CronogramaViewModel(
                         )
                         ?.toLocalDate()
                         ?: return@mapNotNull null
+
                 val desde =
                     runCatching {
                         LocalTime.parse(
@@ -311,6 +379,7 @@ class CronogramaViewModel(
                         )
                     }.getOrNull()
                         ?: return@mapNotNull null
+
                 val hasta =
                     runCatching {
                         LocalTime.parse(
@@ -318,6 +387,7 @@ class CronogramaViewModel(
                         )
                     }.getOrNull()
                         ?: return@mapNotNull null
+
                 val trabajo =
                     charla.trabajoId
                         ?.let { trabajoId ->
@@ -326,6 +396,7 @@ class CronogramaViewModel(
                                     it.id == trabajoId
                                 }
                         }
+
                 val simposio =
                     charla.simposioId
                         ?.let { simposioId ->
@@ -334,6 +405,7 @@ class CronogramaViewModel(
                                     it.id == simposioId
                                 }
                         }
+
                 val tipo =
                     runCatching {
                         TipoActividad.valueOf(
@@ -342,6 +414,7 @@ class CronogramaViewModel(
                     }.getOrDefault(
                         TipoActividad.OTRO
                     )
+
                 ItemAgendaFirebase(
                     charlaId = charla.id,
                     titulo = charla.titulo,
@@ -354,9 +427,73 @@ class CronogramaViewModel(
                     piso = simposio?.aulaPiso,
                     simposio = simposio?.titulo,
                     expositor = trabajo?.autorNombre,
-                    enMiAgenda = charla.id in agendaIds
+                    enMiAgenda = charla.id in agendaCharlaIds
                 )
             }
+
+        val listaActividades =
+            actividadesFirebase.mapNotNull { actividad ->
+
+                val fecha =
+                    actividad.fecha
+                        ?.toDate()
+                        ?.toInstant()
+                        ?.atZone(
+                            ZoneId.systemDefault()
+                        )
+                        ?.toLocalDate()
+                        ?: return@mapNotNull null
+
+                val desde =
+                    runCatching {
+                        LocalTime.parse(
+                            actividad.horaInicio
+                        )
+                    }.getOrNull()
+                        ?: return@mapNotNull null
+
+                val hasta =
+                    runCatching {
+                        LocalTime.parse(
+                            actividad.horaFin
+                        )
+                    }.getOrNull()
+                        ?: return@mapNotNull null
+
+                val tipo =
+                    runCatching {
+                        TipoActividad.valueOf(
+                            actividad.tipo
+                        )
+                    }.getOrDefault(
+                        TipoActividad.OTRO
+                    )
+
+                ItemAgendaFirebase(
+                    actividadId = actividad.id,
+                    titulo = actividad.titulo,
+                    tipo = tipo,
+                    fecha = fecha,
+                    horaInicio = desde,
+                    horaFin = hasta,
+                    aula = actividad.aulaNombre
+                        .takeIf {
+                            it.isNotBlank()
+                        },
+                    edificio = actividad.aulaEdificio
+                        .takeIf {
+                            it.isNotBlank()
+                        },
+                    piso = actividad.aulaPiso,
+                    simposio = null,
+                    expositor = null,
+                    enMiAgenda =
+                        actividad.id in agendaActividadIds
+                )
+            }
+
+        val lista =
+            (listaCharlas + listaActividades)
                 .sortedWith(
                     compareBy<ItemAgendaFirebase> {
                         it.fecha
@@ -364,6 +501,7 @@ class CronogramaViewModel(
                         it.horaInicio
                     }
                 )
+
         val diasDisponibles =
             lista
                 .map {
@@ -371,46 +509,57 @@ class CronogramaViewModel(
                 }
                 .distinct()
                 .sorted()
+
         _dias.value = diasDisponibles
+
         if (
-            _dia.value == null || _dia.value !in diasDisponibles
+            _dia.value == null ||
+            _dia.value !in diasDisponibles
         ) {
-            _dia.value = diasDisponibles.firstOrNull()
+            _dia.value =
+                diasDisponibles.firstOrNull()
         }
         _todos.value = lista
         programarRecordatorios(lista)
+
         aplicarFiltro(lista)
     }
 
     /**
-     * Mantiene las alarmas de recordatorio alineadas con la agenda del usuario.
+     * Mantiene las alarmas de recordatorio alineadas
+     * con la agenda del usuario.
      *
-     * Se engancha aca porque reconstruir() ya corre ante cualquier cambio que
-     * importe: que el usuario marque o desmarque una charla, o que el
-     * organizador le mueva el horario.
+     * Las actividades no generan recordatorios.
      */
     private fun programarRecordatorios(
         lista: List<ItemAgendaFirebase>
     ) {
-        /* Si todavia no llegaron las charlas no hay nada que decidir, y
-         * reprogramar con la lista vacia borraria alarmas que siguen siendo
-         * validas mientras los listeners estan cargando. */
-        if (charlasFirebase.isEmpty()) return
 
-        val mias = lista.filter { it.enMiAgenda }
+        if (charlasFirebase.isEmpty()) {
+            return
+        }
 
-        /* reconstruir() se dispara con cada snapshot de los cuatro listeners;
-         * sin esta firma estariamos rehaciendo las mismas alarmas de mas. */
+        val mias =
+            lista.filter {
+                it.enMiAgenda &&
+                        !it.esActividad
+            }
+
         val firma =
             mias.joinToString("|") {
                 "${it.charlaId}@${it.fecha}T${it.horaInicio}"
             }
-        if (firma == firmaRecordatorios) return
+
+        if (firma == firmaRecordatorios) {
+            return
+        }
+
         firmaRecordatorios = firma
 
         ProgramadorRecordatorios.reprogramar(
             getApplication(),
             mias.map { item ->
+
                 ProgramadorRecordatorios.Programable(
                     charlaId = item.charlaId,
                     titulo = item.titulo,
@@ -423,19 +572,23 @@ class CronogramaViewModel(
             }
         )
     }
+
     private fun aplicarFiltro(
         lista: List<ItemAgendaFirebase>
     ) {
         val diaSeleccionado = _dia.value
         if (diaSeleccionado == null) {
-            _items.value =
-                emptyList()
+            _items.value = emptyList()
             return
         }
-        var filtrados = lista.filter {
+
+        var filtrados =
+            lista.filter {
                 it.fecha == diaSeleccionado
             }
+
         if (_soloMiAgenda.value) {
+
             filtrados =
                 filtrados.filter {
                     it.enMiAgenda
@@ -443,58 +596,91 @@ class CronogramaViewModel(
         }
         _items.value = filtrados
     }
+
     fun seleccionarDia(
         dia: LocalDate
     ) {
         _dia.value = dia
         reconstruir()
     }
+
     fun alternarSoloMiAgenda() {
         _soloMiAgenda.value =
             !_soloMiAgenda.value
         reconstruir()
     }
 
+    /* agrega o elimina una charla/actividad de la agenda personal */
     fun alternarAgenda(
         item: ItemAgendaFirebase
     ) {
         val uid = auth.currentUser?.uid
-        if (uid == null) { _avisos.trySend(
+        if (uid == null) {
+            _avisos.trySend(
                 "Iniciá sesión para armar tu agenda"
             )
             return
         }
+
         val documentoId =
-            "${uid}_${item.charlaId}"
+            if (item.esActividad) {
+                "${uid}_actividad_${item.actividadId}"
+            } else {
+                "${uid}_${item.charlaId}"
+            }
+
         val ref =
             firestore
                 .collection("agendaUsuarios")
                 .document(documentoId)
+
         if (item.enMiAgenda) {
+
             ref.delete()
-                .addOnSuccessListener { _avisos.trySend(
+                .addOnSuccessListener {
+
+                    _avisos.trySend(
                         "Quitada de tu agenda"
                     )
                 }
-                .addOnFailureListener { error -> _avisos.trySend(
+                .addOnFailureListener { error ->
+
+                    _avisos.trySend(
                         "No se pudo quitar de tu agenda: ${error.message}"
                     )
                 }
+
             return
         }
-        val choques = _items.value.filter { otra ->
+
+        /* buscamos superposiciones con otros elementos que ya tenga guardados */
+        val choques =
+            _items.value.filter { otra ->
+
                 otra.enMiAgenda &&
+                        otra.id != item.id &&
                         otra.fecha == item.fecha &&
-                        otra.charlaId != item.charlaId &&
                         item.horaInicio < otra.horaFin &&
                         item.horaFin > otra.horaInicio
             }
+
         val agenda =
-            AgendaUsuarioFirebase(
-                usuarioUid = uid,
-                charlaId = item.charlaId,
-                agregadoEn = Timestamp.now()
-            )
+            if (item.esActividad) {
+
+                AgendaUsuarioFirebase(
+                    usuarioUid = uid,
+                    charlaId = "",
+                    actividadId = item.actividadId,
+                    agregadoEn = Timestamp.now()
+                )
+            } else {
+                AgendaUsuarioFirebase(
+                    usuarioUid = uid,
+                    charlaId = item.charlaId,
+                    actividadId = "",
+                    agregadoEn = Timestamp.now()
+                )
+            }
         ref.set(agenda)
             .addOnSuccessListener {
                 if (choques.isEmpty()) {
@@ -504,21 +690,28 @@ class CronogramaViewModel(
                 } else {
                     val otra = choques.first()
                     _avisos.trySend(
-                        "Agregada, pero se superpone con \"${otra.titulo}\" " +
+                        "Agregada, pero se superpone con " +
+                                "\"${otra.titulo}\" " +
                                 "(${otra.horaInicio}-${otra.horaFin})"
                     )
                 }
             }
-            .addOnFailureListener { error -> _avisos.trySend(
+            .addOnFailureListener { error ->
+                _avisos.trySend(
                     "No se pudo agregar a tu agenda: ${error.message}"
                 )
             }
     }
+
     override fun onCleared() {
         super.onCleared()
         listenerCharlas?.remove()
         listenerTrabajos?.remove()
         listenerSimposios?.remove()
+        listenerActividades?.remove()
         listenerAgenda?.remove()
+        listenerAuth?.let {
+            auth.removeAuthStateListener(it)
+        }
     }
 }

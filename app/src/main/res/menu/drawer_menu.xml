@@ -34,6 +34,10 @@
             android:title="Inscriptos"
             android:icon="@drawable/outline_group_24" />
         <item
+            android:id="@+id/nav_actividades"
+            android:title="Gestionar actividades"
+            android:icon="@drawable/outline_add_notes_24" />
+        <item
             android:id="@+id/nav_gestionar_faq"
             android:icon="@drawable/baseline_help_outline_24"
             android:title="Gestionar preguntas frecuentes" />

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jnab2025.data.model.CharlaFirebase
+import com.example.jnab2025.data.model.ActividadFirebase
 import com.example.jnab2025.data.model.EstadoTrabajo
 import com.example.jnab2025.data.model.SimposioFirebase
 import com.example.jnab2025.data.model.TipoActividad
@@ -33,6 +34,8 @@ class CharlaViewModel(
     private val _charlas =
         MutableStateFlow<List<CharlaFirebase>>(emptyList())
     val charlas: StateFlow<List<CharlaFirebase>> = _charlas.asStateFlow()
+    private val _actividades = MutableStateFlow<List<ActividadFirebase>>(emptyList())
+    val actividades: StateFlow<List<ActividadFirebase>> = _actividades.asStateFlow()
     private val _trabajo = MutableStateFlow<TrabajoFirebase?>(null)
     val trabajo: StateFlow<TrabajoFirebase?> = _trabajo.asStateFlow()
     private val _simposio = MutableStateFlow<SimposioFirebase?>(null)
@@ -45,14 +48,14 @@ class CharlaViewModel(
     private val _enviando = MutableStateFlow(false)
     val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
     private var listenerCharlas: ListenerRegistration? = null
+    private var listenerActividades: ListenerRegistration? = null
 
     companion object {
-        /** Franja del dia en la que se pueden ubicar presentaciones. */
+        /** Franja del dia en la que se pueden ubicar presentaciones */
         val HORA_APERTURA: LocalTime = LocalTime.of(8, 0)
         val HORA_CIERRE: LocalTime = LocalTime.of(20, 0)
     }
-
-    /** Un bloque de 30 minutos del dia del simposio. */
+    /** Un bloque de 30 minutos del dia del simposio */
     data class Slot(
         val inicio: LocalTime,
         val fin: LocalTime,
@@ -61,6 +64,11 @@ class CharlaViewModel(
     ) {
         val libre: Boolean get() = ocupadoPor == null
     }
+    private data class OcupacionSlot(
+        val inicio: LocalTime,
+        val fin: LocalTime,
+        val titulo: String
+    )
 
     /** El dia del simposio: las charlas no se programan en otro. */
     val fechaDelSimposio: StateFlow<LocalDate?> =
@@ -74,42 +82,105 @@ class CharlaViewModel(
      * pantalla esta abierta, el slot se marca ocupado al instante.
      */
     val slots: StateFlow<List<Slot>> =
-        combine(_simposio, _charlas, _trabajo) { simposio, charlas, trabajo ->
-            calcularSlots(simposio, charlas, trabajo)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        combine(
+            _simposio,
+            _charlas,
+            _actividades,
+            _trabajo
+        ) { simposio, charlas, actividades, trabajo ->
+
+            calcularSlots(
+                simposio = simposio,
+                charlas = charlas,
+                actividades = actividades,
+                trabajo = trabajo
+            )
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            emptyList()
+        )
 
     private fun calcularSlots(
         simposio: SimposioFirebase?,
         charlas: List<CharlaFirebase>,
+        actividades: List<ActividadFirebase>,
         trabajo: TrabajoFirebase?
     ): List<Slot> {
-
         simposio ?: return emptyList()
         val fecha = simposio.fechaInicio?.toLocalDate() ?: return emptyList()
+        /*
+         * Solo nos interesan las ocupaciones:
+         * - del mismo día
+         * - de la misma aula
+         *
+         * La charla del propio trabajo no cuenta porque
+         * estamos permitiendo reprogramarla.
+         */
+        val ocupacionesCharlas =
+            charlas
+                .filter { charla ->
+                    charla.aulaId == simposio.aulaId &&
+                            charla.fecha?.toLocalDate() == fecha &&
+                            (trabajo == null || charla.trabajoId != trabajo.id)
+                }
+                .mapNotNull { charla ->
+                    val inicio = runCatching {
+                            LocalTime.parse(charla.horaInicio)
+                        }.getOrNull()
+                    val fin = runCatching {
+                            LocalTime.parse(charla.horaFin)
+                        }.getOrNull()
 
-        // Solo puede chocar lo que ocupa la misma aula ese dia. La charla del
-        // propio trabajo no cuenta: si se esta reprogramando, su horario actual
-        // tiene que seguir disponible.
-        val ocupadas = charlas.filter { charla ->
-            charla.aulaId == simposio.aulaId &&
-                charla.fecha?.toLocalDate() == fecha &&
-                (trabajo == null || charla.trabajoId != trabajo.id)
-        }
-
+                    if (inicio != null && fin != null) {
+                        OcupacionSlot(
+                            inicio = inicio,
+                            fin = fin,
+                            titulo = charla.titulo
+                        )
+                    } else {
+                        null
+                    }
+                }
+        val ocupacionesActividades =
+            actividades
+                .filter { actividad ->
+                    actividad.aulaId == simposio.aulaId &&
+                            actividad.fecha?.toLocalDate() == fecha
+                }
+                .mapNotNull { actividad ->
+                    val inicio = runCatching {
+                            LocalTime.parse(actividad.horaInicio)
+                        }.getOrNull()
+                    val fin = runCatching {
+                            LocalTime.parse(actividad.horaFin)
+                        }.getOrNull()
+                    if (inicio != null && fin != null) {
+                        OcupacionSlot(
+                            inicio = inicio,
+                            fin = fin,
+                            titulo = actividad.titulo
+                        )
+                    } else {
+                        null
+                    }
+                }
+        val ocupadas = ocupacionesCharlas + ocupacionesActividades
         val duracion = CharlaFirebase.MINUTOS_PRESENTACION.toLong()
         val slots = mutableListOf<Slot>()
         var inicio = HORA_APERTURA
-
         while (!inicio.plusMinutes(duracion).isAfter(HORA_CIERRE)) {
             val fin = inicio.plusMinutes(duracion)
+            val choque = ocupadas.firstOrNull { ocupacion ->
 
-            val choque = ocupadas.firstOrNull { charla ->
-                val desde = runCatching { LocalTime.parse(charla.horaInicio) }.getOrNull()
-                val hasta = runCatching { LocalTime.parse(charla.horaFin) }.getOrNull()
-                desde != null && hasta != null && inicio < hasta && desde < fin
-            }
-
-            slots += Slot(inicio, fin, choque?.titulo)
+                    inicio < ocupacion.fin &&
+                            fin > ocupacion.inicio
+                }
+            slots += Slot(
+                inicio = inicio,
+                fin = fin,
+                ocupadoPor = choque?.titulo
+            )
             inicio = fin
         }
         return slots
@@ -117,6 +188,7 @@ class CharlaViewModel(
 
     init {
         escucharCharlas()
+        escucharActividades()
     }
 
     //escucha el cronograma Firebase completo.
@@ -138,6 +210,29 @@ class CharlaViewModel(
                             ?.mapNotNull { documento ->
                                 documento.toObject(
                                     CharlaFirebase::class.java
+                                )
+                            }
+                            .orEmpty()
+                }
+    }
+    private fun escucharActividades() {
+        listenerActividades?.remove()
+        listenerActividades =
+            firestore
+                .collection("actividades")
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        _avisos.trySend(
+                            "No se pudieron cargar las actividades: ${error.message}"
+                        )
+                        return@addSnapshotListener
+                    }
+                    _actividades.value =
+                        snapshot
+                            ?.documents
+                            ?.mapNotNull { documento ->
+                                documento.toObject(
+                                    ActividadFirebase::class.java
                                 )
                             }
                             .orEmpty()
@@ -366,11 +461,6 @@ class CharlaViewModel(
             }
     }
 
-    /**Hay conflicto cuando:
-     * - es el mismo día
-     * - es la misma aula
-     * - los horarios se superponen
-     * La misma hora en días diferentes es válida.*/
     private fun verificarConflicto(
         trabajo: TrabajoFirebase,
         simposio: SimposioFirebase,
@@ -379,24 +469,30 @@ class CharlaViewModel(
     ) {
         val horaFin =
             horaInicio.plusMinutes(
-                CharlaFirebase
-                    .MINUTOS_PRESENTACION
-                    .toLong()
+                CharlaFirebase.MINUTOS_PRESENTACION.toLong()
             )
+
+        // primero obtenemos las charlas
         firestore
             .collection("charlas")
             .get()
-            .addOnSuccessListener { snapshot ->
+            .addOnSuccessListener { snapshotCharlas ->
                 val charlas =
-                    snapshot.documents
+                    snapshotCharlas.documents
                         .mapNotNull { documento ->
                             documento.toObject(
                                 CharlaFirebase::class.java
                             )
                         }
+                /* Buscamos conflicto unicamente entre: mismo día, misma aula, horarios superpuestos
+                  La charla del propio trabajo se ignora porque ya comprobamos anteriormente que
+                  no tenga una presentación programada */
+                val conflictoCharla =
+                    charlas.firstOrNull { charla ->
 
-                val hayConflicto =
-                    charlas.any { charla ->
+                        if (charla.trabajoId == trabajo.id) {
+                            return@firstOrNull false
+                        }
                         val fechaCharla =
                             charla.fecha
                                 ?.toDate()
@@ -405,61 +501,116 @@ class CharlaViewModel(
                                     ZoneId.systemDefault()
                                 )
                                 ?.toLocalDate()
-
                         if (fechaCharla != fecha) {
-                            false
-                        } else {
-                            val inicioExistente =
-                                runCatching {
-                                    LocalTime.parse(
-                                        charla.horaInicio
-                                    )
-                                }.getOrNull()
-
-                            val finExistente =
-                                runCatching {
-                                    LocalTime.parse(
-                                        charla.horaFin
-                                    )
-                                }.getOrNull()
-
-                            if (
-                                inicioExistente == null ||
-                                finExistente == null
-                            ) {
-                                false
-                            } else {
-                                val mismaAula =
-                                    charla.aulaId ==
-                                            simposio.aulaId
-
-                                val seSuperponen =
-                                    horaInicio < finExistente &&
-                                            horaFin > inicioExistente
-                                mismaAula &&
-                                        seSuperponen
-                            }
+                            return@firstOrNull false
                         }
+                        if (charla.aulaId != simposio.aulaId) {
+                            return@firstOrNull false
+                        }
+                        val inicioExistente =
+                            runCatching {
+                                LocalTime.parse(
+                                    charla.horaInicio
+                                )
+                            }.getOrNull()
+                        val finExistente =
+                            runCatching {
+                                LocalTime.parse(
+                                    charla.horaFin
+                                )
+                            }.getOrNull()
+                        if (
+                            inicioExistente == null ||
+                            finExistente == null
+                        ) {
+                            return@firstOrNull false
+                        }
+                        horaInicio < finExistente &&
+                                horaFin > inicioExistente
                     }
 
-                if (hayConflicto) {
+                if (conflictoCharla != null) {
                     terminar(
-                        "Ya existe una actividad en esa aula y horario"
+                        "El horario se superpone con la charla \"${conflictoCharla.titulo}\""
                     )
                     return@addOnSuccessListener
                 }
-
-                guardarPresentacion(
-                    trabajo = trabajo,
-                    simposio = simposio,
-                    fecha = fecha,
-                    horaInicio = horaInicio,
-                    horaFin = horaFin
-                )
+                // si no hubo conflicto con una charla, comprobamos las actividades
+                firestore
+                    .collection("actividades")
+                    .get()
+                    .addOnSuccessListener { snapshotActividades ->
+                        val actividades =
+                            snapshotActividades.documents
+                                .mapNotNull { documento ->
+                                    documento.toObject(
+                                        ActividadFirebase::class.java
+                                    )
+                                }
+                        val conflictoActividad =
+                            actividades.firstOrNull { actividad ->
+                                val fechaActividad =
+                                    actividad.fecha
+                                        ?.toDate()
+                                        ?.toInstant()
+                                        ?.atZone(
+                                            ZoneId.systemDefault()
+                                        )
+                                        ?.toLocalDate()
+                                if (fechaActividad != fecha) {
+                                    return@firstOrNull false
+                                }
+                                if (
+                                    actividad.aulaId !=
+                                    simposio.aulaId
+                                ) {
+                                    return@firstOrNull false
+                                }
+                                val inicioExistente =
+                                    runCatching {
+                                        LocalTime.parse(
+                                            actividad.horaInicio
+                                        )
+                                    }.getOrNull()
+                                val finExistente =
+                                    runCatching {
+                                        LocalTime.parse(
+                                            actividad.horaFin
+                                        )
+                                    }.getOrNull()
+                                if (
+                                    inicioExistente == null ||
+                                    finExistente == null
+                                ) {
+                                    return@firstOrNull false
+                                }
+                                horaInicio < finExistente &&
+                                        horaFin > inicioExistente
+                            }
+                        if (conflictoActividad != null) {
+                            terminar(
+                                "El horario se superpone con la actividad \"${conflictoActividad.titulo}\""
+                            )
+                            return@addOnSuccessListener
+                        }
+                        //no hay conflicto ni con charlas ni activvidades
+                        guardarPresentacion(
+                            trabajo = trabajo,
+                            simposio = simposio,
+                            fecha = fecha,
+                            horaInicio = horaInicio,
+                            horaFin = horaFin
+                        )
+                    }
+                    .addOnFailureListener { error ->
+                        terminar(
+                            "No se pudieron verificar las actividades: ${error.message}"
+                        )
+                    }
             }
             .addOnFailureListener { error ->
                 terminar(
-                    "No se pudo verificar el horario: ${error.message}"
+                    "No se pudieron verificar las charlas: ${error.message}"
                 )
             }
     }
@@ -529,5 +680,6 @@ class CharlaViewModel(
     override fun onCleared() {
         super.onCleared()
         listenerCharlas?.remove()
+        listenerActividades?.remove()
     }
 }

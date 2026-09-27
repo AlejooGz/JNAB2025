@@ -28,7 +28,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:text="+ Nueva pregunta"
+        android:text="+ Crear nueva pregunta"
         android:backgroundTint="@color/dark_red"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"

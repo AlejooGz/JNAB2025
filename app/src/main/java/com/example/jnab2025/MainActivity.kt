@@ -433,6 +433,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.nav_gestionar_novedades -> {
                 findNavController(R.id.nav_host_fragment).navigate(R.id.gestionarNovedadesFragment)
             }
+            R.id.nav_actividades -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.actividadesFragment)
+            }
         }
 
         binding.drawerLayout.closeDrawer(GravityCompat.START)

@@ -69,10 +69,15 @@ class CronogramaAdapter(
         }
     }
     private class Diff : DiffUtil.ItemCallback<ItemAgendaFirebase>() {
-        override fun areItemsTheSame(oldItem: ItemAgendaFirebase, newItem: ItemAgendaFirebase) =
-            oldItem.charlaId == newItem.charlaId
-
-        override fun areContentsTheSame(oldItem: ItemAgendaFirebase, newItem: ItemAgendaFirebase) =
-            oldItem == newItem
+        override fun areItemsTheSame(oldItem: ItemAgendaFirebase,
+            newItem: ItemAgendaFirebase
+        ): Boolean {
+            return oldItem.id == newItem.id
+        }
+        override fun areContentsTheSame(oldItem: ItemAgendaFirebase,
+            newItem: ItemAgendaFirebase
+        ): Boolean {
+            return oldItem == newItem
+        }
     }
 }

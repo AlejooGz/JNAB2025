@@ -19,28 +19,21 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class HomeOrganizadorFragment : Fragment() {
-
-    private var _binding:
-            FragmentHomeOrganizadorBinding? = null
-
+    private var _binding: FragmentHomeOrganizadorBinding? = null
     private val binding get() = _binding!!
-
-    private val viewModel:
-            HomeOrganizadorViewModel by viewModels()
+    private val viewModel: HomeOrganizadorViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding =
             FragmentHomeOrganizadorBinding.inflate(
                 inflater,
                 container,
                 false
             )
-
         return binding.root
     }
 
@@ -52,7 +45,6 @@ class HomeOrganizadorFragment : Fragment() {
             view,
             savedInstanceState
         )
-
         mostrarSaludo()
         configurarNavegacion()
         observarResumen()
@@ -61,63 +53,65 @@ class HomeOrganizadorFragment : Fragment() {
     private fun mostrarSaludo() {
         val nombreCompleto =
             Sesion.nombre(requireContext())
-
-        val primerNombre = nombreCompleto
-            .trim()
-            .split(Regex("\\s+"))
-            .firstOrNull()
-            .orEmpty()
-            .ifBlank {
-                "Organizador"
-            }
-
+        val primerNombre =
+            nombreCompleto
+                .trim()
+                .split(Regex("\\s+"))
+                .firstOrNull()
+                .orEmpty()
+                .ifBlank {
+                    "Organizador"
+                }
         binding.tvSaludo.text =
             "¡Hola, $primerNombre!"
     }
 
     private fun configurarNavegacion() {
-
+        // Resumen
         binding.cardMisSimposios.setOnClickListener {
             abrirMisSimposios()
         }
 
-        binding.cardPropuestasPendientes
-            .setOnClickListener {
-                /*
-                 * PropuestasFragment necesita un simposioId.
-                 * Primero abrimos Mis simposios para elegirlo.
-                 */
-                abrirMisSimposios()
-            }
+        binding.cardPropuestasPendientes.setOnClickListener {
+            abrirSimposiosFiltrados(
+                "PROPUESTAS"
+            )
+        }
+        binding.cardPagosPendientes.setOnClickListener {
+            abrirInscriptos()
+        }
+        binding.cardInscriptos.setOnClickListener {
+            abrirInscriptos()
+        }
+        binding.cardTrabajosSinProgramar.setOnClickListener {
+            abrirSimposiosFiltrados(
+                "PROGRAMAR"
+            )
+        }
 
-        binding.cardPagosPendientes
-            .setOnClickListener {
-                abrirInscriptos()
-            }
+        // Accesos rapidos
+        binding.cardCrearSimposio.setOnClickListener {
+            findNavController().navigate(
+                R.id.crearSimposioFragment
+            )
+        }
 
-        binding.cardCrearSimposio
-            .setOnClickListener {
-                findNavController().navigate(
-                    R.id.crearSimposioFragment
-                )
-            }
+        binding.cardAccesoMisSimposios.setOnClickListener {
+            findNavController().navigate(
+                R.id.gestionFaqFragment
+            )
+        }
 
-        binding.cardAccesoMisSimposios
-            .setOnClickListener {
-                abrirMisSimposios()
-            }
-
-        binding.cardVerInscriptos
-            .setOnClickListener {
-                abrirInscriptos()
-            }
-
-        binding.cardPublicarNovedad
-            .setOnClickListener {
-                findNavController().navigate(
-                    R.id.crearNovedadFragment
-                )
-            }
+        binding.cardVerInscriptos.setOnClickListener {
+            findNavController().navigate(
+                R.id.crearActividadFragment
+            )
+        }
+        binding.cardPublicarNovedad.setOnClickListener {
+            findNavController().navigate(
+                R.id.crearNovedadFragment
+            )
+        }
     }
 
     private fun abrirMisSimposios() {
@@ -132,45 +126,65 @@ class HomeOrganizadorFragment : Fragment() {
         )
     }
 
+    private fun abrirSimposiosFiltrados(
+        tipo: String
+    ) {
+        val argumentos =
+            Bundle().apply {
+                putString(
+                    "tipoFiltro",
+                    tipo
+                )
+            }
+        findNavController().navigate(
+            R.id.simposiosFiltroHomeFragment,
+            argumentos
+        )
+    }
+
     private fun observarResumen() {
         viewLifecycleOwner.lifecycleScope.launch {
-
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
+
                 launch {
-                    viewModel.resumen
-                        .collectLatest { resumen ->
-
-                            binding.tvCantidadSimposios.text =
-                                resumen
-                                    .cantidadSimposios
-                                    .toString()
-
-                            binding.tvPropuestasPendientes.text =
-                                resumen
-                                    .propuestasPendientes
-                                    .toString()
-
-                            binding.tvPagosPendientes.text =
-                                resumen
-                                    .pagosPendientes
-                                    .toString()
-                        }
+                    viewModel.resumen.collectLatest {
+                            resumen ->
+                        binding.tvCantidadSimposios.text =
+                            resumen
+                                .cantidadSimposios
+                                .toString()
+                        binding.tvPropuestasPendientes.text =
+                            resumen
+                                .propuestasPendientes
+                                .toString()
+                        binding.tvPagosPendientes.text =
+                            resumen
+                                .pagosPendientes
+                                .toString()
+                        binding.tvCantidadInscriptos.text =
+                            resumen
+                                .cantidadInscriptos
+                                .toString()
+                        binding.tvTrabajosSinProgramar.text =
+                            resumen
+                                .trabajosSinProgramar
+                                .toString()
+                    }
                 }
 
                 launch {
-                    viewModel.error
-                        .collectLatest { mensaje ->
-
-                            if (mensaje != null) {
-                                Toast.makeText(
-                                    requireContext(),
-                                    mensaje,
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+                    viewModel.error.collectLatest {
+                            mensaje ->
+                        if (mensaje != null) {
+                            Toast.makeText(
+                                requireContext(),
+                                mensaje,
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
+                    }
                 }
             }
         }
