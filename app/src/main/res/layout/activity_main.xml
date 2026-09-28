@@ -48,6 +48,7 @@
             android:background="@color/cream"
             app:itemIconTint="@color/dark_red"
             app:itemTextColor="@color/dark_red"
+            app:itemActiveIndicatorStyle="@style/BottomNavigationActiveIndicator"
             app:menu="@menu/bottom_nav_menu"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"

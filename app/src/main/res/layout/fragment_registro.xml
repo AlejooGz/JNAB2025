@@ -85,8 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:minHeight="48dp"
-                android:paddingVertical="8dp"
-                android:textColor="@color/dark_red"/>
+                android:background="@drawable/bg_spinner_registro" />
 
             <Button
                 android:id="@+id/btnRegistrarse"

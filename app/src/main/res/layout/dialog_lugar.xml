@@ -25,7 +25,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:textColor="@color/dark_red" />
+            android:background="@drawable/bg_spinner_cream"
+            android:dropDownVerticalOffset="4dp" />
 
         <EditText
             android:id="@+id/etDescuento"
@@ -80,7 +81,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:hint="Latitud"
-            android:inputType="numberDecimal|numberSigned"
+            android:inputType="text"
             android:textColor="@color/dark_red"
             android:textColorHint="@color/dark_red" />
 
@@ -90,7 +91,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:hint="Longitud"
-            android:inputType="numberDecimal|numberSigned"
+            android:inputType="text"
             android:textColor="@color/dark_red"
             android:textColorHint="@color/dark_red" />
 

@@ -659,7 +659,7 @@ object LugaresIniciales {
             activo = true
         ),
         /*LugarFirebase(
-            nombre = "Waira",
+            nombre = "Waira Travel",
             categoria = CategoriaLugar.AGENCIA.name,
             latitud = -42.766931684978495,
             longitud = -65.03911004199881,

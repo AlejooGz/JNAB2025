@@ -31,6 +31,9 @@
 
         <item name="textColorAlertDialogListItem">@color/cream</item>
 
-    </style>
 
+    </style>
+    <style name="BottomNavigationActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/mint_green</item>
+    </style>
 </resources>

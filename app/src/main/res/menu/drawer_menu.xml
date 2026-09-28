@@ -47,7 +47,7 @@
             android:title="Gestionar lugares" />
         <item
             android:id="@+id/nav_gestionar_novedades"
-            android:icon="@drawable/outline_add_notes_24"
+            android:icon="@drawable/outline_breaking_news_24"
             android:title="Gestionar novedades" />
     </group>
 
