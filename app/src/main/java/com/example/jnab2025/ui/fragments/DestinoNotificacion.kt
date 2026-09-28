@@ -20,7 +20,9 @@ internal fun NavController.abrirDestinoDeAviso(
     opciones: NavOptions? = null
 ): Boolean {
     when (tipo) {
-        TipoNotificacion.RECORDATORIO_CHARLA.name -> {
+        // los dos apuntan a una charla: el detalle muestra dia, horario y aula
+        TipoNotificacion.RECORDATORIO_CHARLA.name,
+        TipoNotificacion.PRESENTACION_PROGRAMADA.name -> {
             if (referenciaId.isBlank()) return false
             // accion global del nav_graph, igual que desde el home
             navigate(
@@ -31,6 +33,10 @@ internal fun NavController.abrirDestinoDeAviso(
 
         TipoNotificacion.PAGO_APROBADO.name ->
             navigate(R.id.inscripcionFragment, null, opciones)
+
+        // el organizador va a la lista de inscriptos, donde verifica comprobantes
+        TipoNotificacion.COMPROBANTE_RECIBIDO.name ->
+            navigate(R.id.verInscriptosFragment, null, opciones)
 
         // el mapa se centra en el lugar y abre su detalle
         TipoNotificacion.LUGAR_AGREGADO.name ->

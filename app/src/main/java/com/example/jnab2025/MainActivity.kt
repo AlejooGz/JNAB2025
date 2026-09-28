@@ -459,5 +459,7 @@ private val TIPOS_CON_DESTINO_DESDE_BANDEJA = setOf(
     TipoNotificacion.LUGAR_AGREGADO.name,
     TipoNotificacion.TRABAJO_ENVIADO.name,
     TipoNotificacion.TRABAJO_ACEPTADO.name,
-    TipoNotificacion.TRABAJO_RECHAZADO.name
+    TipoNotificacion.TRABAJO_RECHAZADO.name,
+    TipoNotificacion.PRESENTACION_PROGRAMADA.name,
+    TipoNotificacion.COMPROBANTE_RECIBIDO.name
 )

@@ -54,7 +54,7 @@ object Notificaciones {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description =
-                    "Avisos sobre el estado de tu comprobante e inscripcion"
+                    "Avisos sobre comprobantes de pago e inscripciones"
             }
         )
 
@@ -87,7 +87,7 @@ object Notificaciones {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description =
-                    "Envios de trabajos a tus simposios y resoluciones de tus trabajos"
+                    "Envios de trabajos a tus simposios, resoluciones y horarios de tus presentaciones"
             }
         )
     }

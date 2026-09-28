@@ -34,6 +34,11 @@ enum class PublicoFaq { ASISTENTE, EXPOSITOR }
  * referenciaId es el id del SIMPOSIO (al tocarlo se abren sus propuestas).
  * TRABAJO_ACEPTADO y TRABAJO_RECHAZADO los escribe el organizador para el
  * autor al resolver el trabajo; su referenciaId es el id del trabajo.
+ * PRESENTACION_PROGRAMADA la escribe el organizador para el autor al programar
+ * su charla; su referenciaId es el id de la CHARLA (se abre su detalle).
+ * COMPROBANTE_RECIBIDO no lo escribe el inscripto: cada organizador lo detecta
+ * al ver un comprobante PENDIENTE nuevo y se lo deja a si mismo (ver
+ * DetectorComprobantes); su referenciaId es el id de la inscripcion.
  */
 enum class TipoNotificacion {
     PAGO_APROBADO,
@@ -41,5 +46,7 @@ enum class TipoNotificacion {
     LUGAR_AGREGADO,
     TRABAJO_ENVIADO,
     TRABAJO_ACEPTADO,
-    TRABAJO_RECHAZADO
+    TRABAJO_RECHAZADO,
+    PRESENTACION_PROGRAMADA,
+    COMPROBANTE_RECIBIDO
 }
