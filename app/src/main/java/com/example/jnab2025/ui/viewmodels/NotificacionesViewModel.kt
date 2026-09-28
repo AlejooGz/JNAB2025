@@ -3,8 +3,12 @@ package com.example.jnab2025.ui.viewmodels
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import com.example.jnab2025.data.model.ComprobanteFirebase
+import com.example.jnab2025.data.model.EstadoComprobante
 import com.example.jnab2025.data.model.NotificacionFirebase
+import com.example.jnab2025.notificaciones.DetectorComprobantes
 import com.example.jnab2025.notificaciones.SincronizadorNotificaciones
+import com.example.jnab2025.utils.Sesion
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -43,6 +47,9 @@ class NotificacionesViewModel(
     private var listenerNotificaciones: ListenerRegistration? = null
     private var uidEscuchado: String? = null
 
+    /** Solo para organizadores: comprobantes pendientes que generan avisos. */
+    private var listenerComprobantes: ListenerRegistration? = null
+
     init {
         escuchar()
     }
@@ -57,6 +64,8 @@ class NotificacionesViewModel(
         if (uid == null) {
             listenerNotificaciones?.remove()
             listenerNotificaciones = null
+            listenerComprobantes?.remove()
+            listenerComprobantes = null
             uidEscuchado = null
             _noLeidas.value = 0
             _notificaciones.value = null
@@ -72,12 +81,23 @@ class NotificacionesViewModel(
         _notificaciones.value = null
         _noLeidas.value = 0
 
+        escucharComprobantes(uid)
+
         listenerNotificaciones =
             firestore
                 .collection("notificaciones")
                 .whereEqualTo("destinatarioUid", uid)
                 .addSnapshotListener { snapshot, error ->
-                    if (error != null || snapshot == null) return@addSnapshotListener
+                    if (error != null) {
+                        // Firestore ya dio de baja el listener (por ejemplo, al
+                        // cerrar sesion). Se descarta para que el proximo
+                        // escuchar() lo rearme, aunque vuelva el mismo usuario.
+                        listenerNotificaciones?.remove()
+                        listenerNotificaciones = null
+                        uidEscuchado = null
+                        return@addSnapshotListener
+                    }
+                    if (snapshot == null) return@addSnapshotListener
 
                     val notificaciones =
                         snapshot.documents
@@ -97,6 +117,39 @@ class NotificacionesViewModel(
                     _notificaciones.value =
                         notificaciones.sortedByDescending { it.creadaEn }
                     _noLeidas.value = notificaciones.count { !it.leida }
+                }
+    }
+
+    /**
+     * Si el usuario es organizador, vigila los comprobantes PENDIENTES para
+     * dejarse avisos COMPROBANTE_RECIBIDO (ver [DetectorComprobantes]). Con la
+     * app cerrada hace lo mismo el worker.
+     */
+    private fun escucharComprobantes(uid: String) {
+        listenerComprobantes?.remove()
+        listenerComprobantes = null
+        if (!Sesion.esOrganizador(getApplication())) return
+
+        listenerComprobantes =
+            firestore
+                .collection("comprobantes")
+                .whereEqualTo("estado", EstadoComprobante.PENDIENTE.name)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        // mismo criterio que el listener de notificaciones
+                        listenerComprobantes?.remove()
+                        listenerComprobantes = null
+                        return@addSnapshotListener
+                    }
+                    val pendientes =
+                        snapshot?.documents
+                            ?.mapNotNull { documento ->
+                                documento
+                                    .toObject(ComprobanteFirebase::class.java)
+                                    ?.copy(id = documento.id)
+                            }
+                            .orEmpty()
+                    DetectorComprobantes.procesar(getApplication(), uid, pendientes)
                 }
     }
 
@@ -128,5 +181,6 @@ class NotificacionesViewModel(
     override fun onCleared() {
         super.onCleared()
         listenerNotificaciones?.remove()
+        listenerComprobantes?.remove()
     }
 }

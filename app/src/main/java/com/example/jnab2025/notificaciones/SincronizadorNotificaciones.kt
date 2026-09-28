@@ -3,6 +3,9 @@ package com.example.jnab2025.notificaciones
 import android.content.Context
 import android.util.Log
 import com.example.jnab2025.data.model.CharlaFirebase
+import com.example.jnab2025.data.model.ComprobanteFirebase
+import com.example.jnab2025.data.model.EstadoComprobante
+import com.example.jnab2025.utils.Sesion
 import com.example.jnab2025.data.model.NotificacionFirebase
 import com.example.jnab2025.data.model.SimposioFirebase
 import com.example.jnab2025.data.model.TipoNotificacion
@@ -56,6 +59,47 @@ object SincronizadorNotificaciones {
     }
 
     /**
+     * Version bloqueante de lo que hace el listener de comprobantes: si el
+     * usuario es organizador, se deja un aviso por cada comprobante nuevo (ver
+     * [DetectorComprobantes]). Corre antes de [revisarPendientes] en el worker,
+     * asi el aviso recien creado sale en la misma pasada.
+     */
+    fun detectarComprobantes(context: Context) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        if (!Sesion.esOrganizador(context)) return
+
+        runCatching {
+            val snapshot =
+                Tasks.await(
+                    FirebaseFirestore.getInstance()
+                        .collection("comprobantes")
+                        .whereEqualTo("estado", EstadoComprobante.PENDIENTE.name)
+                        .get(),
+                    ESPERA_SEGUNDOS,
+                    java.util.concurrent.TimeUnit.SECONDS
+                )
+
+            val pendientes =
+                snapshot.documents.mapNotNull { documento ->
+                    documento
+                        .toObject(ComprobanteFirebase::class.java)
+                        ?.copy(id = documento.id)
+                }
+
+            val escrituras = DetectorComprobantes.procesar(context, uid, pendientes)
+            if (escrituras.isNotEmpty()) {
+                Tasks.await(
+                    Tasks.whenAll(escrituras),
+                    ESPERA_SEGUNDOS,
+                    java.util.concurrent.TimeUnit.SECONDS
+                )
+            }
+        }.onFailure {
+            Log.e(TAG, "No se pudieron revisar los comprobantes pendientes", it)
+        }
+    }
+
+    /**
      * Emite el aviso solo si nunca salio antes. Compartido con el listener en
      * vivo para que ambos caminos filtren igual.
      *
@@ -88,7 +132,9 @@ object SincronizadorNotificaciones {
                 TipoNotificacion.LUGAR_AGREGADO.name -> Notificaciones.CANAL_LUGARES
                 TipoNotificacion.TRABAJO_ENVIADO.name,
                 TipoNotificacion.TRABAJO_ACEPTADO.name,
-                TipoNotificacion.TRABAJO_RECHAZADO.name -> Notificaciones.CANAL_TRABAJOS
+                TipoNotificacion.TRABAJO_RECHAZADO.name,
+                TipoNotificacion.PRESENTACION_PROGRAMADA.name -> Notificaciones.CANAL_TRABAJOS
+                // COMPROBANTE_RECIBIDO y PAGO_APROBADO van por "Pagos e inscripciones"
                 else -> Notificaciones.CANAL_PAGOS
             }
 

@@ -29,6 +29,8 @@ class NotificacionesWorker(
 ) : Worker(context, params) {
 
     override fun doWork(): Result {
+        // primero: si es organizador, los comprobantes nuevos generan su aviso
+        SincronizadorNotificaciones.detectarComprobantes(applicationContext)
         SincronizadorNotificaciones.revisarPendientes(applicationContext)
         SincronizadorNotificaciones.sincronizarRecordatorios(applicationContext)
         return Result.success()

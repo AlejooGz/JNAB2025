@@ -23,6 +23,10 @@ object RegistroNotificaciones {
     /** Ids separados por salto de linea, del mas viejo al mas nuevo. */
     private const val K_MOSTRADAS_ORDEN = "mostradasOrden"
     private const val K_PROGRAMADAS = "charlasProgramadas"
+    /** Prefijo + UID: desde cuando este organizador vigila comprobantes. */
+    private const val K_LINEA_BASE = "lineaBaseComprobantes_"
+    /** Ids de aviso de comprobante que este dispositivo ya dejo en Firestore. */
+    private const val K_COMPROBANTES_DETECTADOS = "comprobantesDetectados"
 
     /** Tope para que la lista de ids ya avisados no crezca sin control. */
     private const val MAX_MOSTRADAS = 200
@@ -77,4 +81,42 @@ object RegistroNotificaciones {
             .putStringSet(K_PROGRAMADAS, charlaIds)
             .apply()
     }
+
+    // --- Comprobantes recibidos (organizador) -----------------------------
+
+    /**
+     * Momento (epoch millis) desde el que este organizador recibe avisos de
+     * comprobantes en este dispositivo. La primera vez se fija en "ahora":
+     * los que ya estaban pendientes no suenan (siguen en Ver inscriptos).
+     */
+    fun lineaBaseComprobantes(context: Context, organizadorUid: String): Long {
+        val clave = K_LINEA_BASE + organizadorUid
+        val prefs = prefs(context)
+        val guardada = prefs.getLong(clave, 0L)
+        if (guardada > 0L) return guardada
+
+        val ahora = System.currentTimeMillis()
+        prefs.edit().putLong(clave, ahora).apply()
+        return ahora
+    }
+
+    fun comprobanteDetectado(context: Context, idAviso: String): Boolean =
+        idAviso in comprobantesDetectados(context)
+
+    fun marcarComprobanteDetectado(context: Context, idAviso: String) {
+        val actuales = comprobantesDetectados(context) - idAviso + idAviso
+        prefs(context).edit()
+            .putString(
+                K_COMPROBANTES_DETECTADOS,
+                actuales.takeLast(MAX_MOSTRADAS).joinToString("\n")
+            )
+            .apply()
+    }
+
+    private fun comprobantesDetectados(context: Context): List<String> =
+        prefs(context)
+            .getString(K_COMPROBANTES_DETECTADOS, null)
+            ?.split('\n')
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
 }
