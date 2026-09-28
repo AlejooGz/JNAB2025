@@ -215,6 +215,11 @@
         android:label="Inscriptos" />
 
     <fragment
+        android:id="@+id/acreditacionFragment"
+        android:name="com.example.jnab2025.ui.fragments.AcreditacionFragment"
+        android:label="Acreditación" />
+
+    <fragment
         android:id="@+id/mapsFragment"
         android:name="com.example.jnab2025.ui.fragments.MapsFragment"
         android:label="Mapa Descuentos">

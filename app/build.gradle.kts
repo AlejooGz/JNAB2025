@@ -143,6 +143,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     // QR de la credencial del home del expositor
     implementation(libs.zxing.core)
+    // Escaner de QR de la acreditacion (organizador)
+    implementation(libs.play.services.code.scanner)
     // Habilita la vista previa (@Preview) en Android Studio; solo en debug
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

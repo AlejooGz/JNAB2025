@@ -20,6 +20,9 @@ composeBom = "2025.05.00"
 lifecycleRuntimeCompose = "2.8.7"
 # Solo el nucleo de ZXing: genera el QR de la credencial (no usa la camara)
 zxing = "3.5.3"
+# Escaner de QR de Google Play Services (acreditacion). Usa la camara desde Play
+# Services, asi que la app no necesita el permiso CAMERA.
+playServicesCodeScanner = "16.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +45,7 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "playServicesCodeScanner" }
 
 
 [plugins]
