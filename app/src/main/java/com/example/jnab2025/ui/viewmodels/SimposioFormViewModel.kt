@@ -3,106 +3,431 @@ package com.example.jnab2025.ui.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jnab2025.data.local.JnabDatabase
-import com.example.jnab2025.data.model.Aula
-import com.example.jnab2025.data.model.Simposio
-import com.example.jnab2025.data.repository.OrganizadorRepository
+import com.example.jnab2025.data.model.AulaFirebase
+import com.example.jnab2025.data.model.SimposioFirebase
 import com.example.jnab2025.utils.Sesion
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
 
-/** Sirve para crear y para editar: la diferencia es si llega con un id o no. */
-class SimposioFormViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repo = OrganizadorRepository(JnabDatabase.get(application))
-    private val usuarioId = Sesion.usuarioId(application)
-    private val eventoId = Sesion.eventoId(application)
-
-    val aulas: StateFlow<List<Aula>> = repo.aulas()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    private val _simposio = MutableStateFlow<Simposio?>(null)
-    val simposio: StateFlow<Simposio?> = _simposio.asStateFlow()
-
+class SimposioFormViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+    private val firestore = FirebaseFirestore.getInstance()
+    private val _aulas = MutableStateFlow<List<AulaFirebase>>(emptyList())
+    val aulas: StateFlow<List<AulaFirebase>> = _aulas.asStateFlow()
+    private val _simposio = MutableStateFlow<SimposioFirebase?>(null)
+    val simposio: StateFlow<SimposioFirebase?> = _simposio.asStateFlow()
     private val _avisos = Channel<String>(Channel.BUFFERED)
     val avisos: Flow<String> = _avisos.receiveAsFlow()
-
     private val _guardados = Channel<Unit>(Channel.BUFFERED)
     val guardados: Flow<Unit> = _guardados.receiveAsFlow()
+    // true desde que se valida el aula hasta que el simposio queda guardado o falla
+    private val _enviando = MutableStateFlow(false)
+    val enviando: StateFlow<Boolean> = _enviando.asStateFlow()
 
-    fun cargar(simposioId: Long) = viewModelScope.launch {
-        _simposio.value = repo.simposio(simposioId)
+    init {
+        cargarAulas()
     }
 
+    private fun cargarAulas() {
+        firestore
+            .collection("aulas")
+            .get()
+            .addOnSuccessListener { resultado ->
+
+                val lista = resultado.documents
+                    .mapNotNull { documento ->
+                        documento.toObject(
+                            AulaFirebase::class.java
+                        )
+                    }
+
+                _aulas.value = lista
+            }
+            .addOnFailureListener { error ->
+                _avisos.trySend(
+                    "No se pudieron cargar las aulas: ${error.message}"
+                )
+            }
+    }
+    /**
+     * El simposio dura un solo dia, asi que recibe una sola fecha. Igual se
+     * siguen guardando fechaInicio y fechaFin con el mismo valor, para no
+     * romper los documentos que ya estan en Firestore ni la validacion de
+     * choque de aulas, que compara rangos.
+     */
     fun guardar(
-        simposioId: Long,
+        simposioId: String?,
         titulo: String,
         tema: String,
         descripcion: String,
-        aulaId: Long?,
-        desde: LocalDate?,
-        hasta: LocalDate?
-    ) = viewModelScope.launch {
+        aulaId: String?,
+        fecha: LocalDate?
+    ) {
+        val desde = fecha
+        val hasta = fecha
+
         when {
-            titulo.isBlank() -> return@launch avisar("Falta el titulo")
-            tema.isBlank() -> return@launch avisar("Falta el tema central")
-            descripcion.isBlank() -> return@launch avisar("Falta la descripcion")
-            aulaId == null -> return@launch avisar("Elegi un aula")
-            desde == null || hasta == null -> return@launch avisar("Elegi las fechas")
-            hasta < desde -> return@launch avisar("La fecha de fin es anterior a la de inicio")
-        }
-
-        // Como el aula es del simposio, alcanza con chequear acá para que dos
-        // simposios no se pisen en la misma sala.
-        val choques = repo.conflictosDeAula(aulaId!!, desde!!, hasta!!, simposioId)
-        if (choques.isNotEmpty()) {
-            return@launch avisar("Esa aula ya la ocupa \"${choques.first().titulo}\" en esas fechas")
-        }
-
-        val existente = _simposio.value
-        runCatching {
-            if (simposioId == 0L || existente == null) {
-                repo.crearSimposio(
-                    Simposio(
-                        eventoId = eventoId,
-                        organizadorId = usuarioId,
-                        aulaId = aulaId,
-                        titulo = titulo.trim(),
-                        descripcion = descripcion.trim(),
-                        temaCentral = tema.trim(),
-                        fechaInicio = desde,
-                        fechaFin = hasta
-                    )
-                )
-            } else {
-                repo.actualizarSimposio(
-                    existente.copy(
-                        aulaId = aulaId,
-                        titulo = titulo.trim(),
-                        descripcion = descripcion.trim(),
-                        temaCentral = tema.trim(),
-                        fechaInicio = desde,
-                        fechaFin = hasta
-                    )
-                )
+            titulo.isBlank() -> {
+                _avisos.trySend("Falta el título")
+                return
             }
-        }.onSuccess {
-            _avisos.send(if (simposioId == 0L) "Simposio creado" else "Cambios guardados")
-            _guardados.send(Unit)
-        }.onFailure {
-            _avisos.send("No se pudo guardar: ${it.message}")
+            tema.isBlank() -> {
+                _avisos.trySend("Falta el tema central")
+                return
+            }
+            descripcion.isBlank() -> {
+                _avisos.trySend("Falta la descripción")
+                return
+            }
+            aulaId == null -> {
+                _avisos.trySend("Elegí un aula")
+                return
+            }
+            desde == null || hasta == null -> {
+                _avisos.trySend("Elegí el día del simposio")
+                return
+            }
+        }
+        val organizadorUid =
+            Sesion.firebaseUid(getApplication())
+        if (organizadorUid == null) {
+            _avisos.trySend(
+                "No hay un organizador autenticado"
+            )
+            return
+        }
+        val aula = _aulas.value.firstOrNull {
+            it.id == aulaId
+        }
+        if (aula == null) {
+            _avisos.trySend(
+                "No se encontró el aula seleccionada"
+            )
+            return
+        }
+        _enviando.value = true
+        if (simposioId == null) {
+            verificarConflictoYGuardar(
+                organizadorUid = organizadorUid,
+                aula = aula,
+                titulo = titulo,
+                tema = tema,
+                descripcion = descripcion,
+                desde = desde,
+                hasta = hasta
+            )
+        } else {
+            verificarConflictoYActualizar(
+                simposioId = simposioId,
+                organizadorUid = organizadorUid,
+                aula = aula,
+                titulo = titulo,
+                tema = tema,
+                descripcion = descripcion,
+                desde = desde,
+                hasta = hasta
+            )
         }
     }
 
-    private suspend fun avisar(mensaje: String) {
-        _avisos.send(mensaje)
+    private fun verificarConflictoYGuardar(
+        organizadorUid: String,
+        aula: AulaFirebase,
+        titulo: String,
+        tema: String,
+        descripcion: String,
+        desde: LocalDate,
+        hasta: LocalDate
+    ) {
+        firestore
+            .collection("simposios")
+            .whereEqualTo("aulaId", aula.id)
+            .get()
+            .addOnSuccessListener { resultado ->
+
+                val conflicto = resultado.documents
+                    .mapNotNull {
+                        it.toObject(
+                            SimposioFirebase::class.java
+                        )
+                    }
+                    .any { existente ->
+
+                        val inicioExistente =
+                            existente.fechaInicio
+                                ?.toDate()
+                                ?.toInstant()
+                                ?.atZone(
+                                    ZoneId.systemDefault()
+                                )
+                                ?.toLocalDate()
+
+                        val finExistente =
+                            existente.fechaFin
+                                ?.toDate()
+                                ?.toInstant()
+                                ?.atZone(
+                                    ZoneId.systemDefault()
+                                )
+                                ?.toLocalDate()
+
+                        if (
+                            inicioExistente == null ||
+                            finExistente == null
+                        ) {
+                            false
+                        } else {
+                            desde <= finExistente &&
+                                    hasta >= inicioExistente
+                        }
+                    }
+
+                if (conflicto) {
+                    terminar(
+                        "Esa aula ya está ocupada por otro simposio en esas fechas"
+                    )
+                    return@addOnSuccessListener
+                }
+                crearSimposio(
+                    organizadorUid = organizadorUid,
+                    aula = aula,
+                    titulo = titulo,
+                    tema = tema,
+                    descripcion = descripcion,
+                    desde = desde,
+                    hasta = hasta
+                )
+            }
+            .addOnFailureListener { error ->
+                terminar(
+                    "No se pudieron verificar los horarios: ${error.message}"
+                )
+            }
+    }
+
+    private fun crearSimposio(
+        organizadorUid: String,
+        aula: AulaFirebase,
+        titulo: String,
+        tema: String,
+        descripcion: String,
+        desde: LocalDate,
+        hasta: LocalDate
+    ) {
+
+        val ref = firestore
+            .collection("simposios")
+            .document()
+
+        val simposio = SimposioFirebase(
+            id = ref.id,
+            organizadorUid = organizadorUid,
+
+            aulaId = aula.id,
+            aulaNombre = aula.nombre,
+            aulaEdificio = aula.edificio,
+            aulaPiso = aula.piso,
+
+            titulo = titulo.trim(),
+            descripcion = descripcion.trim(),
+            temaCentral = tema.trim(),
+
+            fechaInicio = desde.toTimestamp(),
+            fechaFin = hasta.toTimestamp()
+        )
+
+        ref.set(simposio)
+            .addOnSuccessListener {
+
+                terminar(
+                    "Simposio creado"
+                )
+
+                _guardados.trySend(Unit)
+            }
+            .addOnFailureListener { error ->
+
+                terminar(
+                    "No se pudo guardar: ${error.message}"
+                )
+            }
+    }
+
+    // cierra el guardado: apaga la ruedita y avisa el resultado
+    private fun terminar(mensaje: String) {
+        _enviando.value = false
+        _avisos.trySend(mensaje)
+    }
+
+    private fun LocalDate.toTimestamp(): Timestamp {
+
+        val instant = this
+            .atStartOfDay(
+                ZoneId.systemDefault()
+            )
+            .toInstant()
+
+        return Timestamp(
+            Date.from(instant)
+        )
+    }
+
+    fun cargar(simposioId: String) {
+        firestore
+            .collection("simposios")
+            .document(simposioId)
+            .get()
+            .addOnSuccessListener { documento ->
+
+                val simposio = documento.toObject(
+                    SimposioFirebase::class.java
+                )
+
+                if (simposio == null) {
+                    _avisos.trySend(
+                        "No se encontró el simposio"
+                    )
+                    return@addOnSuccessListener
+                }
+                _simposio.value = simposio
+            }
+            .addOnFailureListener { error ->
+
+                _avisos.trySend(
+                    "No se pudo cargar el simposio: ${error.message}"
+                )
+            }
+    }
+    private fun verificarConflictoYActualizar(
+        simposioId: String,
+        organizadorUid: String,
+        aula: AulaFirebase,
+        titulo: String,
+        tema: String,
+        descripcion: String,
+        desde: LocalDate,
+        hasta: LocalDate
+    ) {
+        firestore
+            .collection("simposios")
+            .whereEqualTo("aulaId", aula.id)
+            .get()
+            .addOnSuccessListener { resultado ->
+
+                val conflicto = resultado.documents
+                    // No comparar el simposio consigo mismo
+                    .filter { documento ->
+                        documento.id != simposioId
+                    }
+                    .mapNotNull { documento ->
+                        documento.toObject(
+                            SimposioFirebase::class.java
+                        )
+                    }
+                    .any { existente ->
+
+                        val inicioExistente =
+                            existente.fechaInicio
+                                ?.toDate()
+                                ?.toInstant()
+                                ?.atZone(
+                                    ZoneId.systemDefault()
+                                )
+                                ?.toLocalDate()
+
+                        val finExistente =
+                            existente.fechaFin
+                                ?.toDate()
+                                ?.toInstant()
+                                ?.atZone(
+                                    ZoneId.systemDefault()
+                                )
+                                ?.toLocalDate()
+
+                        if (
+                            inicioExistente == null ||
+                            finExistente == null
+                        ) {
+                            false
+                        } else {
+                            desde <= finExistente &&
+                                    hasta >= inicioExistente
+                        }
+                    }
+
+                if (conflicto) {
+                    terminar(
+                        "Esa aula ya está ocupada por otro simposio en esas fechas"
+                    )
+                    return@addOnSuccessListener
+                }
+                actualizarSimposio(
+                    simposioId = simposioId,
+                    organizadorUid = organizadorUid,
+                    aula = aula,
+                    titulo = titulo,
+                    tema = tema,
+                    descripcion = descripcion,
+                    desde = desde,
+                    hasta = hasta
+                )
+            }
+            .addOnFailureListener { error ->
+                terminar(
+                    "No se pudieron verificar los horarios: ${error.message}"
+                )
+            }
+    }
+    private fun actualizarSimposio(
+        simposioId: String,
+        organizadorUid: String,
+        aula: AulaFirebase,
+        titulo: String,
+        tema: String,
+        descripcion: String,
+        desde: LocalDate,
+        hasta: LocalDate
+    ) {
+
+        val simposio = SimposioFirebase(
+            id = simposioId,
+            organizadorUid = organizadorUid,
+            aulaId = aula.id,
+            aulaNombre = aula.nombre,
+            aulaEdificio = aula.edificio,
+            aulaPiso = aula.piso,
+            titulo = titulo.trim(),
+            descripcion = descripcion.trim(),
+            temaCentral = tema.trim(),
+            fechaInicio = desde.toTimestamp(),
+            fechaFin = hasta.toTimestamp()
+        )
+
+        firestore
+            .collection("simposios")
+            .document(simposioId)
+            .set(simposio)
+            .addOnSuccessListener {
+                terminar(
+                    "Simposio actualizado"
+                )
+                _guardados.trySend(Unit)
+            }
+            .addOnFailureListener { error ->
+                terminar(
+                    "No se pudo actualizar: ${error.message}"
+                )
+            }
     }
 }

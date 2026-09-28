@@ -15,6 +15,7 @@ import androidx.navigation.fragment.navArgs
 import com.example.jnab2025.databinding.FragmentRechazarPropuestaBinding
 import com.example.jnab2025.ui.viewmodels.PropuestasViewModel
 import com.example.jnab2025.utils.Archivos
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -26,7 +27,6 @@ class RechazarPropuestaFragment : Fragment() {
 
     private var _binding: FragmentRechazarPropuestaBinding? = null
     private val binding get() = _binding!!
-
     private val args: RechazarPropuestaFragmentArgs by navArgs()
     private val viewModel: PropuestasViewModel by viewModels()
 
@@ -45,10 +45,19 @@ class RechazarPropuestaFragment : Fragment() {
 
         binding.btnVerPdf.setOnClickListener {
             val trabajo = viewModel.trabajo.value
-            Archivos.mensajeDe(Archivos.abrirPdf(requireContext(), trabajo?.archivoUri))
-                ?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show() }
+            Archivos.mensajeDe(
+                Archivos.abrirPdf(
+                    requireContext(),
+                    trabajo?.archivoUrl
+                )
+            )?.let {
+                Toast.makeText(
+                    requireContext(),
+                    it,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
-
         binding.btnCancelarRechazo.setOnClickListener { findNavController().popBackStack() }
 
         binding.btnConfirmarRechazo.setOnClickListener {
@@ -71,6 +80,9 @@ class RechazarPropuestaFragment : Fragment() {
                     }
                 }
                 launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it) }
+                }
+                launch {
                     viewModel.avisos.collectLatest {
                         Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
                     }
@@ -84,6 +96,7 @@ class RechazarPropuestaFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

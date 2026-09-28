@@ -16,7 +16,7 @@
     <color name="light_pink">#FFF5F2</color>
     <color name="cream">#F3EED9</color>
 
-    <!-- Colores específicos para componentes de la app -->|
+    <!-- Colores específicos para componentes de la app -->
     <color name="yellow_header">#932C27</color>
     <color name="green_subtitle">#BC827A</color>
     <color name="event_background">#FFF5F2</color>

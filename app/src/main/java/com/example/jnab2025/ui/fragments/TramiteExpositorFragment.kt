@@ -19,25 +19,17 @@ import androidx.navigation.fragment.navArgs
 import com.example.jnab2025.R
 import com.example.jnab2025.databinding.FragmentTramiteExpositorBinding
 import com.example.jnab2025.ui.viewmodels.EnviarTrabajoViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class TramiteExpositorFragment : Fragment() {
-
     private var _binding: FragmentTramiteExpositorBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: EnviarTrabajoViewModel by viewModels()
     private val args: TramiteExpositorFragmentArgs by navArgs()
-
     private var archivoUri: Uri? = null
     private var nombreArchivo: String? = null
-
-    /**
-     * OpenDocument en lugar de un Intent suelto: devuelve un URI al que se le
-     * puede pedir permiso persistente, para que el PDF siga siendo accesible
-     * despues de cerrar la app. Antes solo se guardaba el nombre del archivo.
-     */
     private val elegirPdf = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -49,7 +41,6 @@ class TramiteExpositorFragment : Fragment() {
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
         }
-
         archivoUri = uri
         nombreArchivo = nombreDe(uri)
         binding.tvArchivoSeleccionado.text = "Archivo: $nombreArchivo"
@@ -66,23 +57,24 @@ class TramiteExpositorFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         binding.btnSeleccionarArchivo.setOnClickListener {
             elegirPdf.launch(arrayOf("application/pdf"))
         }
-
         binding.btnEnviarTramite.setOnClickListener {
             viewModel.enviar(
                 simposioId = args.simposioId,
                 titulo = binding.etTituloTrabajo.text.toString(),
                 resumen = binding.etResumenTrabajo.text.toString(),
-                archivoUri = archivoUri?.toString(),
+                archivoUri = archivoUri,
                 nombreArchivo = nombreArchivo
             )
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it) }
+                }
                 viewModel.envios.collectLatest { envio ->
                     when (envio) {
                         EnviarTrabajoViewModel.Envio.Ok -> {
@@ -91,7 +83,6 @@ class TramiteExpositorFragment : Fragment() {
                                 R.id.action_tramiteExpositorFragment_to_seguimientoTramiteFragment2
                             )
                         }
-
                         is EnviarTrabajoViewModel.Envio.Error -> avisar(envio.mensaje)
                     }
                 }
@@ -106,13 +97,13 @@ class TramiteExpositorFragment : Fragment() {
             if (indice >= 0 && it.moveToFirst()) it.getString(indice) else null
         } ?: "trabajo.pdf"
     }
-
     private fun avisar(mensaje: String) {
         Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

@@ -13,33 +13,31 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.example.jnab2025.data.model.Aula
+import com.example.jnab2025.data.model.AulaFirebase
 import com.example.jnab2025.databinding.FragmentSimposioFormBinding
 import com.example.jnab2025.ui.viewmodels.SimposioFormViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
+import com.google.firebase.Timestamp
+import java.time.ZoneId
 /**
  * Formulario compartido por crear y editar simposio. La unica diferencia es si
  * llega con un id existente o con 0.
  */
 abstract class SimposioFormFragment : Fragment() {
-
     private var _binding: FragmentSimposioFormBinding? = null
     protected val binding get() = _binding!!
 
     protected val viewModel: SimposioFormViewModel by viewModels()
-
-    /** 0 cuando se esta creando uno nuevo. */
-    protected abstract val simposioId: Long
+    protected abstract val simposioId: String?
     protected abstract val encabezado: String
 
-    private var aulaId: Long? = null
-    private var desde: LocalDate? = null
-    private var hasta: LocalDate? = null
-
+    private var aulaId: String? = null
+    /** El simposio dura un solo dia. */
+    private var fecha: LocalDate? = null
     private val formato = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     override fun onCreateView(
@@ -54,12 +52,11 @@ abstract class SimposioFormFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.tvEncabezado.text = encabezado
-
-        if (simposioId != 0L) viewModel.cargar(simposioId)
-
+        simposioId?.let { id ->
+            viewModel.cargar(id)
+        }
         binding.btnAula.setOnClickListener { elegirAula() }
-        binding.btnFechaInicio.setOnClickListener { elegirFecha(esInicio = true) }
-        binding.btnFechaFin.setOnClickListener { elegirFecha(esInicio = false) }
+        binding.btnFecha.setOnClickListener { elegirFecha() }
 
         binding.btnGuardar.setOnClickListener {
             viewModel.guardar(
@@ -68,8 +65,7 @@ abstract class SimposioFormFragment : Fragment() {
                 tema = binding.etTema.text.toString(),
                 descripcion = binding.etDescripcion.text.toString(),
                 aulaId = aulaId,
-                desde = desde,
-                hasta = hasta
+                fecha = fecha
             )
         }
 
@@ -82,14 +78,19 @@ abstract class SimposioFormFragment : Fragment() {
                         binding.etTema.setText(simposio.temaCentral)
                         binding.etDescripcion.setText(simposio.descripcion)
                         aulaId = simposio.aulaId
-                        desde = simposio.fechaInicio
-                        hasta = simposio.fechaFin
-                        pintarFechas()
+                        // El simposio es de un dia: fechaInicio es ese dia.
+                        fecha = timestampALocalDate(
+                            simposio.fechaInicio
+                        )
+                        pintarFecha()
                         pintarAula()
                     }
                 }
                 launch {
                     viewModel.aulas.collectLatest { pintarAula() }
+                }
+                launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it, "Guardando…") }
                 }
                 launch {
                     viewModel.avisos.collectLatest {
@@ -119,14 +120,13 @@ abstract class SimposioFormFragment : Fragment() {
             .show()
     }
 
-    private fun elegirFecha(esInicio: Boolean) {
-        val base = (if (esInicio) desde else hasta) ?: LocalDate.now()
+    private fun elegirFecha() {
+        val base = fecha ?: LocalDate.now()
         DatePickerDialog(
             requireContext(),
             { _, anio, mes, dia ->
-                val elegida = LocalDate.of(anio, mes + 1, dia)
-                if (esInicio) desde = elegida else hasta = elegida
-                pintarFechas()
+                fecha = LocalDate.of(anio, mes + 1, dia)
+                pintarFecha()
             },
             base.year, base.monthValue - 1, base.dayOfMonth
         ).show()
@@ -138,22 +138,28 @@ abstract class SimposioFormFragment : Fragment() {
         binding.tvAula.text = aula?.let { describir(it) } ?: "Sin aula asignada"
     }
 
-    private fun pintarFechas() {
-        val d = desde
-        val h = hasta
-        binding.tvFechas.text = when {
-            d == null && h == null -> "Sin fechas elegidas"
-            d != null && h == null -> "Desde ${d.format(formato)}"
-            d == null && h != null -> "Hasta ${h.format(formato)}"
-            else -> "${d!!.format(formato)} al ${h!!.format(formato)}"
-        }
+    private fun pintarFecha() {
+        val elegida = fecha
+        binding.tvFechas.text = elegida
+            ?.let { "Día del simposio: ${it.format(formato)}" }
+            ?: "Sin fecha elegida"
     }
 
-    private fun describir(aula: Aula) =
+    private fun describir(aula: AulaFirebase) =
         if (aula.piso == 0) "${aula.nombre} - planta baja" else "${aula.nombre} - piso ${aula.piso}"
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
+    }
+    private fun timestampALocalDate(
+        timestamp: com.google.firebase.Timestamp?
+    ): LocalDate? {
+        return timestamp
+            ?.toDate()
+            ?.toInstant()
+            ?.atZone(ZoneId.systemDefault())
+            ?.toLocalDate()
     }
 }

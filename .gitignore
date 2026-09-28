@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+app/google-services.json
+
+# Archivos de Claude Code
+/CLAUDE.md
+/CAMBIOS-NOTIFICACIONES.md
+/.idea/claudeCodeTabState.xml
+.idea/

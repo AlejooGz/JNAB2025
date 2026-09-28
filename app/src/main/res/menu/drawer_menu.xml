@@ -33,11 +33,35 @@
             android:id="@+id/nav_ver_inscriptos"
             android:title="Inscriptos"
             android:icon="@drawable/outline_group_24" />
+        <item
+            android:id="@+id/nav_acreditacion"
+            android:title="Acreditación"
+            android:icon="@drawable/outline_qr_code_scanner_24" />
+        <item
+            android:id="@+id/nav_actividades"
+            android:title="Gestionar actividades"
+            android:icon="@drawable/outline_add_notes_24" />
+        <item
+            android:id="@+id/nav_gestionar_faq"
+            android:icon="@drawable/baseline_help_outline_24"
+            android:title="Gestionar preguntas frecuentes" />
+        <item
+            android:id="@+id/nav_gestionar_lugares"
+            android:icon="@drawable/outline_add_location_alt_24"
+            android:title="Gestionar lugares" />
+        <item
+            android:id="@+id/nav_gestionar_novedades"
+            android:icon="@drawable/outline_breaking_news_24"
+            android:title="Gestionar novedades" />
     </group>
 
     <group
         android:id="@+id/group_asistente"
         android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_mi_agenda"
+            android:icon="@drawable/outline_event_available_24"
+            android:title="Mi Agenda" />
         <item
             android:id="@+id/nav_inscripcion"
             android:title="Inscripción"

@@ -19,6 +19,9 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loginFragment_to_registroFragment"
+            app:destination="@id/registroFragment" />
     </fragment>
 
     <fragment
@@ -41,15 +44,21 @@
 
 
 
-    <!--
-
-
-        <fragment
+    <fragment
         android:id="@+id/miAgendaFragment"
         android:name="com.example.jnab2025.ui.fragments.MiAgendaFragment"
         android:label="Mi Agenda"
-        tools:layout="@layout/fragment_mi_agenda" />
-    -->
+        tools:layout="@layout/fragment_mi_agenda">
+
+        <action
+            android:id="@+id/action_miAgendaFragment_to_charlaDetailFragment"
+            app:destination="@id/charlaDetailFragment" />
+
+        <action
+            android:id="@+id/action_miAgendaFragment_to_actividadDetailFragment"
+            app:destination="@id/actividadDetailFragment" />
+
+    </fragment>
 
     <fragment
         android:id="@+id/agendaFragment"
@@ -74,6 +83,21 @@
         android:id="@+id/novedadesFragment"
         android:name="com.example.jnab2025.ui.fragments.NovedadesFragment"
         android:label="Novedades" />
+    <fragment
+        android:id="@+id/crearNovedadFragment"
+        android:name="com.example.jnab2025.ui.fragments.CrearNovedadFragment"
+        android:label="Crear Novedad">
+
+        <argument
+            android:name="novedadId"
+            app:argType="string"
+            android:defaultValue="" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/gestionarNovedadesFragment"
+        android:name="com.example.jnab2025.ui.fragments.GestionarNovedadesFragment"
+        android:label="Gestionar novedades" />
 
     <fragment
         android:id="@+id/misSimposiosFragment"
@@ -89,6 +113,9 @@
         <action
             android:id="@+id/action_misSimposiosFragment_to_propuestasFragment"
             app:destination="@id/propuestasFragment" />
+        <action
+            android:id="@+id/action_misSimposiosFragment_to_trabajosSimposioFragment"
+            app:destination="@id/trabajosSimposioFragment" />
     </fragment>
 
     <fragment
@@ -102,7 +129,7 @@
         android:label="Editar Simposio">
         <argument
             android:name="simposioId"
-            app:argType="long" />
+            app:argType="string" />
     </fragment>
 
     <fragment
@@ -111,7 +138,7 @@
         android:label="Propuestas">
         <argument
             android:name="simposioId"
-            app:argType="long" />
+            app:argType="string" />
         <action
             android:id="@+id/action_propuestasFragment_to_rechazarPropuestaFragment"
             app:destination="@id/rechazarPropuestaFragment" />
@@ -126,7 +153,7 @@
         android:label="Rechazar Propuesta">
         <argument
             android:name="trabajoId"
-            app:argType="long" />
+            app:argType="string" />
     </fragment>
 
     <fragment
@@ -135,7 +162,7 @@
         android:label="Aceptar Propuesta">
         <argument
             android:name="trabajoId"
-            app:argType="long" />
+            app:argType="string" />
     </fragment>
 
     <fragment
@@ -144,7 +171,7 @@
         android:label="Trámite Expositor" >
         <argument
             android:name="simposioId"
-            app:argType="long" />
+            app:argType="string" />
         <action
             android:id="@+id/action_tramiteExpositorFragment_to_seguimientoTramiteFragment2"
             app:destination="@id/seguimientoTramiteFragment" />
@@ -154,9 +181,6 @@
         android:id="@+id/seguimientoTramiteFragment"
         android:name="com.example.jnab2025.ui.fragments.SeguimientoTramiteFragment"
         android:label="Seguimiento de Trámite" >
-        <action
-            android:id="@+id/action_seguimientoTramiteFragment_to_editarTramiteFragment"
-            app:destination="@id/editarTramiteFragment" />
         <action
             android:id="@+id/action_seguimientoTramiteFragment_to_inscripcionFragment"
             app:destination="@id/inscripcionFragment" />
@@ -181,15 +205,6 @@
         android:label="Cargar Comprobante" />
 
     <fragment
-        android:id="@+id/editarTramiteFragment"
-        android:name="com.example.jnab2025.ui.fragments.EditarTramiteFragment"
-        android:label="Editar Trámite">
-        <argument
-            android:name="tramiteId"
-            app:argType="integer" />
-    </fragment>
-    
-    <fragment
         android:id="@+id/inscripcionFragment"
         android:name="com.example.jnab2025.ui.fragments.InscripcionFragment"
         android:label="Inscripción" />
@@ -200,23 +215,52 @@
         android:label="Inscriptos" />
 
     <fragment
+        android:id="@+id/acreditacionFragment"
+        android:name="com.example.jnab2025.ui.fragments.AcreditacionFragment"
+        android:label="Acreditación" />
+
+    <fragment
         android:id="@+id/mapsFragment"
         android:name="com.example.jnab2025.ui.fragments.MapsFragment"
-        android:label="Mapa Descuentos" />
+        android:label="Mapa Descuentos">
+        <!-- Viene de una notificacion LUGAR_AGREGADO: el mapa se centra en ese lugar -->
+        <argument
+            android:name="lugarId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/charlaDetailFragment"
         android:name="com.example.jnab2025.ui.fragments.CharlaDetailFragment"
         android:label="Detalle de Charla"
         tools:layout="@layout/fragment_charla_detail">
+
         <argument
             android:name="charlaId"
-            app:argType="integer" />
+            app:argType="string" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/actividadDetailFragment"
+        android:name="com.example.jnab2025.ui.fragments.ActividadDetailFragment"
+        android:label="Detalle de Actividad"
+        tools:layout="@layout/fragment_actividad_detail">
+
+        <argument
+            android:name="actividadId"
+            app:argType="string" />
+
     </fragment>
 
     <action
         android:id="@+id/action_agendaFragment_to_charlaDetailFragment"
         app:destination="@id/charlaDetailFragment" />
+    <action
+        android:id="@+id/action_agendaFragment_to_actividadDetailFragment"
+        app:destination="@id/actividadDetailFragment" />
     <fragment
         android:id="@+id/FAQFragment"
         android:name="com.example.jnab2025.ui.fragments.FAQFragment"
@@ -230,6 +274,84 @@
         android:name="com.example.jnab2025.ui.fragments.FAQFragment"
         android:label="Preguntas Frecuentes"
         tools:layout="@layout/fragment_faq" />
+    <fragment
+        android:id="@+id/gestionFaqFragment"
+        android:name="com.example.jnab2025.ui.fragments.GestionFaqFragment"
+        android:label="Gestionar FAQ"
+        tools:layout="@layout/fragment_gestion_faq" />
 
+    <fragment
+        android:id="@+id/registroFragment"
+        android:name="com.example.jnab2025.ui.fragments.RegistroFragment"
+        android:label="Registro" />
+
+    <fragment
+        android:id="@+id/trabajosSimposioFragment"
+        android:name="com.example.jnab2025.ui.fragments.TrabajosSimposioFragment"
+        android:label="Trabajos del Simposio">
+
+        <argument
+            android:name="simposioId"
+            app:argType="string" />
+
+        <action
+            android:id="@+id/action_trabajosSimposioFragment_to_programarPresentacionFragment"
+            app:destination="@id/programarPresentacionFragment" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/programarPresentacionFragment"
+        android:name="com.example.jnab2025.ui.fragments.ProgramarPresentacionFragment"
+        android:label="Programar Presentación">
+
+        <argument
+            android:name="trabajoId"
+            app:argType="string" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/gestionLugaresFragment"
+        android:name="com.example.jnab2025.ui.fragments.GestionLugaresFragment"
+        android:label="Gestionar lugares"
+        tools:layout="@layout/fragment_gestion_lugares" />
+    <fragment
+        android:id="@+id/notificacionesFragment"
+        android:name="com.example.jnab2025.ui.fragments.NotificacionesFragment"
+        android:label="Notificaciones" />
+
+    <fragment
+        android:id="@+id/actividadesFragment"
+        android:name="com.example.jnab2025.ui.fragments.ActividadesFragment"
+        android:label="Actividades">
+
+        <action
+            android:id="@+id/action_actividadesFragment_to_crearActividadFragment"
+            app:destination="@id/crearActividadFragment" />
+
+        <action
+            android:id="@+id/action_actividadesFragment_to_editarActividadFragment"
+            app:destination="@id/editarActividadFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/crearActividadFragment"
+        android:name="com.example.jnab2025.ui.fragments.CrearActividadFragment"
+        android:label="Nueva actividad" />
+
+    <fragment
+        android:id="@+id/editarActividadFragment"
+        android:name="com.example.jnab2025.ui.fragments.EditarActividadFragment"
+        android:label="Editar actividad">
+
+        <argument
+            android:name="actividadId"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/simposiosFiltroHomeFragment"
+        android:name="com.example.jnab2025.ui.fragments.SimposiosFiltroHomeFragment"
+        android:label="Simposios pendientes"
+        tools:layout="@layout/fragment_simposios_filtro_home" />
 </navigation>
 

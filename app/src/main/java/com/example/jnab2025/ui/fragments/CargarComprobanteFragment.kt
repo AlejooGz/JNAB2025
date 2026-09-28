@@ -17,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.jnab2025.databinding.FragmentCargarComprobanteBinding
 import com.example.jnab2025.ui.viewmodels.InscripcionViewModel
+import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -68,7 +69,10 @@ class CargarComprobanteFragment : Fragment() {
         }
 
         binding.btnEnviarComprobante.setOnClickListener {
-            viewModel.cargarComprobante(archivoUri?.toString(), nombreArchivo)
+            viewModel.cargarComprobante(
+                archivoUri,
+                nombreArchivo
+            )
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -77,13 +81,19 @@ class CargarComprobanteFragment : Fragment() {
                     viewModel.vista.collectLatest { vista ->
                         val inscripcion = vista.inscripcion
                         binding.tvDetalle.text = if (inscripcion == null) {
-                            "Primero tenes que inscribirte al evento."
+                            "Primero tenés que inscribirte al evento."
                         } else {
-                            val tipo = inscripcion.tipo.name.lowercase()
-                            "Inscripcion de $tipo por $${inscripcion.monto.toInt()}"
+                            val tipo = inscripcion.tipo.lowercase()
+                            val categoria = inscripcion.categoria.lowercase()
+
+                            "Inscripción de $tipo · $categoria " +
+                                "por $${inscripcion.monto.toInt()}"
                         }
                         binding.btnEnviarComprobante.isEnabled = inscripcion != null
                     }
+                }
+                launch {
+                    viewModel.enviando.collectLatest { mostrarCargando(it) }
                 }
                 launch {
                     viewModel.avisos.collectLatest { aviso ->
@@ -107,6 +117,7 @@ class CargarComprobanteFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mostrarCargando(false)
         _binding = null
     }
 }

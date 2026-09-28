@@ -47,6 +47,9 @@
                     android:layout_height="wrap_content"
                     android:hint="Titulo del simposio"
                     android:inputType="text"
+                    android:textColor="@color/dark_red"
+                    android:textColorHint="@color/dark_red"
+                    android:backgroundTint="@color/dark_red"
                     android:minHeight="48dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -60,6 +63,9 @@
                     android:hint="Tema central"
                     android:inputType="text"
                     android:minHeight="48dp"
+                    android:textColor="@color/dark_red"
+                    android:textColorHint="@color/dark_red"
+                    android:backgroundTint="@color/dark_red"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/etTitulo" />
@@ -72,6 +78,9 @@
                     android:gravity="top"
                     android:hint="Descripcion"
                     android:inputType="textMultiLine"
+                    android:textColor="@color/dark_red"
+                    android:textColorHint="@color/dark_red"
+                    android:backgroundTint="@color/dark_red"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/etTema" />
@@ -102,45 +111,29 @@
                     tools:text="Aula 1 - planta baja" />
 
                 <Button
-                    android:id="@+id/btnFechaInicio"
+                    android:id="@+id/btnFecha"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:layout_marginEnd="6dp"
                     android:backgroundTint="@color/dusty_rose"
-                    android:text="Desde"
+                    android:text="Elegir el día del simposio"
                     android:textColor="@color/white"
-                    app:layout_constraintEnd_toStartOf="@id/btnFechaFin"
-                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/tvAula" />
-
-                <Button
-                    android:id="@+id/btnFechaFin"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:backgroundTint="@color/dusty_rose"
-                    android:text="Hasta"
-                    android:textColor="@color/white"
-                    app:layout_constraintBottom_toBottomOf="@id/btnFechaInicio"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_weight="1"
-                    app:layout_constraintStart_toEndOf="@id/btnFechaInicio"
-                    app:layout_constraintTop_toTopOf="@id/btnFechaInicio" />
 
                 <TextView
                     android:id="@+id/tvFechas"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Sin fechas elegidas"
+                    android:text="Sin fecha elegida"
                     android:textAlignment="center"
                     android:textColor="@color/black"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/btnFechaInicio"
-                    tools:text="15/05/2025 al 16/05/2025" />
+                    app:layout_constraintTop_toBottomOf="@id/btnFecha"
+                    tools:text="Día del simposio: 15/05/2025" />
 
                 <Button
                     android:id="@+id/btnGuardar"

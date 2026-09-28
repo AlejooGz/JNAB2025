@@ -48,10 +48,47 @@
             android:background="@color/cream"
             app:itemIconTint="@color/dark_red"
             app:itemTextColor="@color/dark_red"
+            app:itemActiveIndicatorStyle="@style/BottomNavigationActiveIndicator"
             app:menu="@menu/bottom_nav_menu"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Capa de carga: tapa toda la pantalla mientras se envia algo a
+             Firebase. Es clickable para que los toques no lleguen abajo, y
+             tiene elevation para quedar sobre el BottomNavigationView. -->
+        <LinearLayout
+            android:id="@+id/capaCargando"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="#99000000"
+            android:clickable="true"
+            android:elevation="24dp"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ProgressBar
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/cream" />
+
+            <TextView
+                android:id="@+id/tvCargando"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Enviando…"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

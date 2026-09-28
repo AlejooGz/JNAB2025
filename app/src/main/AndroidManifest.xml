@@ -2,6 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Notificaciones -->
+    <!-- Android 13+ exige pedirla en runtime; en versiones previas se concede sola. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Alarma exacta para el recordatorio de 30 min. En Android 12+ el usuario
+         puede revocarla, por eso el codigo cae a una alarma inexacta si no esta. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Las alarmas programadas se pierden al reiniciar: hay que reprogramarlas. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -37,6 +47,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Dispara el recordatorio cuando vence la alarma de una charla. -->
+        <receiver
+            android:name=".notificaciones.RecordatorioCharlaReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Reprograma los recordatorios despues de reiniciar el telefono. -->
+        <receiver
+            android:name=".notificaciones.ArranqueReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
