@@ -6,12 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.jnab2025.data.model.CharlaFirebase
 import com.example.jnab2025.data.model.ActividadFirebase
 import com.example.jnab2025.data.model.EstadoTrabajo
+import com.example.jnab2025.data.model.NotificacionFirebase
 import com.example.jnab2025.data.model.SimposioFirebase
 import com.example.jnab2025.data.model.TipoActividad
+import com.example.jnab2025.data.model.TipoNotificacion
 import com.example.jnab2025.data.model.TrabajoFirebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.WriteBatch
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,8 @@ import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class CharlaViewModel(
     application: Application
@@ -54,6 +59,10 @@ class CharlaViewModel(
         /** Franja del dia en la que se pueden ubicar presentaciones */
         val HORA_APERTURA: LocalTime = LocalTime.of(8, 0)
         val HORA_CIERRE: LocalTime = LocalTime.of(20, 0)
+
+        /** "viernes 24/10" en el aviso de presentacion programada. */
+        private val FORMATO_DIA_AVISO: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("EEEE dd/MM", Locale.forLanguageTag("es-AR"))
     }
     /** Un bloque de 30 minutos del dia del simposio */
     data class Slot(
@@ -641,8 +650,13 @@ class CharlaViewModel(
                 horaInicio = horaInicio.toString(),
                 horaFin = horaFin.toString()
             )
-        charlaRef
-            .set(charla)
+        // La charla y el aviso al autor van juntos: o se guardan las dos cosas
+        // o ninguna, asi el expositor siempre se entera de su horario.
+        val batch = firestore.batch()
+        batch.set(charlaRef, charla)
+        avisarAlAutor(batch, trabajo, simposio, charlaRef.id, fecha, horaInicio, horaFin)
+        batch
+            .commit()
             .addOnSuccessListener {
                 terminar(
                     "Presentación programada correctamente"
@@ -654,6 +668,52 @@ class CharlaViewModel(
                     "No se pudo programar la presentación: ${error.message}"
                 )
             }
+    }
+
+    /**
+     * Agrega al batch la notificacion PRESENTACION_PROGRAMADA para el autor
+     * del trabajo, con el dia, el horario y el aula de su presentacion.
+     */
+    private fun avisarAlAutor(
+        batch: WriteBatch,
+        trabajo: TrabajoFirebase,
+        simposio: SimposioFirebase,
+        charlaId: String,
+        fecha: LocalDate,
+        horaInicio: LocalTime,
+        horaFin: LocalTime
+    ) {
+        if (trabajo.autorUid.isBlank()) return
+
+        val referencia = firestore
+            .collection("notificaciones")
+            .document()
+        val mensaje = buildString {
+            append("\"${trabajo.titulo}\" se presenta el ")
+            append(fecha.format(FORMATO_DIA_AVISO))
+            append(" de $horaInicio a $horaFin")
+            if (simposio.aulaNombre.isNotBlank()) {
+                append(" en ${simposio.aulaNombre}")
+            }
+            if (simposio.titulo.isNotBlank()) {
+                append(" (${simposio.titulo})")
+            }
+            append(".")
+        }
+
+        batch.set(
+            referencia,
+            NotificacionFirebase(
+                id = referencia.id,
+                destinatarioUid = trabajo.autorUid,
+                tipo = TipoNotificacion.PRESENTACION_PROGRAMADA.name,
+                titulo = "Tu presentación ya tiene horario",
+                mensaje = mensaje,
+                // la charla, para abrir su detalle al tocarlo
+                referenciaId = charlaId,
+                creadaEn = Timestamp.now()
+            )
+        )
     }
 
     private fun Timestamp.toLocalDate(): LocalDate =
