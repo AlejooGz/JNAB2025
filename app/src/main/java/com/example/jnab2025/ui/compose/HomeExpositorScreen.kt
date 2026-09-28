@@ -73,8 +73,6 @@ fun HomeExpositorScreen(
         ResumenTrabajos(estado, acciones)
         SeccionCredencial(credencial, estadoAsistente.inscripcion, accionesAsistente)
         SeccionPresentaciones(estado.presentaciones, accionesAsistente)
-        // reutilizada del home del asistente
-        SeccionProximasCharlas(estadoAsistente.proximasCharlas, accionesAsistente)
 
         EspacioFinal()
     }

@@ -55,7 +55,6 @@ fun HomeAsistenteScreen(
 
         SeccionCuentaRegresiva(estado.inicioJornadas, estado.finJornadas)
         SeccionCredencial(credencial, estado.inscripcion, acciones)
-        SeccionProximasCharlas(estado.proximasCharlas, acciones)
         EspacioFinal()
     }
 }
