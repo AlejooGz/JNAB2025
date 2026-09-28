@@ -140,7 +140,9 @@ private fun iconoDe(tipo: String): Int =
         TipoNotificacion.TRABAJO_ACEPTADO.name -> R.drawable.outline_edit_document_24
         TipoNotificacion.TRABAJO_RECHAZADO.name -> R.drawable.baseline_close_24
         TipoNotificacion.PRESENTACION_PROGRAMADA.name -> R.drawable.outline_event_available_24
-        TipoNotificacion.COMPROBANTE_RECIBIDO.name -> R.drawable.outline_receipt_long_24
+        TipoNotificacion.COMPROBANTE_RECIBIDO.name,
+        TipoNotificacion.RECORDATORIO_COMPROBANTE.name -> R.drawable.outline_receipt_long_24
+        TipoNotificacion.NOVEDAD_PUBLICADA.name -> R.drawable.outline_breaking_news_24
         else -> R.drawable.outline_notifications_24
     }
 

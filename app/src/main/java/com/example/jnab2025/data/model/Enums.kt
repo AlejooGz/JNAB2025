@@ -39,6 +39,12 @@ enum class PublicoFaq { ASISTENTE, EXPOSITOR }
  * COMPROBANTE_RECIBIDO no lo escribe el inscripto: cada organizador lo detecta
  * al ver un comprobante PENDIENTE nuevo y se lo deja a si mismo (ver
  * DetectorComprobantes); su referenciaId es el id de la inscripcion.
+ * NOVEDAD_PUBLICADA la escribe el organizador para cada expositor y asistente
+ * al crear una novedad; su referenciaId es el id de la novedad.
+ * RECORDATORIO_COMPROBANTE lo genera el propio dispositivo del expositor al
+ * iniciar sesion o abrir la app, mientras tenga trabajos y le falte el
+ * comprobante de pago (ver RecordatorioComprobante). Es UN doc por expositor
+ * que se reescribe cada vez; su referenciaId queda vacio.
  */
 enum class TipoNotificacion {
     PAGO_APROBADO,
@@ -48,5 +54,7 @@ enum class TipoNotificacion {
     TRABAJO_ACEPTADO,
     TRABAJO_RECHAZADO,
     PRESENTACION_PROGRAMADA,
-    COMPROBANTE_RECIBIDO
+    COMPROBANTE_RECIBIDO,
+    NOVEDAD_PUBLICADA,
+    RECORDATORIO_COMPROBANTE
 }

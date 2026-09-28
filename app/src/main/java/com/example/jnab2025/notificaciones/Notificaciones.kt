@@ -28,6 +28,7 @@ object Notificaciones {
     const val CANAL_RECORDATORIOS = "jnab_recordatorios"
     const val CANAL_LUGARES = "jnab_lugares"
     const val CANAL_TRABAJOS = "jnab_trabajos"
+    const val CANAL_NOVEDADES = "jnab_novedades"
 
     /**
      * Extras del intent que abre la app al tocar el aviso. MainActivity los lee
@@ -88,6 +89,17 @@ object Notificaciones {
             ).apply {
                 description =
                     "Envios de trabajos a tus simposios, resoluciones y horarios de tus presentaciones"
+            }
+        )
+
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CANAL_NOVEDADES,
+                "Novedades de las Jornadas",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description =
+                    "Avisa cuando la organizacion publica una novedad"
             }
         )
     }

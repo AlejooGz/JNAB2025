@@ -31,8 +31,13 @@ internal fun NavController.abrirDestinoDeAviso(
             )
         }
 
-        TipoNotificacion.PAGO_APROBADO.name ->
+        // la pantalla de inscripcion muestra el estado y deja cargar el comprobante
+        TipoNotificacion.PAGO_APROBADO.name,
+        TipoNotificacion.RECORDATORIO_COMPROBANTE.name ->
             navigate(R.id.inscripcionFragment, null, opciones)
+
+        TipoNotificacion.NOVEDAD_PUBLICADA.name ->
+            navigate(R.id.novedadesFragment, null, opciones)
 
         // el organizador va a la lista de inscriptos, donde verifica comprobantes
         TipoNotificacion.COMPROBANTE_RECIBIDO.name ->

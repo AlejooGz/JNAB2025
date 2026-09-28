@@ -130,6 +130,7 @@ object SincronizadorNotificaciones {
         val canal =
             when (notificacion.tipo) {
                 TipoNotificacion.LUGAR_AGREGADO.name -> Notificaciones.CANAL_LUGARES
+                TipoNotificacion.NOVEDAD_PUBLICADA.name -> Notificaciones.CANAL_NOVEDADES
                 TipoNotificacion.TRABAJO_ENVIADO.name,
                 TipoNotificacion.TRABAJO_ACEPTADO.name,
                 TipoNotificacion.TRABAJO_RECHAZADO.name,
