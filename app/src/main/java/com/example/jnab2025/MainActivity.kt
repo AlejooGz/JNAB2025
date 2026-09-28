@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import com.example.jnab2025.notificaciones.NotificacionesWorker
 import com.example.jnab2025.notificaciones.Notificaciones
 import com.example.jnab2025.notificaciones.ProgramadorRecordatorios
+import com.example.jnab2025.notificaciones.RecordatorioComprobante
 import com.example.jnab2025.ui.viewmodels.NotificacionesViewModel
 import com.example.jnab2025.databinding.ActivityMainBinding
 import com.example.jnab2025.utils.Sesion
@@ -287,6 +288,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         notificacionesViewModel.escuchar()
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // Al expositor sin comprobante se le recuerda en cada login y en cada
+        // apertura en frio. Tiene su propio control para no repetirse al rotar.
+        RecordatorioComprobante.revisar(this)
+
         if (uid == uidSincronizado) return
         uidSincronizado = uid
 
@@ -377,6 +383,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 ProgramadorRecordatorios.cancelarTodos(this)
                 NotificacionesWorker.cancelar(this)
                 uidSincronizado = null
+                // el proximo login vuelve a revisar si falta el comprobante
+                RecordatorioComprobante.reiniciar()
 
                 // Limpia los filtros del mapa antes de cerrar la sesión
                 val filtroViewModel =
@@ -461,5 +469,7 @@ private val TIPOS_CON_DESTINO_DESDE_BANDEJA = setOf(
     TipoNotificacion.TRABAJO_ACEPTADO.name,
     TipoNotificacion.TRABAJO_RECHAZADO.name,
     TipoNotificacion.PRESENTACION_PROGRAMADA.name,
-    TipoNotificacion.COMPROBANTE_RECIBIDO.name
+    TipoNotificacion.COMPROBANTE_RECIBIDO.name,
+    TipoNotificacion.NOVEDAD_PUBLICADA.name,
+    TipoNotificacion.RECORDATORIO_COMPROBANTE.name
 )
