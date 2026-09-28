@@ -369,6 +369,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.nav_ver_inscriptos -> {
                 findNavController(R.id.nav_host_fragment).navigate(R.id.verInscriptosFragment)
             }
+            R.id.nav_acreditacion -> {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.acreditacionFragment)
+            }
             R.id.nav_inscripcion -> {
                 findNavController(R.id.nav_host_fragment).navigate(R.id.inscripcionFragment)
             }

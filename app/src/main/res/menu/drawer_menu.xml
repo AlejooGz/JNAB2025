@@ -34,6 +34,10 @@
             android:title="Inscriptos"
             android:icon="@drawable/outline_group_24" />
         <item
+            android:id="@+id/nav_acreditacion"
+            android:title="Acreditación"
+            android:icon="@drawable/outline_qr_code_scanner_24" />
+        <item
             android:id="@+id/nav_actividades"
             android:title="Gestionar actividades"
             android:icon="@drawable/outline_add_notes_24" />
