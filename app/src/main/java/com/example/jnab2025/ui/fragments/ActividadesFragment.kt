@@ -21,6 +21,10 @@ import com.example.jnab2025.ui.adapters.ActividadAdapter
 import com.example.jnab2025.ui.viewmodels.ActividadViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.widget.Button
+import android.widget.TextView
 
 class ActividadesFragment : Fragment() {
     private var _binding: FragmentActividadesBinding? = null
@@ -159,81 +163,47 @@ class ActividadesFragment : Fragment() {
     private fun confirmarEliminar(
         actividad: ActividadFirebase
     ) {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_eliminar_novedad, null)
 
-        val dialog =
-            AlertDialog.Builder(
-                requireContext()
-            )
-                .setTitle(
-                    "Eliminar actividad"
-                )
-                .setMessage(
-                    "¿Querés eliminar \"${actividad.titulo}\"?"
-                )
-                .setNegativeButton(
-                    "Cancelar",
-                    null
-                )
-                .setPositiveButton(
-                    "Eliminar"
-                ) { _, _ ->
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
 
-                    viewModel.eliminarActividad(
-                        actividad.id
-                    )
-                }
-                .create()
+        val tvTitulo = dialogView.findViewById<TextView>(
+            R.id.tvTituloDialog
+        )
+
+        val tvMensaje = dialogView.findViewById<TextView>(
+            R.id.tvMensajeDialog
+        )
+
+        val btnCancelar = dialogView.findViewById<Button>(
+            R.id.btnCancelarDialog
+        )
+
+        val btnEliminar = dialogView.findViewById<Button>(
+            R.id.btnEliminarDialog
+        )
+
+        tvTitulo.text = "Eliminar actividad"
+
+        tvMensaje.text =
+            "¿Querés eliminar \"${actividad.titulo}\"?"
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnEliminar.setOnClickListener {
+            viewModel.eliminarActividad(actividad.id)
+            dialog.dismiss()
+        }
 
         dialog.setOnShowListener {
-            dialog.window?.setBackgroundDrawableResource(
-                R.drawable.bg_dialog_cream
+            dialog.window?.setBackgroundDrawable(
+                ColorDrawable(Color.TRANSPARENT)
             )
-            dialog.findViewById<android.widget.TextView>(
-                androidx.appcompat.R.id.alertTitle
-            )?.setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.dark_red
-                )
-            )
-            dialog.findViewById<android.widget.TextView>(
-                android.R.id.message
-            )?.setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.dark_red
-                )
-            )
-
-            dialog.getButton(
-                AlertDialog.BUTTON_POSITIVE
-            ).apply {
-                setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.white
-                    )
-                )
-                setBackgroundResource(
-                    R.drawable.bg_button_dark_red
-                )
-                isAllCaps = false
-            }
-
-            dialog.getButton(
-                AlertDialog.BUTTON_NEGATIVE
-            ).apply {
-                setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.dark_red
-                    )
-                )
-                setBackgroundColor(
-                    android.graphics.Color.TRANSPARENT
-                )
-                isAllCaps = false
-            }
         }
 
         dialog.show()

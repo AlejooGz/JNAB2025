@@ -59,13 +59,13 @@ class RegistroFragment : Fragment() {
 
         val adapter = ArrayAdapter(
             requireContext(),
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner_registro,
             roles
-        )
-
-        adapter.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
+        ).apply {
+            setDropDownViewResource(
+                R.layout.item_spinner_dropdown_registro
+            )
+        }
 
         binding.spRol.adapter = adapter
     }

@@ -25,6 +25,9 @@ import com.example.jnab2025.ui.adapters.GestionLugaresAdapter
 import com.example.jnab2025.ui.viewmodels.LugaresViewModel
 import com.example.jnab2025.utils.mostrarCargando
 import kotlinx.coroutines.launch
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.widget.Button
 
 class GestionLugaresFragment : Fragment() {
     private var _binding: FragmentGestionLugaresBinding? = null
@@ -121,12 +124,16 @@ class GestionLugaresFragment : Fragment() {
     ) {
         val dialogBinding = DialogLugarBinding.inflate(layoutInflater)
         val categorias = arrayOf("Hospedaje", "Restaurante", "Agencia")
-        dialogBinding.spCategoria.adapter =
-            ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
-                categorias
-            )
+        val adapterCategoria = ArrayAdapter(
+            requireContext(),
+            R.layout.item_spinner,
+            categorias
+        ).apply {
+            setDropDownViewResource(R.layout.item_spinner_dropdown)
+        }
+
+        dialogBinding.spCategoria.adapter = adapterCategoria
+
         if (lugar != null) {
             dialogBinding.etNombre.setText(lugar.nombre)
             dialogBinding.etDescuento.setText(lugar.descuento)
@@ -252,73 +259,69 @@ class GestionLugaresFragment : Fragment() {
     private fun confirmarCambioEstado(
         lugar: LugarFirebase
     ) {
-        val accion =
-            if (lugar.activo) {
-                "desactivar"
-            } else {
-                "activar"
-            }
-        val titulo =
-            if (lugar.activo) {
-                "Desactivar lugar"
-            } else {
-                "Activar lugar"
-            }
-        val textoBoton =
-            if (lugar.activo) {
-                "Desactivar"
-            } else {
-                "Activar"
-            }
-        val dialog =
-            AlertDialog.Builder(
-                requireContext()
-            )
-                .setTitle(titulo)
-                .setMessage("¿Querés $accion ${lugar.nombre}?")
-                .setPositiveButton(textoBoton
-                ) { _, _ ->
-                    viewModel.cambiarEstado(lugar)
-                }
-                .setNegativeButton("Cancelar", null)
-                .create()
+        val accion = if (lugar.activo) {
+            "desactivar"
+        } else {
+            "activar"
+        }
+
+        val titulo = if (lugar.activo) {
+            "Desactivar lugar"
+        } else {
+            "Activar lugar"
+        }
+
+        val textoBoton = if (lugar.activo) {
+            "Desactivar"
+        } else {
+            "Activar"
+        }
+
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_eliminar_novedad, null)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        val tvTitulo = dialogView.findViewById<TextView>(
+            R.id.tvTituloDialog
+        )
+
+        val tvMensaje = dialogView.findViewById<TextView>(
+            R.id.tvMensajeDialog
+        )
+
+        val btnCancelar = dialogView.findViewById<Button>(
+            R.id.btnCancelarDialog
+        )
+
+        val btnConfirmar = dialogView.findViewById<Button>(
+            R.id.btnEliminarDialog
+        )
+
+        tvTitulo.text = titulo
+
+        tvMensaje.text =
+            "¿Querés $accion \"${lugar.nombre}\"?"
+
+        btnConfirmar.text = textoBoton
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnConfirmar.setOnClickListener {
+            viewModel.cambiarEstado(lugar)
+            dialog.dismiss()
+        }
 
         dialog.setOnShowListener {
-            val darkRed =
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.dark_red
-                )
-            dialog.window
-                ?.setBackgroundDrawableResource(R.drawable.bg_dialog_cream)
-            dialog.findViewById<TextView>(androidx.appcompat.R.id.alertTitle
-            )?.apply {
-                setTextColor(
-                    darkRed
-                )
-                setTypeface(
-                    typeface,
-                    Typeface.BOLD
-                )
-            }
-            dialog.findViewById<TextView>(
-                android.R.id.message
-            )?.apply {
-                setTextColor(
-                    darkRed
-                )
-            }
-            dialog.getButton(
-                AlertDialog.BUTTON_POSITIVE
-            ).setTextColor(
-                darkRed
-            )
-            dialog.getButton(
-                AlertDialog.BUTTON_NEGATIVE
-            ).setTextColor(
-                darkRed
+            dialog.window?.setBackgroundDrawable(
+                ColorDrawable(Color.TRANSPARENT)
             )
         }
+
         dialog.show()
     }
 
