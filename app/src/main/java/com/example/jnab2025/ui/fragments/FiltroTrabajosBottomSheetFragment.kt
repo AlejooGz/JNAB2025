@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import com.example.jnab2025.R
 import com.example.jnab2025.data.model.EstadoTrabajo
 import com.example.jnab2025.databinding.BottomSheetFiltroTrabajosBinding
 import com.example.jnab2025.ui.viewmodels.FiltroTrabajosViewModel
@@ -88,15 +87,11 @@ class FiltroTrabajosBottomSheetFragment :
         binding.btnEnviado.isChecked =
             EstadoTrabajo.ENVIADO in estados
 
-        binding.btnEnEvaluacion.isChecked =
-            EstadoTrabajo.EN_EVALUACION in estados
-
         binding.btnAprobado.isChecked =
             EstadoTrabajo.APROBADO in estados
 
         binding.btnRechazado.isChecked =
             EstadoTrabajo.RECHAZADO in estados
-
 
         val programacion =
             filtroViewModel
@@ -119,11 +114,6 @@ class FiltroTrabajosBottomSheetFragment :
         configurarEstado(
             binding.btnEnviado,
             EstadoTrabajo.ENVIADO
-        )
-
-        configurarEstado(
-            binding.btnEnEvaluacion,
-            EstadoTrabajo.EN_EVALUACION
         )
 
         configurarEstado(

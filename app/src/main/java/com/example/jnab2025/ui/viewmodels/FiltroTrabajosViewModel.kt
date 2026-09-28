@@ -2,6 +2,7 @@ package com.example.jnab2025.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.example.jnab2025.data.model.EstadoTrabajo
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,10 +10,22 @@ import kotlinx.coroutines.flow.update
 
 class FiltroTrabajosViewModel : ViewModel() {
 
+    private val auth =
+        FirebaseAuth.getInstance()
+
+    private val authStateListener =
+        FirebaseAuth.AuthStateListener { firebaseAuth ->
+
+            if (firebaseAuth.currentUser == null) {
+                limpiar()
+            }
+        }
+
     private val _estadosSeleccionados =
         MutableStateFlow<Set<EstadoTrabajo>>(emptySet())
 
-    val estadosSeleccionados: StateFlow<Set<EstadoTrabajo>> =
+    val estadosSeleccionados:
+            StateFlow<Set<EstadoTrabajo>> =
         _estadosSeleccionados.asStateFlow()
 
     private val _programacionSeleccionada =
@@ -21,6 +34,12 @@ class FiltroTrabajosViewModel : ViewModel() {
     val programacionSeleccionada:
             StateFlow<Set<FiltroProgramacion>> =
         _programacionSeleccionada.asStateFlow()
+
+    init {
+        auth.addAuthStateListener(
+            authStateListener
+        )
+    }
 
     fun alternarEstado(
         estado: EstadoTrabajo
@@ -49,11 +68,20 @@ class FiltroTrabajosViewModel : ViewModel() {
     }
 
     fun limpiar() {
+
         _estadosSeleccionados.value =
             emptySet()
 
         _programacionSeleccionada.value =
             emptySet()
+    }
+
+    override fun onCleared() {
+        auth.removeAuthStateListener(
+            authStateListener
+        )
+
+        super.onCleared()
     }
 
     enum class FiltroProgramacion {
