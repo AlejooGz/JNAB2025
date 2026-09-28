@@ -3,6 +3,8 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import com.example.jnab2025.data.model.NovedadFirebase
+import com.example.jnab2025.data.model.TipoNotificacion
+import com.example.jnab2025.notificaciones.AvisoMasivo
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -18,6 +20,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+
+/** Largo maximo del texto de la novedad que se muestra en el aviso. */
+private const val LARGO_RESUMEN = 140
 
 class NovedadesViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
@@ -206,6 +211,9 @@ class NovedadesViewModel : ViewModel() {
 
                 _eventos.value = Evento.Publicada
 
+                // solo al crearla: editar una novedad no la vuelve a avisar
+                avisarNovedad(novedad)
+
             } catch (e: Exception) {
 
                 _eventos.value = Evento.Error(
@@ -217,6 +225,26 @@ class NovedadesViewModel : ViewModel() {
                 _publicando.value = false
             }
         }
+    }
+
+    /**
+     * Deja una notificacion NOVEDAD_PUBLICADA para cada expositor y asistente
+     * (ver [AvisoMasivo]). Va despues de guardar la novedad y por separado:
+     * si el aviso falla, la novedad igual queda publicada (solo se registra en
+     * el log, para no pisar el evento Publicada que cierra la pantalla).
+     */
+    private fun avisarNovedad(novedad: NovedadFirebase) {
+        val resumen =
+            novedad.descripcion
+                .replace(Regex("\\s+"), " ")
+                .let { if (it.length > LARGO_RESUMEN) it.take(LARGO_RESUMEN).trimEnd() + "…" else it }
+
+        AvisoMasivo.aExpositoresYAsistentes(
+            tipo = TipoNotificacion.NOVEDAD_PUBLICADA,
+            titulo = "Novedad: ${novedad.titulo}",
+            mensaje = resumen,
+            referenciaId = novedad.id
+        )
     }
 
     fun actualizar(
